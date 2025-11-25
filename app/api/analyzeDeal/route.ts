@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadSettings, type DealerSettings } from "@/lib/settings";
-import { runUnderwritingEngine, type UnderwritingResult } from "@/lib/underwriting";
+import {
+  runUnderwritingEngine,
+  type UnderwritingResult
+} from "@/lib/underwriting";
+import { saveDeal } from "@/lib/deals";
 
 type DealInput = {
   vehicleCost: number;
@@ -278,6 +282,32 @@ export async function POST(req: NextRequest) {
       ltv,
       underwriting
     );
+
+    await saveDeal({
+      input: {
+        vehicleCost: body.vehicleCost,
+        reconCost: body.reconCost,
+        salePrice: body.salePrice,
+        downPayment: body.downPayment,
+        apr: effectiveApr,
+        termWeeks: body.termWeeks,
+        paymentFrequency: body.paymentFrequency,
+        monthlyIncome: body.monthlyIncome ?? null,
+        monthsOnJob: body.monthsOnJob ?? null,
+        pastRepo: Boolean(body.pastRepo)
+      },
+      result: {
+        payment: core.payment,
+        totalInterest: core.totalInterest,
+        totalProfit: core.totalProfit,
+        breakEvenWeek: core.breakEvenWeek,
+        paymentToIncome: risk.paymentToIncome ?? null,
+        ltv,
+        riskScore: risk.riskScore,
+        underwritingVerdict: underwriting.verdict,
+        underwritingReasons: underwriting.reasons
+      }
+    });
 
     return NextResponse.json({
       payment: core.payment,
