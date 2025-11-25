@@ -2,40 +2,76 @@
 
 import { useEffect, useState } from "react";
 
+type DealerSettings = {
+  dealerName: string;
+  defaultAPR: number;
+  maxPTI: number;
+  maxLTV: number;
+  minDownPayment: number;
+  maxTermWeeks: number;
+};
+
 export default function DealerSettingsPage() {
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<DealerSettings | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
-      const res = await fetch("/data/dealer.json");
-      const data = await res.json();
-      setSettings(data);
+      try {
+        const res = await fetch("/api/settings", { method: "GET" });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Failed to load settings");
+          return;
+        }
+        setSettings(data);
+      } catch (err: any) {
+        setError(err?.message || "Failed to load settings");
+      }
     }
     load();
   }, []);
 
-  if (!settings) return null;
+  if (!settings) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "#020617",
+          color: "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <p>Loading dealer settings...</p>
+      </main>
+    );
+  }
 
   async function save() {
     setError("");
     setSaved(false);
 
-    const res = await fetch("/api/settings/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings)
-    });
+    try {
+      const res = await fetch("/api/settings/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings)
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error || "Failed to save");
-      return;
+      if (!res.ok) {
+        setError(data.error || "Failed to save");
+        return;
+      }
+
+      setSaved(true);
+    } catch (err: any) {
+      setError(err?.message || "Failed to save");
     }
-
-    setSaved(true);
   }
 
   const container = {
@@ -87,7 +123,10 @@ export default function DealerSettingsPage() {
           style={input}
           value={settings.defaultAPR}
           onChange={(e) =>
-            setSettings({ ...settings, defaultAPR: parseFloat(e.target.value) })
+            setSettings({
+              ...settings,
+              defaultAPR: parseFloat(e.target.value || "0")
+            })
           }
         />
 
@@ -98,7 +137,10 @@ export default function DealerSettingsPage() {
           style={input}
           value={settings.maxPTI}
           onChange={(e) =>
-            setSettings({ ...settings, maxPTI: parseFloat(e.target.value) })
+            setSettings({
+              ...settings,
+              maxPTI: parseFloat(e.target.value || "0")
+            })
           }
         />
 
@@ -109,7 +151,10 @@ export default function DealerSettingsPage() {
           style={input}
           value={settings.maxLTV}
           onChange={(e) =>
-            setSettings({ ...settings, maxLTV: parseFloat(e.target.value) })
+            setSettings({
+              ...settings,
+              maxLTV: parseFloat(e.target.value || "0")
+            })
           }
         />
 
@@ -121,7 +166,7 @@ export default function DealerSettingsPage() {
           onChange={(e) =>
             setSettings({
               ...settings,
-              minDownPayment: parseFloat(e.target.value)
+              minDownPayment: parseFloat(e.target.value || "0")
             })
           }
         />
@@ -134,7 +179,7 @@ export default function DealerSettingsPage() {
           onChange={(e) =>
             setSettings({
               ...settings,
-              maxTermWeeks: parseInt(e.target.value)
+              maxTermWeeks: parseInt(e.target.value || "0")
             })
           }
         />
