@@ -1,7 +1,4 @@
-import path from "path";
-import { promises as fs } from "fs";
-
-const DEALS_DIR = path.join(process.cwd(), "data", "deals");
+import { supabaseAdmin } from "./supabase";
 
 export type SavedDealInput = {
   input: {
@@ -34,50 +31,36 @@ export type SavedDeal = SavedDealInput & {
   createdAt: string; // ISO string
 };
 
-async function ensureDealsDirExists() {
-  try {
-    await fs.mkdir(DEALS_DIR, { recursive: true });
-  } catch {
-    // ignore
-  }
-}
-
 export async function saveDeal(payload: SavedDealInput): Promise<void> {
-  await ensureDealsDirExists();
+  const { error } = await supabaseAdmin.from("deals").insert({
+    input: payload.input,
+    result: payload.result
+  });
 
-  const id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-  const createdAt = new Date().toISOString();
-
-  const full: SavedDeal = {
-    id,
-    createdAt,
-    ...payload
-  };
-
-  const filePath = path.join(DEALS_DIR, `${id}.json`);
-  await fs.writeFile(filePath, JSON.stringify(full, null, 2), "utf8");
+  if (error) {
+    console.error("Failed to save deal to Supabase", error);
+    throw new Error(error.message);
+  }
 }
 
 export async function listDeals(limit = 50): Promise<SavedDeal[]> {
-  await ensureDealsDirExists();
+  const { data, error } = await supabaseAdmin
+    .from("deals")
+    .select("id, created_at, input, result")
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
-  const files = await fs.readdir(DEALS_DIR);
-  const jsonFiles = files.filter((f) => f.endsWith(".json"));
-
-  const deals: SavedDeal[] = [];
-
-  for (const file of jsonFiles) {
-    const filePath = path.join(DEALS_DIR, file);
-    try {
-      const content = await fs.readFile(filePath, "utf8");
-      const parsed = JSON.parse(content) as SavedDeal;
-      deals.push(parsed);
-    } catch {
-      // ignore bad files
-    }
+  if (error) {
+    console.error("Failed to list deals from Supabase", error);
+    throw new Error(error.message);
   }
 
-  deals.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  if (!data) return [];
 
-  return deals.slice(0, limit);
+  return data.map((row: any) => ({
+    id: row.id as string,
+    createdAt: row.created_at as string,
+    input: row.input,
+    result: row.result
+  }));
 }
