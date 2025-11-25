@@ -12,28 +12,32 @@ export interface UnderwritingResult {
 }
 
 interface DealerRules {
+  // Stored as ratios, for example 0.25 for 25 percent and 1.40 for 140 percent
   maxPTI: number;
   maxLTV: number;
   minDownPayment: number;
   maxTermWeeks: number;
 }
 
-interface DealInput {
+// This type is exactly what your route builds as `underwritingInput`
+export interface UnderwritingDealInput {
   income: number;
   salePrice: number;
   vehicleCost: number;
-  down: number;
+  totalCost: number;
+  downPayment: number;
   apr: number;
   termWeeks: number;
-  pti: number;
-  ltv: number;
+  weeklyPayment: number;
+  pti: number;        // ratio, for example 0.25 for 25 percent
+  ltv: number;        // ratio, for example 1.20 for 120 percent
   profit: number;
   jobTimeMonths: number;
   repoCount: number;
 }
 
 export function runUnderwritingEngine(
-  deal: DealInput,
+  deal: UnderwritingDealInput,
   rules: DealerRules
 ): UnderwritingResult {
   const reasons: string[] = [];
@@ -42,85 +46,101 @@ export function runUnderwritingEngine(
   // PTI check
   if (deal.pti > rules.maxPTI) {
     verdict = "COUNTER";
-    reasons.push(`PTI is too high at ${deal.pti}. Allowed is ${rules.maxPTI}.`);
+    reasons.push(
+      `Payment to income is ${(deal.pti * 100).toFixed(1)} percent, dealer max is ${(rules.maxPTI * 100).toFixed(1)} percent.`
+    );
   }
 
   // LTV check
   if (deal.ltv > rules.maxLTV) {
     verdict = "COUNTER";
-    reasons.push(`LTV is too high at ${deal.ltv}. Allowed is ${rules.maxLTV}.`);
+    reasons.push(
+      `LTV is ${(deal.ltv * 100).toFixed(1)} percent, dealer max is ${(rules.maxLTV * 100).toFixed(1)} percent.`
+    );
   }
 
   // Down payment adequacy
-  if (deal.down < rules.minDownPayment) {
+  if (deal.downPayment < rules.minDownPayment) {
     verdict = "COUNTER";
     reasons.push(
-      `Down payment is too low. Minimum required is ${rules.minDownPayment}.`
+      `Down payment is ${deal.downPayment.toFixed(2)}, minimum required is ${rules.minDownPayment.toFixed(2)}.`
     );
   }
 
   // Profitability check
   if (deal.profit < 1500) {
     verdict = "COUNTER";
-    reasons.push(`Profit is low at ${deal.profit}.`);
+    reasons.push(
+      `Total profit is ${deal.profit.toFixed(2)}, below the preferred floor of 1500.`
+    );
   }
 
   // Term check
   if (deal.termWeeks > rules.maxTermWeeks) {
     verdict = "COUNTER";
     reasons.push(
-      `Term exceeds maximum of ${rules.maxTermWeeks} weeks. Currently ${deal.termWeeks}.`
+      `Term is ${deal.termWeeks} weeks, dealer max is ${rules.maxTermWeeks} weeks.`
     );
   }
 
   // Job time
   if (deal.jobTimeMonths < 3) {
     verdict = "COUNTER";
-    reasons.push(`Job time is short at ${deal.jobTimeMonths} months.`);
+    reasons.push(
+      `Job time is ${deal.jobTimeMonths} months which is under the usual comfort window.`
+    );
   }
 
   // Repo history
   if (deal.repoCount >= 2) {
     verdict = "DECLINE";
-    reasons.push(`Customer has ${deal.repoCount} repos.`);
+    reasons.push(`Customer has ${deal.repoCount} prior repos.`);
   }
 
-  // Upgraded decline rules
-  if (deal.pti > rules.maxPTI + 5) {
+  // Hard decline for very high PTI
+  if (deal.pti > rules.maxPTI + 0.05) {
     verdict = "DECLINE";
-    reasons.push(`PTI is far over acceptable levels.`);
+    reasons.push(
+      `Payment to income is far above policy, even for a counter structure.`
+    );
   }
 
-  if (deal.ltv > rules.maxLTV + 15) {
+  // Hard decline for very high LTV
+  if (deal.ltv > rules.maxLTV + 0.15) {
     verdict = "DECLINE";
-    reasons.push(`LTV is far over acceptable levels.`);
+    reasons.push(
+      `LTV is far above acceptable limits, even with additional down payment.`
+    );
   }
 
-  // If no reasons exist and initial verdict was approve
+  // If no reasons and still approve
   if (verdict === "APPROVE") {
     return {
       verdict,
-      reasons: ["Deal meets dealer criteria and profitability requirement"]
+      reasons: [
+        "Deal meets dealer criteria for PTI, LTV, down payment, term, and profit."
+      ]
     };
   }
 
-  // COUNTER OFFER LOGIC
+  // Counter offer suggestions
   const adjustments: UnderwritingResult["adjustments"] = {};
 
-  // Raise down payment
-  if (deal.down < rules.minDownPayment) {
+  // Suggest raising down payment
+  if (deal.downPayment < rules.minDownPayment) {
     adjustments.newDownPayment = rules.minDownPayment;
   }
 
-  // Reduce term
+  // Suggest reducing term
   if (deal.termWeeks > rules.maxTermWeeks) {
     adjustments.newTermWeeks = rules.maxTermWeeks;
   }
 
-  // Reduce sale price when LTV is high
+  // Suggest reducing sale price when LTV is high
   if (deal.ltv > rules.maxLTV) {
-    const allowedSalePrice = deal.vehicleCost * (rules.maxLTV / 100);
-    adjustments.newSalePrice = Math.round(allowedSalePrice);
+    const allowedAdvance = deal.vehicleCost * rules.maxLTV;
+    const suggestedSalePrice = allowedAdvance + deal.downPayment;
+    adjustments.newSalePrice = Math.round(suggestedSalePrice);
   }
 
   return {
