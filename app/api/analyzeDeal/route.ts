@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadSettings, type DealerSettings } from "@/lib/settings";
-import { runUnderwritingEngine } from "@/lib/underwriting";
+import { runUnderwritingEngine, type UnderwritingResult } from "@/lib/underwriting";
 
 type DealInput = {
   vehicleCost: number;
@@ -134,7 +134,9 @@ async function getAiOpinion(
   input: DealInput,
   core: CoreResult,
   risk: { paymentToIncome: number | null; riskScore: string },
-  settings: DealerSettings
+  settings: DealerSettings,
+  ltv: number,
+  underwriting: UnderwritingResult
 ) {
   const apiKey =
     process.env.OPENAI_API_KEY || process.env.PENAI_API_KEY || "";
@@ -146,8 +148,13 @@ async function getAiOpinion(
 
   const apr = input.apr && input.apr > 0 ? input.apr : settings.defaultAPR;
 
+  const ltvPercent = (ltv * 100).toFixed(1);
+  const ptiPercent = risk.paymentToIncome
+    ? (risk.paymentToIncome * 100).toFixed(1) + "%"
+    : "N/A";
+
   const prompt = `
-You are an experienced buy-here-pay-here finance manager.
+You are an experienced buy here pay here finance manager.
 
 Dealer policy:
 - Dealer name: ${settings.dealerName}
@@ -174,20 +181,21 @@ Calculated:
 - Weekly payment: ${core.payment.toFixed(2)}
 - Total interest: ${core.totalInterest.toFixed(2)}
 - Total profit: ${core.totalProfit.toFixed(2)}
-- Break-even week: ${core.breakEvenWeek}
-- Payment to income: ${
-    risk.paymentToIncome
-      ? (risk.paymentToIncome * 100).toFixed(1) + "%"
-      : "N/A"
-  }
+- Break even week: ${core.breakEvenWeek}
+- Payment to income: ${ptiPercent}
+- LTV percent: ${ltvPercent} percent
 - Risk score: ${risk.riskScore}
 
+Underwriting engine:
+- Verdict: ${underwriting.verdict}
+- Reasons: ${underwriting.reasons.join(" | ")}
+
 Instructions:
-Give:
-1. One-line verdict (“solid deal”, “thin but ok”, etc)
-2. 2–3 sentence breakdown using real numbers
-3. One improvement suggestion (tweak down, price, or term)
-Do NOT mention AI or models.
+1. Your verdict must match the underwriting verdict above (APPROVE, COUNTER, or DECLINE).
+2. Start with a one line verdict such as "Approve, solid deal", "Counter, thin but workable", or "Decline, too much advance".
+3. Then give a two or three sentence breakdown using the real numbers, and explain any key reasons from the underwriting reasons above.
+4. Finish with one clear suggestion to improve the structure (down payment, price, or term).
+Do not mention AI or models.
 `.trim();
 
   try {
@@ -262,7 +270,14 @@ export async function POST(req: NextRequest) {
 
     const underwriting = runUnderwritingEngine(underwritingInput, rules);
 
-    const aiExplanation = await getAiOpinion(body, core, risk, settings);
+    const aiExplanation = await getAiOpinion(
+      body,
+      core,
+      risk,
+      settings,
+      ltv,
+      underwriting
+    );
 
     return NextResponse.json({
       payment: core.payment,
