@@ -69,11 +69,38 @@ export async function listDeals(
 
   if (!data) return [];
 
-  return data.map((row: any) => ({
-    id: row.id as string,
-    createdAt: row.created_at as string,
-    userId: (row.user_id as string | null) ?? null,
-    input: row.input,
-    result: row.result
-  }));
+  return data.map(
+    (row: any): SavedDeal => ({
+      id: row.id as string,
+      createdAt: row.created_at as string,
+      userId: (row.user_id as string | null) ?? null,
+      input: row.input,
+      result: row.result
+    })
+  );
+}
+
+export async function getDealById(id: string): Promise<SavedDeal | null> {
+  const { data, error } = await supabaseAdmin
+    .from("deals")
+    .select("id, created_at, user_id, input, result")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to fetch deal by id from Supabase", error);
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    id: data.id as string,
+    createdAt: data.created_at as string,
+    userId: (data.user_id as string | null) ?? null,
+    input: data.input,
+    result: data.result
+  } as SavedDeal;
 }
