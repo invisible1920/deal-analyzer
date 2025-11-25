@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
+import { supabaseClient } from "@/lib/supabaseClient";
 
 type FormState = {
   vehicleCost: number;
@@ -29,9 +30,22 @@ export default function HomePage() {
     pastRepo: false
   });
 
+  const [userId, setUserId] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const { data } = await supabaseClient.auth.getUser();
+        setUserId(data.user ? data.user.id : null);
+      } catch {
+        setUserId(null);
+      }
+    }
+    loadUser();
+  }, []);
 
   function handleChange(field: keyof FormState, value: string | boolean) {
     setForm((prev) => {
@@ -56,7 +70,7 @@ export default function HomePage() {
       const res = await fetch("/api/analyzeDeal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+        body: JSON.stringify({ ...form, userId })
       });
 
       let data: any = null;
@@ -148,9 +162,15 @@ export default function HomePage() {
         <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "4px" }}>
           BHPH Deal Analyzer MVP
         </h1>
-        <p style={{ color: "#9ca3af", marginBottom: "16px" }}>
+        <p style={{ color: "#9ca3af", marginBottom: "8px" }}>
           Enter a deal and get payment, profit, and basic risk info.
         </p>
+        {!userId && (
+          <p style={{ color: "#facc15", fontSize: "13px", marginBottom: "12px" }}>
+            Not logged in. Deals will not be tied to an account. Use the Login
+            link in the top bar to sign in.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} style={panelStyle}>
           <div style={gridStyle}>
@@ -342,7 +362,7 @@ export default function HomePage() {
               </div>
             </section>
 
-                        {result.underwriting && (
+            {result.underwriting && (
               <section style={{ marginTop: "16px" }}>
                 <div style={panelStyle}>
                   <h2
@@ -354,41 +374,26 @@ export default function HomePage() {
                   >
                     Underwriting verdict
                   </h2>
-
-                  <p style={{ fontSize: "14px", marginBottom: "8px" }}>
-                    Verdict:{" "}
-                    <span
-                      style={{
-                        fontWeight: 700,
-                        color:
-                          result.underwriting.verdict === "APPROVE"
-                            ? "#22c55e"
-                            : result.underwriting.verdict === "COUNTER"
-                            ? "#eab308"
-                            : "#ef4444"
-                      }}
-                    >
-                      {result.underwriting.verdict}
-                    </span>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      marginBottom: "4px"
+                    }}
+                  >
+                    Verdict: {result.underwriting.verdict}
                   </p>
-
-                  {Array.isArray(result.underwriting.reasons) &&
+                  {result.underwriting.reasons &&
                     result.underwriting.reasons.length > 0 && (
-                      <div style={{ marginBottom: "8px" }}>
-                        <p
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            marginBottom: "4px"
-                          }}
-                        >
+                      <>
+                        <p style={{ fontSize: "14px", marginBottom: "4px" }}>
                           Reasons:
                         </p>
                         <ul
                           style={{
-                            fontSize: "13px",
+                            fontSize: "14px",
                             lineHeight: 1.6,
-                            paddingLeft: "18px"
+                            paddingLeft: 18
                           }}
                         >
                           {result.underwriting.reasons.map(
@@ -397,63 +402,11 @@ export default function HomePage() {
                             )
                           )}
                         </ul>
-                      </div>
-                    )}
-
-                  {result.underwriting.adjustments &&
-                    Object.keys(result.underwriting.adjustments).length > 0 && (
-                      <div>
-                        <p
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            marginBottom: "4px"
-                          }}
-                        >
-                          Suggested adjustments:
-                        </p>
-                        <ul
-                          style={{
-                            fontSize: "13px",
-                            lineHeight: 1.6,
-                            paddingLeft: "18px"
-                          }}
-                        >
-                          {result.underwriting.adjustments
-                            .newDownPayment !== undefined && (
-                            <li>
-                              Suggested down payment: $
-                              {result.underwriting.adjustments.newDownPayment.toFixed(
-                                0
-                              )}
-                            </li>
-                          )}
-                          {result.underwriting.adjustments
-                            .newTermWeeks !== undefined && (
-                            <li>
-                              Suggested term:{" "}
-                              {
-                                result.underwriting.adjustments.newTermWeeks
-                              }{" "}
-                              weeks
-                            </li>
-                          )}
-                          {result.underwriting.adjustments
-                            .newSalePrice !== undefined && (
-                            <li>
-                              Suggested sale price: $
-                              {result.underwriting.adjustments.newSalePrice.toFixed(
-                                0
-                              )}
-                            </li>
-                          )}
-                        </ul>
-                      </div>
+                      </>
                     )}
                 </div>
               </section>
             )}
-
 
             {result.aiExplanation && (
               <section style={{ marginTop: "16px" }}>
