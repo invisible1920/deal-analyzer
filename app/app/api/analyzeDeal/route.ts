@@ -20,17 +20,30 @@ type ScheduleRow = {
   balance: number;
 };
 
-function calculateSchedule(input: DealInput) {
+type CoreResult = {
+  payment: number;
+  totalInterest: number;
+  totalProfit: number;
+  breakEvenWeek: number;
+  schedule: ScheduleRow[];
+  totalCost: number;
+  amountFinanced: number;
+};
+
+function calculateSchedule(input: DealInput): CoreResult {
   const totalCost = input.vehicleCost + input.reconCost;
   const amountFinanced = input.salePrice - input.downPayment;
 
+  // Handle "no financing" edge case but still include totalCost / amountFinanced
   if (amountFinanced <= 0) {
     return {
       payment: 0,
       totalInterest: 0,
       totalProfit: input.salePrice - totalCost,
       breakEvenWeek: 0,
-      schedule: [] as ScheduleRow[]
+      schedule: [],
+      totalCost,
+      amountFinanced
     };
   }
 
@@ -72,7 +85,15 @@ function calculateSchedule(input: DealInput) {
     }
   }
 
-  return { payment, totalInterest, totalProfit, breakEvenWeek, schedule, totalCost, amountFinanced };
+  return {
+    payment,
+    totalInterest,
+    totalProfit,
+    breakEvenWeek,
+    schedule,
+    totalCost,
+    amountFinanced
+  };
 }
 
 function basicRiskScore(input: DealInput, payment: number) {
@@ -106,14 +127,7 @@ function basicRiskScore(input: DealInput, payment: number) {
 
 async function getAiExplanation(
   input: DealInput,
-  core: {
-    payment: number;
-    totalInterest: number;
-    totalProfit: number;
-    breakEvenWeek: number;
-    totalCost: number;
-    amountFinanced: number;
-  },
+  core: CoreResult,
   risk: {
     paymentToIncome: number | null;
     riskScore: string;
@@ -218,7 +232,11 @@ export async function POST(req: NextRequest) {
     const core = calculateSchedule(body);
     const risk = basicRiskScore(body, core.payment);
 
-    const aiExplanation = await getAiExplanation(body, core, risk);
+    // If there is nothing financed, skip AI and just return the math
+    let aiExplanation: string | null = null;
+    if (core.amountFinanced > 0) {
+      aiExplanation = await getAiExplanation(body, core, risk);
+    }
 
     return NextResponse.json({
       payment: core.payment,
