@@ -84,25 +84,6 @@ export default function HomePage() {
     }
   }
 
-
-    try {
-      const res = await fetch("/api/analyzeDeal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
-      });
-
-      if (!res.ok) throw new Error("Server error");
-
-      const data = await res.json();
-      setResult(data);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const containerStyle: CSSProperties = {
     minHeight: "100vh",
     padding: "24px",
