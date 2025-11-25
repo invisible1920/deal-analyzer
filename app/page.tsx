@@ -324,3 +324,11 @@ export default function HomePage() {
     </main>
   );
 }
+
+{result && (
+  <section style={summaryGridStyle}>
+    <div style={panelStyle}> ...Summary... </div>
+    <div style={panelStyle}> ...Basic risk... </div>
+  </section>
+)}
+
