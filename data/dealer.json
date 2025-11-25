@@ -1,9 +1,8 @@
 {
+  "dealerName": "My BHPH Dealership",
   "defaultAPR": 24.99,
-  "maxPTI": 0.22,
-  "maxLTV": 1.20,
-  "targetLTV": 0.85,
-  "minDownPayment": 1000,
-  "maxTermWeeks": 120,
-  "enableAI": true
+  "maxPTI": 0.25,
+  "maxLTV": 1.4,
+  "minDownPayment": 800,
+  "maxTermWeeks": 104
 }
