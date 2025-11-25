@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "./supabase";
 
 export type SavedDealInput = {
+  userId: string | null;
   input: {
     vehicleCost: number;
     reconCost: number;
@@ -34,6 +35,7 @@ export type SavedDeal = SavedDealInput & {
 
 export async function saveDeal(payload: SavedDealInput): Promise<void> {
   const { error } = await supabaseAdmin.from("deals").insert({
+    user_id: payload.userId,
     input: payload.input,
     result: payload.result
   });
@@ -44,12 +46,21 @@ export async function saveDeal(payload: SavedDealInput): Promise<void> {
   }
 }
 
-export async function listDeals(limit = 50): Promise<SavedDeal[]> {
-  const { data, error } = await supabaseAdmin
+export async function listDeals(
+  userId?: string,
+  limit = 50
+): Promise<SavedDeal[]> {
+  let query = supabaseAdmin
     .from("deals")
-    .select("id, created_at, input, result")
+    .select("id, created_at, user_id, input, result")
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Failed to list deals from Supabase", error);
@@ -61,6 +72,7 @@ export async function listDeals(limit = 50): Promise<SavedDeal[]> {
   return data.map((row: any) => ({
     id: row.id as string,
     createdAt: row.created_at as string,
+    userId: (row.user_id as string | null) ?? null,
     input: row.input,
     result: row.result
   }));
