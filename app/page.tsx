@@ -31,6 +31,7 @@ export default function HomePage() {
   });
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,8 @@ export default function HomePage() {
         setUserId(data.user ? data.user.id : null);
       } catch {
         setUserId(null);
+      } finally {
+        setAuthLoaded(true);
       }
     }
     loadUser();
@@ -165,8 +168,15 @@ export default function HomePage() {
         <p style={{ color: "#9ca3af", marginBottom: "8px" }}>
           Enter a deal and get payment, profit, and basic risk info.
         </p>
-        {!userId && (
-          <p style={{ color: "#facc15", fontSize: "13px", marginBottom: "12px" }}>
+
+        {authLoaded && !userId && (
+          <p
+            style={{
+              color: "#facc15",
+              fontSize: "13px",
+              marginBottom: "12px"
+            }}
+          >
             Not logged in. Deals will not be tied to an account. Use the Login
             link in the top bar to sign in.
           </p>
