@@ -342,6 +342,119 @@ export default function HomePage() {
               </div>
             </section>
 
+                        {result.underwriting && (
+              <section style={{ marginTop: "16px" }}>
+                <div style={panelStyle}>
+                  <h2
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: 600,
+                      marginBottom: "8px"
+                    }}
+                  >
+                    Underwriting verdict
+                  </h2>
+
+                  <p style={{ fontSize: "14px", marginBottom: "8px" }}>
+                    Verdict:{" "}
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color:
+                          result.underwriting.verdict === "APPROVE"
+                            ? "#22c55e"
+                            : result.underwriting.verdict === "COUNTER"
+                            ? "#eab308"
+                            : "#ef4444"
+                      }}
+                    >
+                      {result.underwriting.verdict}
+                    </span>
+                  </p>
+
+                  {Array.isArray(result.underwriting.reasons) &&
+                    result.underwriting.reasons.length > 0 && (
+                      <div style={{ marginBottom: "8px" }}>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 500,
+                            marginBottom: "4px"
+                          }}
+                        >
+                          Reasons:
+                        </p>
+                        <ul
+                          style={{
+                            fontSize: "13px",
+                            lineHeight: 1.6,
+                            paddingLeft: "18px"
+                          }}
+                        >
+                          {result.underwriting.reasons.map(
+                            (reason: string, idx: number) => (
+                              <li key={idx}>{reason}</li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                  {result.underwriting.adjustments &&
+                    Object.keys(result.underwriting.adjustments).length > 0 && (
+                      <div>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 500,
+                            marginBottom: "4px"
+                          }}
+                        >
+                          Suggested adjustments:
+                        </p>
+                        <ul
+                          style={{
+                            fontSize: "13px",
+                            lineHeight: 1.6,
+                            paddingLeft: "18px"
+                          }}
+                        >
+                          {result.underwriting.adjustments
+                            .newDownPayment !== undefined && (
+                            <li>
+                              Suggested down payment: $
+                              {result.underwriting.adjustments.newDownPayment.toFixed(
+                                0
+                              )}
+                            </li>
+                          )}
+                          {result.underwriting.adjustments
+                            .newTermWeeks !== undefined && (
+                            <li>
+                              Suggested term:{" "}
+                              {
+                                result.underwriting.adjustments.newTermWeeks
+                              }{" "}
+                              weeks
+                            </li>
+                          )}
+                          {result.underwriting.adjustments
+                            .newSalePrice !== undefined && (
+                            <li>
+                              Suggested sale price: $
+                              {result.underwriting.adjustments.newSalePrice.toFixed(
+                                0
+                              )}
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                </div>
+              </section>
+            )}
+
+
             {result.aiExplanation && (
               <section style={{ marginTop: "16px" }}>
                 <div style={panelStyle}>
