@@ -128,12 +128,86 @@ function basicRiskScore(input: DealInput, payment: number) {
   return { paymentToIncome, riskScore: score };
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = (await req.json()) as DealInput;
+function buildExplanation(input: DealInput, core: CoreResult, risk: { paymentToIncome: number | null; riskScore: string }) {
+  const pti = risk.paymentToIncome;
+  const ptiText =
+    pti !== null ? `${(pti * 100).toFixed(1)} percent of income` : "unknown vs income";
 
-    const core = calculateSchedule(body);
-    const risk = basicRiskScore(body, core.payment);
+  const profit = core.totalProfit;
+  const beWeek = core.breakEvenWeek;
+  const riskScore = risk.riskScore;
+
+  let verdict: string;
+  if (riskScore === "Low" && profit >= 4000) {
+    verdict = "solid deal";
+  } else if (riskScore === "High" && profit < 3000) {
+    verdict = "very thin, high risk deal";
+  } else if (riskScore === "High") {
+    verdict = "high risk deal";
+  } else if (profit < 2500) {
+    verdict = "thin but acceptable deal";
+  } else {
+    verdict = "workable deal";
+  }
+
+  const lines: string[] = [];
+
+  lines.push(
+    `Verdict: ${verdict}. Weekly payment is ${core.payment.toFixed(
+      2
+    )}, total profit about ${profit.toFixed(0)}, and break even is around week ${beWeek}.`
+  );
+
+  lines.push(
+    `Payment takes ${ptiText}, simple risk score reads as ${riskScore}.`
+  );
+
+  const tweaks: string[] = [];
+
+  if (pti !== null && pti > 0.25) {
+    tweaks.push("drop the payment-to-income by either shortening term or adding to down payment");
+  }
+  if (profit < 3000) {
+    tweaks.push("raise price slightly or push for a bit more down to get profit closer to 3500–4000");
+  }
+  if (input.pastRepo) {
+    tweaks.push("consider a GPS, tighter follow-up, or a little extra down due to past repo");
+  }
+
+  if (tweaks.length > 0) {
+    lines.push("Suggested tweaks: " + tweaks.join("; ") + ".");
+  }
+
+  return lines.join(" ");
+}
+
+// GET /api/analyzeDeal?vehicleCost=...&reconCost=... etc
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const p = url.searchParams;
+
+    const input: DealInput = {
+      vehicleCost: Number(p.get("vehicleCost") ?? 0),
+      reconCost: Number(p.get("reconCost") ?? 0),
+      salePrice: Number(p.get("salePrice") ?? 0),
+      downPayment: Number(p.get("downPayment") ?? 0),
+      apr: Number(p.get("apr") ?? 0),
+      termWeeks: Number(p.get("termWeeks") ?? 0),
+      paymentFrequency:
+        (p.get("paymentFrequency") as "weekly" | "biweekly") || "weekly",
+      monthlyIncome: p.get("monthlyIncome")
+        ? Number(p.get("monthlyIncome"))
+        : undefined,
+      monthsOnJob: p.get("monthsOnJob")
+        ? Number(p.get("monthsOnJob"))
+        : undefined,
+      pastRepo: p.get("pastRepo") === "true"
+    };
+
+    const core = calculateSchedule(input);
+    const risk = basicRiskScore(input, core.payment);
+    const aiExplanation = buildExplanation(input, core, risk);
 
     return NextResponse.json({
       payment: core.payment,
@@ -142,7 +216,7 @@ export async function POST(req: NextRequest) {
       breakEvenWeek: core.breakEvenWeek,
       paymentToIncome: risk.paymentToIncome,
       riskScore: risk.riskScore,
-      aiExplanation: null
+      aiExplanation
     });
   } catch (err: any) {
     console.error("Handler error", err);
