@@ -273,15 +273,18 @@ const underwriting = runUnderwritingEngine(underwritingInput, rules);
     const aiExplanation = await getAiOpinion(body, core, risk, settings);
 
     return NextResponse.json({
-      payment: core.payment,
-      totalInterest: core.totalInterest,
-      totalProfit: core.totalProfit,
-      breakEvenWeek: core.breakEvenWeek,
-      paymentToIncome: risk.paymentToIncome,
-      riskScore: risk.riskScore,
-      aiExplanation,
-      dealerSettings: settings
-    });
+  payment: core.payment,
+  totalInterest: core.totalInterest,
+  totalProfit: core.totalProfit,
+  breakEvenWeek: core.breakEvenWeek,
+  paymentToIncome: risk.paymentToIncome,
+  ltv,
+  riskScore: risk.riskScore,
+  underwriting,
+  aiExplanation,
+  dealerSettings: settings
+});
+
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Internal server error" },
