@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import { supabaseClient } from "@/lib/supabaseClient";
 
 type SavedDeal = {
   id: string;
   createdAt: string;
+  userId: string | null;
   input: {
     vehicleCost: number;
     reconCost: number;
@@ -48,7 +50,16 @@ export default function DealDetailPage({ params }: PageProps) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/deals");
+        const { data } = await supabaseClient.auth.getUser();
+        const uid = data.user ? data.user.id : null;
+
+        if (!uid) {
+          setError("You must be logged in to view deal details.");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch(`/api/deals?userId=${encodeURIComponent(uid)}`);
         if (!res.ok) {
           const text = await res.text();
           setError(text || `HTTP ${res.status}`);
@@ -58,7 +69,7 @@ export default function DealDetailPage({ params }: PageProps) {
         const deals = (json.deals || []) as SavedDeal[];
         const found = deals.find((d) => d.id === id) || null;
         if (!found) {
-          setError("Deal not found");
+          setError("Deal not found.");
         } else {
           setDeal(found);
         }
