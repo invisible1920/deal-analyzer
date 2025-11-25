@@ -34,10 +34,6 @@ function calculateSchedule(input: DealInput): CoreResult {
   const totalCost = input.vehicleCost + input.reconCost;
   const amountFinanced = input.salePrice - input.downPayment;
 
-  if (!isFinite(totalCost) || !isFinite(amountFinanced)) {
-    throw new Error("Invalid numeric input");
-  }
-
   if (amountFinanced <= 0) {
     return {
       payment: 0,
@@ -50,19 +46,14 @@ function calculateSchedule(input: DealInput): CoreResult {
     };
   }
 
-  const weeksPerYear = 52;
-  const ratePerWeek = input.apr / 100 / weeksPerYear;
-  const n = input.termWeeks && input.termWeeks > 0 ? input.termWeeks : 1;
+  const ratePerWeek = input.apr / 100 / 52;
+  const n = input.termWeeks;
 
-  let payment: number;
-
-  if (ratePerWeek === 0) {
-    payment = amountFinanced / n;
-  } else {
-    payment =
-      (amountFinanced * ratePerWeek) /
-      (1 - Math.pow(1 + ratePerWeek, -n));
-  }
+  const payment =
+    ratePerWeek === 0
+      ? amountFinanced / n
+      : (amountFinanced * ratePerWeek) /
+        (1 - Math.pow(1 + ratePerWeek, -n));
 
   let balance = amountFinanced;
   let totalInterest = 0;
@@ -80,6 +71,7 @@ function calculateSchedule(input: DealInput): CoreResult {
 
   let cumPrincipal = 0;
   let breakEvenWeek = n;
+
   for (const row of schedule) {
     cumPrincipal += row.principal;
     if (cumPrincipal >= totalCost) {
@@ -104,9 +96,7 @@ function basicRiskScore(input: DealInput, payment: number) {
   let paymentToIncome: number | null = null;
 
   if (monthlyIncome > 0) {
-    const weeklyPayment = payment;
-    const estimatedMonthlyPayment = weeklyPayment * 4;
-    paymentToIncome = estimatedMonthlyPayment / monthlyIncome;
+    paymentToIncome = (payment * 4) / monthlyIncome;
   }
 
   let score = "Medium";
@@ -116,98 +106,102 @@ function basicRiskScore(input: DealInput, payment: number) {
     if (paymentToIncome < 0.15) score = "Low";
   }
 
-  if (input.monthsOnJob !== undefined && input.monthsOnJob < 6) {
-    if (score === "Low") score = "Medium";
-    else score = "High";
+  if (input.monthsOnJob && input.monthsOnJob < 6) {
+    score = score === "Low" ? "Medium" : "High";
   }
 
-  if (input.pastRepo) {
-    score = "High";
-  }
+  if (input.pastRepo) score = "High";
 
   return { paymentToIncome, riskScore: score };
 }
 
-function buildExplanation(input: DealInput, core: CoreResult, risk: { paymentToIncome: number | null; riskScore: string }) {
-  const pti = risk.paymentToIncome;
-  const ptiText =
-    pti !== null ? `${(pti * 100).toFixed(1)} percent of income` : "unknown vs income";
-
-  const profit = core.totalProfit;
-  const beWeek = core.breakEvenWeek;
-  const riskScore = risk.riskScore;
-
-  let verdict: string;
-  if (riskScore === "Low" && profit >= 4000) {
-    verdict = "solid deal";
-  } else if (riskScore === "High" && profit < 3000) {
-    verdict = "very thin, high risk deal";
-  } else if (riskScore === "High") {
-    verdict = "high risk deal";
-  } else if (profit < 2500) {
-    verdict = "thin but acceptable deal";
-  } else {
-    verdict = "workable deal";
+async function getAiOpinion(
+  input: DealInput,
+  core: CoreResult,
+  risk: { paymentToIncome: number | null; riskScore: string }
+) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.warn("MISSING OPENAI_API_KEY");
+    return "AI unavailable: missing API key.";
   }
 
-  const lines: string[] = [];
+  const prompt = `
+You are an experienced buy-here-pay-here finance manager.
 
-  lines.push(
-    `Verdict: ${verdict}. Weekly payment is ${core.payment.toFixed(
-      2
-    )}, total profit about ${profit.toFixed(0)}, and break even is around week ${beWeek}.`
-  );
+Deal inputs:
+- Vehicle cost: ${input.vehicleCost}
+- Recon cost: ${input.reconCost}
+- Total cost: ${core.totalCost}
+- Sale price: ${input.salePrice}
+- Down payment: ${input.downPayment}
+- Amount financed: ${core.amountFinanced}
+- APR: ${input.apr}
+- Term weeks: ${input.termWeeks}
+- Income: ${input.monthlyIncome}
+- Months on job: ${input.monthsOnJob}
+- Past repo: ${input.pastRepo}
 
-  lines.push(
-    `Payment takes ${ptiText}, simple risk score reads as ${riskScore}.`
-  );
-
-  const tweaks: string[] = [];
-
-  if (pti !== null && pti > 0.25) {
-    tweaks.push("drop the payment-to-income by either shortening term or adding to down payment");
+Calculated:
+- Weekly payment: ${core.payment.toFixed(2)}
+- Total interest: ${core.totalInterest.toFixed(2)}
+- Total profit: ${core.totalProfit.toFixed(2)}
+- Break-even week: ${core.breakEvenWeek}
+- Payment to income: ${
+    risk.paymentToIncome
+      ? (risk.paymentToIncome * 100).toFixed(1) + "%"
+      : "N/A"
   }
-  if (profit < 3000) {
-    tweaks.push("raise price slightly or push for a bit more down to get profit closer to 3500–4000");
-  }
-  if (input.pastRepo) {
-    tweaks.push("consider a GPS, tighter follow-up, or a little extra down due to past repo");
-  }
+- Risk score: ${risk.riskScore}
 
-  if (tweaks.length > 0) {
-    lines.push("Suggested tweaks: " + tweaks.join("; ") + ".");
-  }
+Instructions:
+Give:
+1. One-line verdict (“solid deal”, “thin but ok”, etc)
+2. 2–3 sentence breakdown using real numbers
+3. One improvement suggestion
+Do NOT mention AI or models.
+`.trim();
 
-  return lines.join(" ");
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        temperature: 0.3,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a senior BHPH finance manager. Be concise, direct, and practical."
+          },
+          { role: "user", content: prompt }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return `AI error: ${text.substring(0, 200)}`;
+    }
+
+    const json = await response.json();
+    return json.choices?.[0]?.message?.content?.trim() || "No AI response.";
+  } catch (err: any) {
+    return `AI request failed: ${err.message}`;
+  }
 }
 
-// GET /api/analyzeDeal?vehicleCost=...&reconCost=... etc
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const url = new URL(req.url);
-    const p = url.searchParams;
+    const body = (await req.json()) as DealInput;
 
-    const input: DealInput = {
-      vehicleCost: Number(p.get("vehicleCost") ?? 0),
-      reconCost: Number(p.get("reconCost") ?? 0),
-      salePrice: Number(p.get("salePrice") ?? 0),
-      downPayment: Number(p.get("downPayment") ?? 0),
-      apr: Number(p.get("apr") ?? 0),
-      termWeeks: Number(p.get("termWeeks") ?? 0),
-      paymentFrequency:
-        (p.get("paymentFrequency") as "weekly" | "biweekly") || "weekly",
-      monthlyIncome: p.get("monthlyIncome")
-        ? Number(p.get("monthlyIncome"))
-        : undefined,
-      monthsOnJob: p.get("monthsOnJob")
-        ? Number(p.get("monthsOnJob"))
-        : undefined,
-      pastRepo: p.get("pastRepo") === "true"
-    };
-
-    const core = calculateSchedule(input);
-    const risk = basicRiskScore(input, core.payment);
-    const aiExplanation = buildExplanation(input, core, risk);
+    const core = calculateSchedule(body);
+    const risk = basicRiskScore(body, core.payment);
+    const aiExplanation = await getAiOpinion(body, core, risk);
 
     return NextResponse.json({
       payment: core.payment,
@@ -219,9 +213,8 @@ export async function GET(req: NextRequest) {
       aiExplanation
     });
   } catch (err: any) {
-    console.error("Handler error", err);
     return NextResponse.json(
-      { error: err?.message || "Internal error in analyzer" },
+      { error: err?.message || "Internal server error" },
       { status: 500 }
     );
   }
