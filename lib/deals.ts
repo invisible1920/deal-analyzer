@@ -23,12 +23,13 @@ export type SavedDealInput = {
     riskScore: string;
     underwritingVerdict: string;
     underwritingReasons: string[];
+    aiExplanation?: string;
   };
 };
 
 export type SavedDeal = SavedDealInput & {
   id: string;
-  createdAt: string; // ISO string
+  createdAt: string;
 };
 
 export async function saveDeal(payload: SavedDealInput): Promise<void> {
