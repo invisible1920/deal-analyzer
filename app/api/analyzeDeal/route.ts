@@ -286,7 +286,8 @@ export async function POST(req: NextRequest) {
       underwriting
     );
 
-    await saveDeal({
+        await saveDeal({
+      userId: body.userId ?? null,
       input: {
         vehicleCost: body.vehicleCost,
         reconCost: body.reconCost,
@@ -311,6 +312,7 @@ export async function POST(req: NextRequest) {
         underwritingReasons: underwriting.reasons
       }
     });
+
 
     return NextResponse.json({
       payment: core.payment,
