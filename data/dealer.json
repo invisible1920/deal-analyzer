@@ -1,0 +1,9 @@
+{
+  "defaultAPR": 24.99,
+  "maxPTI": 0.22,
+  "maxLTV": 1.20,
+  "targetLTV": 0.85,
+  "minDownPayment": 1000,
+  "maxTermWeeks": 120,
+  "enableAI": true
+}
