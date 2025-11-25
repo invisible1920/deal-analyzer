@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import TopNav from "@/components/TopNav";
 
 export const metadata: Metadata = {
   title: "BHPH Deal Analyzer",
@@ -20,55 +20,7 @@ export default function RootLayout({
             background: "#020617"
           }}
         >
-          <nav
-            style={{
-              maxWidth: "960px",
-              margin: "0 auto",
-              padding: "12px 24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
-            }}
-          >
-            <div style={{ fontWeight: 700, fontSize: "16px" }}>
-              BHPH Deal Analyzer
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "16px",
-                fontSize: "14px"
-              }}
-            >
-              <Link
-                href="/"
-                style={{
-                  color: "#e5e7eb",
-                  textDecoration: "none"
-                }}
-              >
-                Analyzer
-              </Link>
-              <Link
-                href="/history"
-                style={{
-                  color: "#9ca3af",
-                  textDecoration: "none"
-                }}
-              >
-                History
-              </Link>
-              <Link
-                href="/login"
-                style={{
-                  color: "#9ca3af",
-                  textDecoration: "none"
-                }}
-              >
-                Login
-              </Link>
-            </div>
-          </nav>
+          <TopNav />
         </header>
         <div>{children}</div>
       </body>
