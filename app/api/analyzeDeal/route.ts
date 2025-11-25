@@ -309,7 +309,8 @@ export async function POST(req: NextRequest) {
         ltv,
         riskScore: risk.riskScore,
         underwritingVerdict: underwriting.verdict,
-        underwritingReasons: underwriting.reasons
+        underwritingReasons: underwriting.reasons,
+        aiExplanation
       }
     });
 
