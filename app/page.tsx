@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 type FormState = {
   vehicleCost: number;
@@ -70,7 +70,7 @@ export default function HomePage() {
     }
   }
 
-  const containerStyle: React.CSSProperties = {
+  const containerStyle: CSSProperties = {
     minHeight: "100vh",
     padding: "24px",
     background: "#020617",
@@ -79,21 +79,21 @@ export default function HomePage() {
     justifyContent: "center"
   };
 
-  const cardStyle: React.CSSProperties = {
+  const cardStyle: CSSProperties = {
     maxWidth: "900px",
     width: "100%",
     background: "#020617",
     borderRadius: "12px"
   };
 
-  const panelStyle: React.CSSProperties = {
+  const panelStyle: CSSProperties = {
     background: "#020617",
     border: "1px solid #1f2937",
     borderRadius: "12px",
     padding: "16px"
   };
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: "100%",
     padding: "8px",
     borderRadius: "6px",
@@ -102,19 +102,19 @@ export default function HomePage() {
     color: "#e5e7eb"
   };
 
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     fontSize: "12px",
     marginBottom: "4px",
     display: "block"
   };
 
-  const gridStyle: React.CSSProperties = {
+  const gridStyle: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "12px"
   };
 
-  const summaryGridStyle: React.CSSProperties = {
+  const summaryGridStyle: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "16px",
