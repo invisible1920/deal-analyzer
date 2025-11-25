@@ -46,28 +46,17 @@ export default function HomePage() {
     });
   }
 
-    async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const params = new URLSearchParams();
-
-      params.set("vehicleCost", String(form.vehicleCost));
-      params.set("reconCost", String(form.reconCost));
-      params.set("salePrice", String(form.salePrice));
-      params.set("downPayment", String(form.downPayment));
-      params.set("apr", String(form.apr));
-      params.set("termWeeks", String(form.termWeeks));
-      params.set("paymentFrequency", form.paymentFrequency);
-      params.set("monthlyIncome", String(form.monthlyIncome));
-      params.set("monthsOnJob", String(form.monthsOnJob));
-      params.set("pastRepo", String(form.pastRepo));
-
-      const res = await fetch(`/api/analyzeDeal?${params.toString()}`, {
-        method: "GET"
+      const res = await fetch("/api/analyzeDeal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form)
       });
 
       let data: any = null;
@@ -101,7 +90,6 @@ export default function HomePage() {
       setLoading(false);
     }
   }
-
 
   const containerStyle: CSSProperties = {
     minHeight: "100vh",
