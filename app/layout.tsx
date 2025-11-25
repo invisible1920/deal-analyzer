@@ -58,6 +58,15 @@ export default function RootLayout({
               >
                 History
               </Link>
+              <Link
+                href="/login"
+                style={{
+                  color: "#9ca3af",
+                  textDecoration: "none"
+                }}
+              >
+                Login
+              </Link>
             </div>
           </nav>
         </header>
