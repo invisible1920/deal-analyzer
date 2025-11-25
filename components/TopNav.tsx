@@ -97,14 +97,20 @@ export default function TopNav() {
         <Link href="/history" style={secondaryLinkStyle}>
           History
         </Link>
+        <Link href="/settings" style={secondaryLinkStyle}>
+          Settings
+        </Link>
 
-        {/* Right side auth area */}
         {loading ? (
           <span style={{ color: "#4b5563", fontSize: "12px" }}>Checking...</span>
         ) : user ? (
           <div style={userBoxStyle}>
             <span>{user.email}</span>
-            <button type="button" onClick={handleLogout} style={logoutButtonStyle}>
+            <button
+              type="button"
+              onClick={handleLogout}
+              style={logoutButtonStyle}
+            >
               Logout
             </button>
           </div>
