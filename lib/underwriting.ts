@@ -19,7 +19,7 @@ interface DealerRules {
   maxTermWeeks: number;
 }
 
-// This type is exactly what your route builds as `underwritingInput`
+// This matches exactly what route.ts sends as underwritingInput
 export interface UnderwritingDealInput {
   income: number;
   salePrice: number;
@@ -113,7 +113,7 @@ export function runUnderwritingEngine(
     );
   }
 
-  // If no reasons and still approve
+  // If still approve
   if (verdict === "APPROVE") {
     return {
       verdict,
