@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { loadSettings, type DealerSettings } from "@/lib/settings";
 
 type DealInput = {
   vehicleCost: number;
   reconCost: number;
   salePrice: number;
   downPayment: number;
-  apr: number;
+  apr?: number;
   termWeeks: number;
   paymentFrequency: "weekly" | "biweekly";
   monthlyIncome?: number;
@@ -30,7 +31,7 @@ type CoreResult = {
   amountFinanced: number;
 };
 
-function calculateSchedule(input: DealInput): CoreResult {
+function calculateSchedule(input: DealInput, settings: DealerSettings): CoreResult {
   const totalCost = input.vehicleCost + input.reconCost;
   const amountFinanced = input.salePrice - input.downPayment;
 
@@ -46,8 +47,14 @@ function calculateSchedule(input: DealInput): CoreResult {
     };
   }
 
-  const ratePerWeek = input.apr / 100 / 52;
-  const n = input.termWeeks;
+  const apr = input.apr && input.apr > 0 ? input.apr : settings.defaultAPR;
+  const cappedTerm =
+    input.termWeeks && input.termWeeks > 0
+      ? Math.min(input.termWeeks, settings.maxTermWeeks)
+      : settings.maxTermWeeks;
+
+  const ratePerWeek = apr / 100 / 52;
+  const n = cappedTerm;
 
   const payment =
     ratePerWeek === 0
@@ -91,7 +98,11 @@ function calculateSchedule(input: DealInput): CoreResult {
   };
 }
 
-function basicRiskScore(input: DealInput, payment: number) {
+function basicRiskScore(
+  input: DealInput,
+  payment: number,
+  settings: DealerSettings
+) {
   const monthlyIncome = input.monthlyIncome || 0;
   let paymentToIncome: number | null = null;
 
@@ -102,8 +113,8 @@ function basicRiskScore(input: DealInput, payment: number) {
   let score = "Medium";
 
   if (paymentToIncome !== null) {
-    if (paymentToIncome > 0.25) score = "High";
-    if (paymentToIncome < 0.15) score = "Low";
+    if (paymentToIncome > settings.maxPTI) score = "High";
+    if (paymentToIncome < settings.maxPTI * 0.6) score = "Low";
   }
 
   if (input.monthsOnJob && input.monthsOnJob < 6) {
@@ -118,16 +129,29 @@ function basicRiskScore(input: DealInput, payment: number) {
 async function getAiOpinion(
   input: DealInput,
   core: CoreResult,
-  risk: { paymentToIncome: number | null; riskScore: string }
+  risk: { paymentToIncome: number | null; riskScore: string },
+  settings: DealerSettings
 ) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey =
+    process.env.OPENAI_API_KEY || process.env.PENAI_API_KEY || "";
+
   if (!apiKey) {
-    console.warn("MISSING OPENAI_API_KEY");
+    console.warn("MISSING OPENAI_API_KEY / PENAI_API_KEY");
     return "AI unavailable: missing API key.";
   }
 
+  const apr = input.apr && input.apr > 0 ? input.apr : settings.defaultAPR;
+
   const prompt = `
 You are an experienced buy-here-pay-here finance manager.
+
+Dealer policy:
+- Dealer name: ${settings.dealerName}
+- Default APR: ${settings.defaultAPR}
+- Max PTI: ${(settings.maxPTI * 100).toFixed(1)} percent
+- Max LTV: ${(settings.maxLTV * 100).toFixed(1)} percent
+- Min down payment: $${settings.minDownPayment}
+- Max term: ${settings.maxTermWeeks} weeks
 
 Deal inputs:
 - Vehicle cost: ${input.vehicleCost}
@@ -136,7 +160,7 @@ Deal inputs:
 - Sale price: ${input.salePrice}
 - Down payment: ${input.downPayment}
 - Amount financed: ${core.amountFinanced}
-- APR: ${input.apr}
+- APR used: ${apr}
 - Term weeks: ${input.termWeeks}
 - Income: ${input.monthlyIncome}
 - Months on job: ${input.monthsOnJob}
@@ -158,7 +182,7 @@ Instructions:
 Give:
 1. One-line verdict (“solid deal”, “thin but ok”, etc)
 2. 2–3 sentence breakdown using real numbers
-3. One improvement suggestion
+3. One improvement suggestion (tweak down, price, or term)
 Do NOT mention AI or models.
 `.trim();
 
@@ -198,10 +222,11 @@ Do NOT mention AI or models.
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as DealInput;
+    const settings = loadSettings();
 
-    const core = calculateSchedule(body);
-    const risk = basicRiskScore(body, core.payment);
-    const aiExplanation = await getAiOpinion(body, core, risk);
+    const core = calculateSchedule(body, settings);
+    const risk = basicRiskScore(body, core.payment, settings);
+    const aiExplanation = await getAiOpinion(body, core, risk, settings);
 
     return NextResponse.json({
       payment: core.payment,
@@ -210,7 +235,8 @@ export async function POST(req: NextRequest) {
       breakEvenWeek: core.breakEvenWeek,
       paymentToIncome: risk.paymentToIncome,
       riskScore: risk.riskScore,
-      aiExplanation
+      aiExplanation,
+      dealerSettings: settings
     });
   } catch (err: any) {
     return NextResponse.json(
