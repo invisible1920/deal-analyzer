@@ -27,6 +27,7 @@ type SavedDeal = {
     riskScore: string;
     underwritingVerdict: string;
     underwritingReasons: string[];
+    aiExplanation?: string;
   };
 };
 
@@ -71,7 +72,7 @@ export default function HistoryPage() {
 
   const panelStyle: CSSProperties = {
     background: "#020617",
-    border: "1px solid #1f2937",
+    border: "1px solid "#1f2937",
     borderRadius: "12px",
     padding: "16px"
   };
@@ -85,13 +86,19 @@ export default function HistoryPage() {
   const thStyle: CSSProperties = {
     textAlign: "left",
     padding: "8px",
-    borderBottom: "1px solid #1f2937",
+    borderBottom: "1px solid "#1f2937",
     color: "#9ca3af"
   };
 
   const tdStyle: CSSProperties = {
     padding: "8px",
-    borderBottom: "1px solid #111827"
+    borderBottom: "1px solid "#111827"
+  };
+
+  const linkStyle: CSSProperties = {
+    color: "#60a5fa",
+    textDecoration: "underline",
+    cursor: "pointer"
   };
 
   return (
@@ -133,6 +140,7 @@ export default function HistoryPage() {
                     <th style={thStyle}>PTI</th>
                     <th style={thStyle}>LTV</th>
                     <th style={thStyle}>Verdict</th>
+                    <th style={thStyle}>View</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -185,6 +193,14 @@ export default function HistoryPage() {
                           >
                             {deal.result.underwritingVerdict}
                           </span>
+                        </td>
+                        <td style={tdStyle}>
+                          <a
+                            href={`/history/${deal.id}`}
+                            style={linkStyle}
+                          >
+                            Details
+                          </a>
                         </td>
                       </tr>
                     );
