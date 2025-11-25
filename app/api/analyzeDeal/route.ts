@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { loadSettings, type DealerSettings } from "@/lib/settings";
+import type { DealerSettings } from "@/lib/settings";
 import {
   runUnderwritingEngine,
   type UnderwritingResult
 } from "@/lib/underwriting";
 import { saveDeal } from "@/lib/deals";
+import { resolveDealerSettings } from "@/lib/dealerSettings";
 
 type DealInput = {
   vehicleCost: number;
@@ -17,7 +18,7 @@ type DealInput = {
   monthlyIncome?: number;
   monthsOnJob?: number;
   pastRepo?: boolean;
-  userId?: string; // optional user id from client
+  userId?: string | null; // comes from the client
 };
 
 type ScheduleRow = {
@@ -239,7 +240,8 @@ Do not mention AI or models.
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as DealInput;
-    const settings = loadSettings();
+
+    const settings = await resolveDealerSettings(body.userId ?? null);
 
     const core = calculateSchedule(body, settings);
     const risk = basicRiskScore(body, core.payment, settings);
@@ -285,7 +287,6 @@ export async function POST(req: NextRequest) {
     );
 
     await saveDeal({
-      userId: body.userId ?? null,
       input: {
         vehicleCost: body.vehicleCost,
         reconCost: body.reconCost,
@@ -307,8 +308,7 @@ export async function POST(req: NextRequest) {
         ltv,
         riskScore: risk.riskScore,
         underwritingVerdict: underwriting.verdict,
-        underwritingReasons: underwriting.reasons,
-        aiExplanation
+        underwritingReasons: underwriting.reasons
       }
     });
 
