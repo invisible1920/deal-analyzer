@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import { supabaseClient } from "@/lib/supabaseClient";
 
 type SavedDeal = {
   id: string;
   createdAt: string;
+  userId: string | null;
   input: {
     vehicleCost: number;
     reconCost: number;
@@ -35,13 +37,24 @@ export default function HistoryPage() {
   const [deals, setDeals] = useState<SavedDeal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/deals");
+        const { data } = await supabaseClient.auth.getUser();
+        const uid = data.user ? data.user.id : null;
+        setUserId(uid);
+
+        if (!uid) {
+          setDeals([]);
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch(`/api/deals?userId=${encodeURIComponent(uid)}`);
         if (!res.ok) {
           const text = await res.text();
           setError(text || `HTTP ${res.status}`);
@@ -111,6 +124,18 @@ export default function HistoryPage() {
           Recent analyzed deals with payment, profit, risk, and verdict.
         </p>
 
+        {!userId && !loading && (
+          <p
+            style={{
+              color: "#facc15",
+              fontSize: "13px",
+              marginBottom: "12px"
+            }}
+          >
+            You are not logged in. Log in to see your own deal history.
+          </p>
+        )}
+
         <div style={panelStyle}>
           {loading && <p>Loading...</p>}
           {error && (
@@ -119,14 +144,14 @@ export default function HistoryPage() {
             </p>
           )}
 
-          {!loading && !error && deals.length === 0 && (
+          {!loading && !error && userId && deals.length === 0 && (
             <p style={{ fontSize: "14px" }}>
               No deals saved yet. Run a few analyses on the main page and they
               will show up here.
             </p>
           )}
 
-          {!loading && !error && deals.length > 0 && (
+          {!loading && !error && userId && deals.length > 0 && (
             <div style={{ overflowX: "auto" }}>
               <table style={tableStyle}>
                 <thead>
