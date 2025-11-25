@@ -46,11 +46,44 @@ export default function HomePage() {
     });
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setResult(null);
+
+    try {
+      const res = await fetch("/api/analyzeDeal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form)
+      });
+
+      if (!res.ok) {
+        let message = "Server error";
+
+        try {
+          const errJson = await res.json();
+          // our API returns { error: "..." } on failure
+          if (errJson && typeof errJson.error === "string") {
+            message = errJson.error;
+          }
+        } catch {
+          // ignore JSON parse failure, fall back to generic message
+        }
+
+        throw new Error(message);
+      }
+
+      const data = await res.json();
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
     try {
       const res = await fetch("/api/analyzeDeal", {
