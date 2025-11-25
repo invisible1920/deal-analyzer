@@ -17,6 +17,7 @@ type DealInput = {
   monthlyIncome?: number;
   monthsOnJob?: number;
   pastRepo?: boolean;
+  userId?: string; // optional user id from client
 };
 
 type ScheduleRow = {
@@ -284,6 +285,7 @@ export async function POST(req: NextRequest) {
     );
 
     await saveDeal({
+      userId: body.userId ?? null,
       input: {
         vehicleCost: body.vehicleCost,
         reconCost: body.reconCost,
