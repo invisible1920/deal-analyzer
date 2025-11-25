@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadSettings, type DealerSettings } from "@/lib/settings";
-import { NextRequest, NextResponse } from "next/server";
-import { loadSettings, type DealerSettings } from "@/lib/settings";
 import { runUnderwritingEngine } from "@/lib/underwriting";
-
 
 type DealInput = {
   vehicleCost: number;
@@ -35,7 +32,10 @@ type CoreResult = {
   amountFinanced: number;
 };
 
-function calculateSchedule(input: DealInput, settings: DealerSettings): CoreResult {
+function calculateSchedule(
+  input: DealInput,
+  settings: DealerSettings
+): CoreResult {
   const totalCost = input.vehicleCost + input.reconCost;
   const amountFinanced = input.salePrice - input.downPayment;
 
@@ -230,61 +230,52 @@ export async function POST(req: NextRequest) {
 
     const core = calculateSchedule(body, settings);
     const risk = basicRiskScore(body, core.payment, settings);
-    // PTI ratio from the same logic as basicRiskScore
-const paymentToIncome =
-  body.monthlyIncome && body.monthlyIncome > 0
-    ? (core.payment * 4) / body.monthlyIncome
-    : null;
 
-// LTV ratio, using amount financed against total cost in the car
-const ltv =
-  core.totalCost > 0 ? core.amountFinanced / core.totalCost : 0;
+    const ltv =
+      core.totalCost > 0 ? core.amountFinanced / core.totalCost : 0;
 
-// Ensure APR is resolved the same way everywhere
-const effectiveApr =
-  body.apr && body.apr > 0 ? body.apr : settings.defaultAPR;
+    const effectiveApr =
+      body.apr && body.apr > 0 ? body.apr : settings.defaultAPR;
 
-// Build underwriting input
-const underwritingInput = {
-  income: body.monthlyIncome || 0,
-  salePrice: body.salePrice,
-  vehicleCost: body.vehicleCost,
-  totalCost: core.totalCost,
-  downPayment: body.downPayment,
-  apr: effectiveApr,
-  termWeeks: body.termWeeks,
-  weeklyPayment: core.payment,
-  pti: paymentToIncome || 0,
-  ltv,
-  profit: core.totalProfit,
-  jobTimeMonths: body.monthsOnJob || 0,
-  repoCount: body.pastRepo ? 1 : 0
-};
+    const underwritingInput = {
+      income: body.monthlyIncome || 0,
+      salePrice: body.salePrice,
+      vehicleCost: body.vehicleCost,
+      totalCost: core.totalCost,
+      downPayment: body.downPayment,
+      apr: effectiveApr,
+      termWeeks: body.termWeeks,
+      weeklyPayment: core.payment,
+      pti: risk.paymentToIncome || 0,
+      ltv,
+      profit: core.totalProfit,
+      jobTimeMonths: body.monthsOnJob || 0,
+      repoCount: body.pastRepo ? 1 : 0
+    };
 
-const rules = {
-  maxPTI: settings.maxPTI,
-  maxLTV: settings.maxLTV,
-  minDownPayment: settings.minDownPayment,
-  maxTermWeeks: settings.maxTermWeeks
-};
+    const rules = {
+      maxPTI: settings.maxPTI,
+      maxLTV: settings.maxLTV,
+      minDownPayment: settings.minDownPayment,
+      maxTermWeeks: settings.maxTermWeeks
+    };
 
-const underwriting = runUnderwritingEngine(underwritingInput, rules);
+    const underwriting = runUnderwritingEngine(underwritingInput, rules);
 
     const aiExplanation = await getAiOpinion(body, core, risk, settings);
 
     return NextResponse.json({
-  payment: core.payment,
-  totalInterest: core.totalInterest,
-  totalProfit: core.totalProfit,
-  breakEvenWeek: core.breakEvenWeek,
-  paymentToIncome: risk.paymentToIncome,
-  ltv,
-  riskScore: risk.riskScore,
-  underwriting,
-  aiExplanation,
-  dealerSettings: settings
-});
-
+      payment: core.payment,
+      totalInterest: core.totalInterest,
+      totalProfit: core.totalProfit,
+      breakEvenWeek: core.breakEvenWeek,
+      paymentToIncome: risk.paymentToIncome,
+      ltv,
+      riskScore: risk.riskScore,
+      underwriting,
+      aiExplanation,
+      dealerSettings: settings
+    });
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Internal server error" },
