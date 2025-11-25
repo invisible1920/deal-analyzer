@@ -242,8 +242,12 @@ Do not mention AI or models.
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as DealInput;
+    const userId = body.userId ?? null;
 
-    const settings = await resolveDealerSettings(body.userId ?? null);
+    const settings = await resolveDealerSettings(userId);
+
+    // monthly usage for this user
+    const dealsThisMonth = await getMonthlyDealCountForUser(userId);
 
     const core = calculateSchedule(body, settings);
     const risk = basicRiskScore(body, core.payment, settings);
@@ -253,6 +257,7 @@ export async function POST(req: NextRequest) {
 
     const effectiveApr =
       body.apr && body.apr > 0 ? body.apr : settings.defaultAPR;
+
 
     const underwritingInput = {
       income: body.monthlyIncome || 0,
@@ -317,7 +322,7 @@ export async function POST(req: NextRequest) {
     });
 
 
-    return NextResponse.json({
+        return NextResponse.json({
       payment: core.payment,
       totalInterest: core.totalInterest,
       totalProfit: core.totalProfit,
@@ -327,8 +332,11 @@ export async function POST(req: NextRequest) {
       riskScore: risk.riskScore,
       underwriting,
       aiExplanation,
-      dealerSettings: settings
+      dealerSettings: settings,
+      dealsThisMonth,
+      freeDealsPerMonth: FREE_DEALS_PER_MONTH
     });
+
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Internal server error" },
