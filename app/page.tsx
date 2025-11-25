@@ -274,61 +274,71 @@ export default function HomePage() {
         )}
 
         {result && (
-          <section style={summaryGridStyle}>
-            <div style={panelStyle}>
-              <h2
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  marginBottom: "8px"
-                }}
-              >
-                Summary
-              </h2>
-              <ul style={{ fontSize: "14px", lineHeight: 1.6 }}>
-                <li>Weekly payment: ${result.payment.toFixed(2)}</li>
-                <li>Total interest: ${result.totalInterest.toFixed(2)}</li>
-                <li>
-                  Total profit including interest: $
-                  {result.totalProfit.toFixed(2)}
-                </li>
-                <li>Break even week: {result.breakEvenWeek}</li>
-              </ul>
-            </div>
-
-            <div style={panelStyle}>
-              <h2
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  marginBottom: "8px"
-                }}
-              >
-                Basic risk
-              </h2>
-              <ul style={{ fontSize: "14px", lineHeight: 1.6 }}>
-                <li>
-                  Payment to income ratio:{" "}
-                  {result.paymentToIncome
-                    ? (result.paymentToIncome * 100).toFixed(1) + "%"
-                    : "n/a"}
-                </li>
-                <li>
-                  Risk score: <strong>{result.riskScore}</strong>
-                </li>
-              </ul>
-            </div>
-          </section>
-        )}
+  <>
+    <section style={summaryGridStyle}>
+      <div style={panelStyle}>
+        <h2
+          style={{
+            fontSize: "16px",
+            fontWeight: 600,
+            marginBottom: "8px"
+          }}
+        >
+          Summary
+        </h2>
+        <ul style={{ fontSize: "14px", lineHeight: 1.6 }}>
+          <li>Weekly payment: ${result.payment.toFixed(2)}</li>
+          <li>Total interest: ${result.totalInterest.toFixed(2)}</li>
+          <li>
+            Total profit including interest: $
+            {result.totalProfit.toFixed(2)}
+          </li>
+          <li>Break even week: {result.breakEvenWeek}</li>
+        </ul>
       </div>
-    </main>
-  );
-}
 
-{result && (
-  <section style={summaryGridStyle}>
-    <div style={panelStyle}> ...Summary... </div>
-    <div style={panelStyle}> ...Basic risk... </div>
-  </section>
+      <div style={panelStyle}>
+        <h2
+          style={{
+            fontSize: "16px",
+            fontWeight: 600,
+            marginBottom: "8px"
+          }}
+        >
+          Basic risk
+        </h2>
+        <ul style={{ fontSize: "14px", lineHeight: 1.6 }}>
+          <li>
+            Payment to income ratio:{" "}
+            {result.paymentToIncome
+              ? (result.paymentToIncome * 100).toFixed(1) + "%"
+              : "n/a"}
+          </li>
+          <li>
+            Risk score: <strong>{result.riskScore}</strong>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    {result.aiExplanation && (
+      <section style={{ marginTop: "16px" }}>
+        <div style={panelStyle}>
+          <h2
+            style={{
+              fontSize: "16px",
+              fontWeight: 600,
+              marginBottom: "8px"
+            }}
+          >
+            AI deal opinion
+          </h2>
+          <p style={{ fontSize: "14px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+            {result.aiExplanation}
+          </p>
+        </div>
+      </section>
+    )}
+  </>
 )}
 
