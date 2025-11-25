@@ -35,6 +35,10 @@ export default function HomePage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usage, setUsage] = useState<{
+    dealsThisMonth: number;
+    freeDealsPerMonth: number;
+  } | null>(null);
 
   useEffect(() => {
     async function loadUser() {
@@ -101,6 +105,16 @@ export default function HomePage() {
       }
 
       setResult(data);
+
+      if (
+        typeof data.dealsThisMonth === "number" &&
+        typeof data.freeDealsPerMonth === "number"
+      ) {
+        setUsage({
+          dealsThisMonth: data.dealsThisMonth,
+          freeDealsPerMonth: data.freeDealsPerMonth
+        });
+      }
     } catch (err: any) {
       setError(err?.message || "Something went wrong");
     } finally {
@@ -165,9 +179,37 @@ export default function HomePage() {
         <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "4px" }}>
           BHPH Deal Analyzer MVP
         </h1>
-        <p style={{ color: "#9ca3af", marginBottom: "8px" }}>
+        <p style={{ color: "#9ca3af", marginBottom: "4px" }}>
           Enter a deal and get payment, profit, and basic risk info.
         </p>
+
+        {usage && (
+          <p
+            style={{
+              color: "#a3e635",
+              fontSize: "13px",
+              marginBottom: "8px"
+            }}
+          >
+            This month you have used{" "}
+            <strong>
+              {usage.dealsThisMonth} / {usage.freeDealsPerMonth}
+            </strong>{" "}
+            free deals.
+          </p>
+        )}
+
+        {!usage && (
+          <p
+            style={{
+              color: "#64748b",
+              fontSize: "13px",
+              marginBottom: "8px"
+            }}
+          >
+            Free plan includes 25 analyzed deals per month when you are logged in.
+          </p>
+        )}
 
         {authLoaded && !userId && (
           <p
