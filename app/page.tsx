@@ -46,7 +46,7 @@ export default function HomePage() {
     });
   }
 
-    async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -59,26 +59,34 @@ export default function HomePage() {
         body: JSON.stringify(form)
       });
 
-      if (!res.ok) {
-        let message = "Server error";
+      // Try to read JSON; if that fails, fall back to text
+      let data: any = null;
+      let rawText = "";
 
-        try {
-          const errJson = await res.json();
-          // our API returns { error: "..." } on failure
-          if (errJson && typeof errJson.error === "string") {
-            message = errJson.error;
-          }
-        } catch {
-          // ignore JSON parse failure, fall back to generic message
-        }
-
-        throw new Error(message);
+      try {
+        const clone = res.clone();
+        data = await clone.json();
+      } catch {
+        rawText = await res.text();
       }
 
-      const data = await res.json();
+      if (!res.ok) {
+        const message =
+          data && typeof data.error === "string"
+            ? data.error
+            : rawText || `HTTP ${res.status}`;
+        setError(message);
+        return;
+      }
+
+      if (!data) {
+        setError("Server returned invalid JSON");
+        return;
+      }
+
       setResult(data);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setError(err?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
