@@ -6,6 +6,8 @@ import {
 } from "@/lib/underwriting";
 import { saveDeal } from "@/lib/deals";
 import { resolveDealerSettings } from "@/lib/dealerSettings";
+import { getMonthlyDealCountForUser, FREE_DEALS_PER_MONTH } from "@/lib/usage";
+
 
 type DealInput = {
   vehicleCost: number;
