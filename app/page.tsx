@@ -96,7 +96,7 @@ export default function HomePage() {
 
   const policy = result?.dealerSettings ?? defaultPolicy;
 
-  // Load user and plan from Supabase
+  // Load user and plan using backend API so it matches the server logic
   useEffect(() => {
     async function loadUserAndPlan() {
       try {
@@ -104,30 +104,47 @@ export default function HomePage() {
         const uid = data.user ? data.user.id : null;
         setUserId(uid);
 
-        if (uid) {
-          const { data: profile, error } = await supabaseClient
-            .from("profiles")
-            .select("plan_type")
-            .eq("id", uid)
-            .maybeSingle();
+        if (!uid) {
+          setPlanType(null);
+          setUsage(null);
+          return;
+        }
 
-          if (!error && profile && profile.plan_type === "pro") {
-            setPlanType("pro");
-          } else if (!error && profile) {
-            setPlanType("free");
+        const res = await fetch("/api/profile-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: uid }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+
+          if (json.planType === "pro" || json.planType === "free") {
+            setPlanType(json.planType);
           } else {
             setPlanType("free");
           }
+
+          if (
+            typeof json.dealsThisMonth === "number" &&
+            typeof json.freeDealsPerMonth === "number"
+          ) {
+            setUsage({
+              dealsThisMonth: json.dealsThisMonth,
+              freeDealsPerMonth: json.freeDealsPerMonth,
+            });
+          }
         } else {
-          setPlanType(null);
+          // On error just fall back to free so page still works
+          setPlanType("free");
         }
-      } catch {
-        setUserId(null);
-        setPlanType(null);
+      } catch (err) {
+        setPlanType("free");
       } finally {
         setAuthLoaded(true);
       }
     }
+
     loadUserAndPlan();
   }, []);
 
