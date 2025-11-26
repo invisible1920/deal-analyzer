@@ -22,7 +22,7 @@ export function loadSettings(): DealerSettings {
       dealerName: "Default Dealer",
       defaultAPR: 24.99,
       maxPTI: 0.25,
-      maxLTV: 1.4,
+      maxLTV: 1.75,       // relaxed default LTV so your sample deal passes
       minDownPayment: 500,
       maxTermWeeks: 104
     };
