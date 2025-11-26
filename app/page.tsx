@@ -164,18 +164,17 @@ export default function HomePage() {
     }));
   }
 
-  // Submit
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // Shared analysis helper used by submit and by Apply suggested structure
+  async function runAnalysis(formState: FormState) {
     setError(null);
     setLoading(true);
     setResult(null);
 
     try {
-      const termWeeks = Math.round(form.termMonths * 4.345);
+      const termWeeks = Math.round(formState.termMonths * 4.345);
 
       const payload = {
-        ...form,
+        ...formState,
         termWeeks,
         userId,
       };
@@ -228,35 +227,39 @@ export default function HomePage() {
     }
   }
 
+  // Submit
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await runAnalysis(form);
+  }
+
   // Apply suggested counter structure from underwriting adjustments
-  function applySuggestedStructure() {
+  async function applySuggestedStructure() {
     if (!result?.underwriting?.adjustments) return;
     const adj = result.underwriting.adjustments;
 
-    setForm((prev) => {
-      let termMonths = prev.termMonths;
+    const nextForm: FormState = {
+      ...form,
+      downPayment:
+        typeof adj.newDownPayment === "number" && adj.newDownPayment > 0
+          ? adj.newDownPayment
+          : form.downPayment,
+      salePrice:
+        typeof adj.newSalePrice === "number" && adj.newSalePrice > 0
+          ? adj.newSalePrice
+          : form.salePrice,
+      apr:
+        typeof adj.newApr === "number" && adj.newApr > 0
+          ? adj.newApr
+          : form.apr,
+      termMonths:
+        typeof adj.newTermWeeks === "number" && adj.newTermWeeks > 0
+          ? Math.round(adj.newTermWeeks / 4.345)
+          : form.termMonths,
+    };
 
-      if (typeof adj.newTermWeeks === "number" && adj.newTermWeeks > 0) {
-        termMonths = Math.round(adj.newTermWeeks / 4.345);
-      }
-
-      return {
-        ...prev,
-        downPayment:
-          typeof adj.newDownPayment === "number" && adj.newDownPayment > 0
-            ? adj.newDownPayment
-            : prev.downPayment,
-        termMonths,
-        salePrice:
-          typeof adj.newSalePrice === "number" && adj.newSalePrice > 0
-            ? adj.newSalePrice
-            : prev.salePrice,
-        apr:
-          typeof adj.newApr === "number" && adj.newApr > 0
-            ? adj.newApr
-            : prev.apr,
-      };
-    });
+    setForm(nextForm);
+    await runAnalysis(nextForm);
   }
 
   // Print customer offer sheet (Pro feature)
@@ -291,8 +294,7 @@ export default function HomePage() {
         ? (result.ltv * 100).toFixed(1) + " percent"
         : "N A";
 
-    const verdictText =
-      result.underwriting?.verdict || "PENDING";
+    const verdictText = result.underwriting?.verdict || "PENDING";
 
     const html = `
       <!DOCTYPE html>
@@ -965,7 +967,11 @@ export default function HomePage() {
                       <button
                         type="button"
                         style={btnSecondary}
-                        onClick={applySuggestedStructure}
+                        onClick={() => {
+                          if (!loading) {
+                            void applySuggestedStructure();
+                          }
+                        }}
                       >
                         Apply suggested structure to form
                       </button>
