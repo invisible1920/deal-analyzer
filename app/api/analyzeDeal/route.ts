@@ -60,7 +60,7 @@ function calculateSchedule(
   const totalCost = input.vehicleCost + input.reconCost;
   const amountFinanced = input.salePrice - input.downPayment;
 
-  // If there's nothing to finance
+  // If there is nothing to finance
   if (amountFinanced <= 0) {
     return {
       payment: 0,
@@ -418,6 +418,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const isPro = planType === "pro";
+
     // Usage limit
     const dealsThisMonth = await getMonthlyDealCountForUser(userId);
 
@@ -488,14 +490,34 @@ export async function POST(req: NextRequest) {
       rules
     );
 
-    const aiExplanation = await getAiOpinion(
-      body,
-      core,
-      risk,
-      settings,
-      ltv,
-      underwriting
-    );
+    // AI explanation is Pro only
+    let aiExplanation: string;
+
+    if (isPro) {
+      aiExplanation = await getAiOpinion(
+        body,
+        core,
+        risk,
+        settings,
+        ltv,
+        underwriting
+      );
+    } else {
+      aiExplanation =
+        "Upgrade to Pro to unlock full AI deal opinion with numbers, risk explanation, and structure suggestions.";
+    }
+
+    // Underwriting returned to client is richer for Pro
+    const responseUnderwriting: UnderwritingResult | { verdict: string; reasons: string[] } =
+      isPro
+        ? underwriting
+        : {
+            verdict: underwriting.verdict,
+            reasons: [
+              "Basic policy check complete.",
+              "Upgrade to Pro to see detailed underwriting reasons, PTI and LTV violations, and recommended counter terms.",
+            ],
+          };
 
     // ========================================================================
     // Save deal to DB
@@ -541,7 +563,7 @@ export async function POST(req: NextRequest) {
       paymentToIncome: risk.paymentToIncome,
       ltv,
       riskScore: risk.riskScore,
-      underwriting,
+      underwriting: responseUnderwriting,
       aiExplanation,
       dealerSettings: settings,
       dealsThisMonth,
