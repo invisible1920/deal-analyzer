@@ -43,23 +43,9 @@ const theme = {
   },
 };
 
-function getSystemTheme() {
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: light)").matches
-    ? "light"
-    : "dark";
-}
-
 export default function HomePage() {
-  const [mode, setMode] = useState<"light" | "dark">(getSystemTheme());
-  const colors = theme[mode];
-
-  useEffect(() => {
-    const matcher = window.matchMedia("(prefers-color-scheme: light)");
-    const handler = () => setMode(matcher.matches ? "light" : "dark");
-    matcher.addEventListener("change", handler);
-    return () => matcher.removeEventListener("change", handler);
-  }, []);
+  // Force light mode to avoid dark to light flicker
+  const colors = theme.light;
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -381,7 +367,9 @@ export default function HomePage() {
           </div>
           <div class="row">
             <span class="label">Estimated payment</span>
-            <span class="value">$${result.payment.toFixed(2)} per ${paymentFrequency}</span>
+            <span class="value">$${result.payment.toFixed(
+              2
+            )} per ${paymentFrequency}</span>
           </div>
           <div class="row">
             <span class="label">APR</span>
@@ -464,7 +452,7 @@ export default function HomePage() {
     border: `1px solid ${colors.border}`,
     borderRadius: "14px",
     padding: "24px",
-    boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
+    boxShadow: "0 12px 32px rgba(0,0,0,0.32)`,
     transition: "all 0.2s ease",
   };
 
@@ -497,8 +485,7 @@ export default function HomePage() {
     padding: "12px 22px",
     borderRadius: "999px",
     border: "none",
-    background:
-      "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
+    background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
     color: "white",
     fontWeight: 600,
     letterSpacing: ".04em",
@@ -533,6 +520,12 @@ export default function HomePage() {
     color: colors.textSecondary,
   };
 
+  // Helper for PTI display to avoid weird output when there is no income
+  const ptiDisplay =
+    result && typeof result.paymentToIncome === "number"
+      ? `${(result.paymentToIncome * 100).toFixed(1)} percent`
+      : "N A";
+
   return (
     <main style={containerStyle}>
       <div style={cardStyle}>
@@ -557,7 +550,7 @@ export default function HomePage() {
               <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
                 BHPH Deal Analyzer
               </h1>
-              {isPro && <span style={proBadge}>Pro</span>}
+              {authLoaded && isPro && <span style={proBadge}>Pro</span>}
             </div>
 
             <p style={{ color: colors.textSecondary, fontSize: "15px" }}>
@@ -837,10 +830,7 @@ export default function HomePage() {
                     }}
                   >
                     <li>
-                      Payment to income{" "}
-                      <strong>
-                        {(result.paymentToIncome * 100).toFixed(1)} percent
-                      </strong>
+                      Payment to income <strong>{ptiDisplay}</strong>
                     </li>
                     <li>
                       Risk score <strong>{result.riskScore}</strong>
