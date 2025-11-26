@@ -452,7 +452,7 @@ export default function HomePage() {
     border: `1px solid ${colors.border}`,
     borderRadius: "14px",
     padding: "24px",
-    boxShadow: "0 12px 32px rgba(0,0,0,0.32)`,
+    boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
     transition: "all 0.2s ease",
   };
 
