@@ -230,6 +230,37 @@ export default function HomePage() {
     }
   }
 
+  // Apply suggested counter structure from underwriting adjustments
+  function applySuggestedStructure() {
+    if (!result?.underwriting?.adjustments) return;
+    const adj = result.underwriting.adjustments;
+
+    setForm((prev) => {
+      let termMonths = prev.termMonths;
+
+      if (typeof adj.newTermWeeks === "number" && adj.newTermWeeks > 0) {
+        termMonths = Math.round(adj.newTermWeeks / 4.345);
+      }
+
+      return {
+        ...prev,
+        downPayment:
+          typeof adj.newDownPayment === "number" && adj.newDownPayment > 0
+            ? adj.newDownPayment
+            : prev.downPayment,
+        termMonths,
+        salePrice:
+          typeof adj.newSalePrice === "number" && adj.newSalePrice > 0
+            ? adj.newSalePrice
+            : prev.salePrice,
+        apr:
+          typeof adj.newApr === "number" && adj.newApr > 0
+            ? adj.newApr
+            : prev.apr,
+      };
+    });
+  }
+
   // Styles
   const containerStyle: CSSProperties = {
     minHeight: "100vh",
@@ -303,6 +334,13 @@ export default function HomePage() {
     fontSize: "14px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
     transition: "all 0.2s ease",
+  };
+
+  const btnSecondary: CSSProperties = {
+    ...btn,
+    padding: "8px 16px",
+    fontSize: "13px",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
   };
 
   const proBadge: CSSProperties = {
@@ -684,6 +722,84 @@ export default function HomePage() {
                     )}
                   </div>
                 )}
+
+                {/* Suggested counter structure for Pro */}
+                {isPro &&
+                  result.underwriting &&
+                  result.underwriting.adjustments &&
+                  (result.underwriting.adjustments.newDownPayment ||
+                    result.underwriting.adjustments.newTermWeeks ||
+                    result.underwriting.adjustments.newSalePrice ||
+                    result.underwriting.adjustments.newApr) && (
+                    <div style={panel}>
+                      <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                        Suggested counter structure
+                      </h2>
+                      <ul
+                        style={{
+                          paddingLeft: 0,
+                          listStyle: "none",
+                          lineHeight: 1.7,
+                          marginBottom: 12,
+                        }}
+                      >
+                        {typeof result.underwriting.adjustments
+                          .newDownPayment === "number" && (
+                          <li>
+                            Down payment target{" "}
+                            <strong>
+                              $
+                              {result.underwriting.adjustments.newDownPayment.toFixed(
+                                2
+                              )}
+                            </strong>
+                          </li>
+                        )}
+                        {typeof result.underwriting.adjustments
+                          .newTermWeeks === "number" && (
+                          <li>
+                            Term target{" "}
+                            <strong>
+                              {result.underwriting.adjustments.newTermWeeks}{" "}
+                              weeks
+                            </strong>
+                          </li>
+                        )}
+                        {typeof result.underwriting.adjustments
+                          .newSalePrice === "number" && (
+                          <li>
+                            Suggested sale price{" "}
+                            <strong>
+                              $
+                              {result.underwriting.adjustments.newSalePrice.toFixed(
+                                2
+                              )}
+                            </strong>
+                          </li>
+                        )}
+                        {typeof result.underwriting.adjustments.newApr ===
+                          "number" && (
+                          <li>
+                            Suggested APR{" "}
+                            <strong>
+                              {result.underwriting.adjustments.newApr.toFixed(
+                                2
+                              )}{" "}
+                              percent
+                            </strong>
+                          </li>
+                        )}
+                      </ul>
+
+                      <button
+                        type="button"
+                        style={btnSecondary}
+                        onClick={applySuggestedStructure}
+                      >
+                        Apply suggested structure to form
+                      </button>
+                    </div>
+                  )}
 
                 {result.aiExplanation && (
                   <div style={panel}>
