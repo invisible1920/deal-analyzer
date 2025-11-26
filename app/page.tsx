@@ -86,6 +86,9 @@ export default function HomePage() {
     freeDealsPerMonth: number;
   } | null>(null);
 
+  // Plan type (free / pro) – drive UI from here
+  const [planType, setPlanType] = useState<"free" | "pro">("free");
+
   // Default policy before any API call
   const defaultPolicy = {
     maxPTI: 0.25,
@@ -94,10 +97,6 @@ export default function HomePage() {
   };
 
   const policy = result?.dealerSettings ?? defaultPolicy;
-
-  // Plan type from API (defaults to free until you run a deal)
-  const planType: "free" | "pro" =
-    result?.planType === "pro" ? "pro" : "free";
 
   // Load user
 
@@ -114,6 +113,28 @@ export default function HomePage() {
     }
     loadUser();
   }, []);
+
+  // After we know the user, read plan_type directly from Supabase
+
+  useEffect(() => {
+    if (!authLoaded || !userId) return;
+
+    async function loadPlan() {
+      const { data, error } = await supabaseClient
+        .from("profiles")
+        .select("plan_type")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!error && data && data.plan_type === "pro") {
+        setPlanType("pro");
+      } else {
+        setPlanType("free");
+      }
+    }
+
+    loadPlan();
+  }, [authLoaded, userId]);
 
   // Input handler
 
@@ -176,6 +197,13 @@ export default function HomePage() {
       }
 
       setResult(data);
+
+      // If API returns planType, keep plan state in sync
+      if (data.planType === "pro") {
+        setPlanType("pro");
+      } else if (data.planType === "free") {
+        setPlanType("free");
+      }
 
       if (
         typeof data.dealsThisMonth === "number" &&
@@ -507,8 +535,7 @@ export default function HomePage() {
                   {usage ? (
                     <>
                       You have run{" "}
-                      <strong>{usage.dealsThisMonth}</strong> deals this
-                      month.
+                      <strong>{usage.dealsThisMonth}</strong> deals this month.
                     </>
                   ) : (
                     "Unlimited deal analyses."
