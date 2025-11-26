@@ -95,6 +95,7 @@ export default function HomePage() {
   };
 
   const policy = result?.dealerSettings ?? defaultPolicy;
+  const isPro = planType === "pro";
 
   // Load user and plan using backend API so it matches the server logic
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function HomePage() {
           // On error just fall back to free so page still works
           setPlanType("free");
         }
-      } catch (err) {
+      } catch (_err) {
         setPlanType("free");
       } finally {
         setAuthLoaded(true);
@@ -315,6 +316,12 @@ export default function HomePage() {
     textTransform: "uppercase",
   };
 
+  const smallUpsell: CSSProperties = {
+    marginTop: 10,
+    fontSize: 12,
+    color: colors.textSecondary,
+  };
+
   return (
     <main style={containerStyle}>
       <div style={cardStyle}>
@@ -339,7 +346,7 @@ export default function HomePage() {
               <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
                 BHPH Deal Analyzer
               </h1>
-              {planType === "pro" && <span style={proBadge}>Pro</span>}
+              {isPro && <span style={proBadge}>Pro</span>}
             </div>
 
             <p style={{ color: colors.textSecondary, fontSize: "15px" }}>
@@ -574,7 +581,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Summary */}
+            {/* Summary and results */}
             {result ? (
               <>
                 <div style={panel}>
@@ -627,7 +634,21 @@ export default function HomePage() {
                     <li>
                       Risk score <strong>{result.riskScore}</strong>
                     </li>
+                    {isPro && typeof result.ltv === "number" && (
+                      <li>
+                        LTV{" "}
+                        <strong>
+                          {(result.ltv * 100).toFixed(1)} percent
+                        </strong>
+                      </li>
+                    )}
                   </ul>
+                  {!isPro && (
+                    <p style={smallUpsell}>
+                      Upgrade to Pro to see live LTV on every deal and catch
+                      over advanced cars before funding.
+                    </p>
+                  )}
                 </div>
 
                 {result.underwriting && (
@@ -654,14 +675,30 @@ export default function HomePage() {
                         )}
                       </ul>
                     )}
+
+                    {!isPro && (
+                      <p style={smallUpsell}>
+                        Pro users see full policy reasons for PTI, LTV, term,
+                        down payment and profit, plus suggested counter terms.
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {result.aiExplanation && (
                   <div style={panel}>
-                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                      AI deal opinion
-                    </h2>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 10,
+                      }}
+                    >
+                      <h2 style={{ fontSize: "17px" }}>AI deal opinion</h2>
+                      {!isPro && <span style={proBadge}>Pro</span>}
+                    </div>
+
                     <p
                       style={{
                         fontSize: "14px",
@@ -671,6 +708,14 @@ export default function HomePage() {
                     >
                       {result.aiExplanation}
                     </p>
+
+                    {!isPro && (
+                      <div style={{ marginTop: 12 }}>
+                        <a href="/billing" style={btn}>
+                          Unlock full AI underwriting with Pro
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
