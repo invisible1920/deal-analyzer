@@ -95,6 +95,10 @@ export default function HomePage() {
 
   const policy = result?.dealerSettings ?? defaultPolicy;
 
+  // Plan type from API (defaults to free until you run a deal)
+  const planType: "free" | "pro" =
+    result?.planType === "pro" ? "pro" : "free";
+
   // Load user
 
   useEffect(() => {
@@ -265,6 +269,19 @@ export default function HomePage() {
     transition: "all 0.2s ease"
   };
 
+  const proBadge: CSSProperties = {
+    padding: "8px 18px",
+    borderRadius: "999px",
+    border: "1px solid rgba(52,211,153,0.6)",
+    background: "rgba(22,163,74,0.15)",
+    color: "#bbf7d0",
+    fontSize: "13px",
+    fontWeight: 700,
+    letterSpacing: ".08em",
+    textTransform: "uppercase",
+    whiteSpace: "nowrap"
+  };
+
   return (
     <main style={containerStyle}>
       <div style={cardStyle}>
@@ -298,17 +315,21 @@ export default function HomePage() {
             </p>
           </div>
 
-          <a
-            href="/billing"
-            style={{
-              ...btn,
-              padding: "10px 20px",
-              fontSize: "13px",
-              whiteSpace: "nowrap"
-            }}
-          >
-            Upgrade to Pro
-          </a>
+          {planType === "pro" ? (
+            <div style={proBadge}>Pro plan active</div>
+          ) : (
+            <a
+              href="/billing"
+              style={{
+                ...btn,
+                padding: "10px 20px",
+                fontSize: "13px",
+                whiteSpace: "nowrap"
+              }}
+            >
+              Upgrade to Pro
+            </a>
+          )}
         </header>
 
         {/* Layout */}
@@ -480,7 +501,20 @@ export default function HomePage() {
                 Monthly usage
               </h2>
 
-              {usage ? (
+              {planType === "pro" ? (
+                <p style={{ fontSize: "14px", color: colors.textSecondary }}>
+                  Pro plan active.{" "}
+                  {usage ? (
+                    <>
+                      You have run{" "}
+                      <strong>{usage.dealsThisMonth}</strong> deals this
+                      month.
+                    </>
+                  ) : (
+                    "Unlimited deal analyses."
+                  )}
+                </p>
+              ) : usage ? (
                 <p style={{ fontSize: "14px", color: colors.textSecondary }}>
                   Used <strong>{usage.dealsThisMonth}</strong> of{" "}
                   <strong>{usage.freeDealsPerMonth}</strong> free deals.
