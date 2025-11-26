@@ -3,9 +3,7 @@
 import { useState, useEffect, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
 
-// ----------------------------------------
 // Types
-// ----------------------------------------
 
 type PaymentFrequency = "monthly" | "biweekly" | "weekly";
 
@@ -22,9 +20,7 @@ type FormState = {
   pastRepo: boolean;
 };
 
-// ----------------------------------------
-// Theme Tokens
-// ----------------------------------------
+// Theme tokens
 
 const theme = {
   light: {
@@ -34,7 +30,7 @@ const theme = {
     text: "#0f172a",
     textSecondary: "#475569",
     inputBg: "#ffffff",
-    inputBorder: "#cbd5e1",
+    inputBorder: "#cbd5e1"
   },
   dark: {
     bg: "#0b1120",
@@ -43,8 +39,8 @@ const theme = {
     text: "#e2e8f0",
     textSecondary: "#94a3b8",
     inputBg: "#1e293b",
-    inputBorder: "#475569",
-  },
+    inputBorder: "#475569"
+  }
 };
 
 function getSystemTheme() {
@@ -53,10 +49,6 @@ function getSystemTheme() {
     ? "light"
     : "dark";
 }
-
-// ----------------------------------------
-// Component
-// ----------------------------------------
 
 export default function HomePage() {
   const [mode, setMode] = useState<"light" | "dark">(getSystemTheme());
@@ -69,9 +61,7 @@ export default function HomePage() {
     return () => matcher.removeEventListener("change", handler);
   }, []);
 
-  // ----------------------------------------
-  // Form State
-  // ----------------------------------------
+  // Form state
 
   const [form, setForm] = useState<FormState>({
     vehicleCost: 6000,
@@ -83,7 +73,7 @@ export default function HomePage() {
     paymentFrequency: "monthly",
     monthlyIncome: 2400,
     monthsOnJob: 6,
-    pastRepo: false,
+    pastRepo: false
   });
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -96,9 +86,16 @@ export default function HomePage() {
     freeDealsPerMonth: number;
   } | null>(null);
 
-  // ----------------------------------------
+  // Default policy before any API call
+  const defaultPolicy = {
+    maxPTI: 0.25,
+    maxLTV: 1.75,
+    maxTermWeeks: 104
+  };
+
+  const policy = result?.dealerSettings ?? defaultPolicy;
+
   // Load user
-  // ----------------------------------------
 
   useEffect(() => {
     async function loadUser() {
@@ -114,9 +111,7 @@ export default function HomePage() {
     loadUser();
   }, []);
 
-  // ----------------------------------------
   // Input handler
-  // ----------------------------------------
 
   function handleChange(
     field: keyof FormState,
@@ -129,13 +124,11 @@ export default function HomePage() {
           ? Number(value)
           : typeof value === "string"
           ? value
-          : value,
+          : value
     }));
   }
 
-  // ----------------------------------------
   // Submit
-  // ----------------------------------------
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -149,34 +142,44 @@ export default function HomePage() {
       const payload = {
         ...form,
         termWeeks,
-        userId,
+        userId
       };
 
       const res = await fetch("/api/analyzeDeal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
       let data: any;
+      let rawText = "";
+
       try {
         const clone = res.clone();
         data = await clone.json();
       } catch {
-        data = { error: await res.text() };
+        rawText = await res.text();
+        data = { error: rawText };
       }
 
       if (!res.ok) {
-        setError(data.error || `Server error ${res.status}`);
+        setError(
+          typeof data?.error === "string"
+            ? data.error
+            : rawText || `Server error ${res.status}`
+        );
         return;
       }
 
       setResult(data);
 
-      if (data.dealsThisMonth && data.freeDealsPerMonth) {
+      if (
+        typeof data.dealsThisMonth === "number" &&
+        typeof data.freeDealsPerMonth === "number"
+      ) {
         setUsage({
           dealsThisMonth: data.dealsThisMonth,
-          freeDealsPerMonth: data.freeDealsPerMonth,
+          freeDealsPerMonth: data.freeDealsPerMonth
         });
       }
     } catch (err: any) {
@@ -186,9 +189,7 @@ export default function HomePage() {
     }
   }
 
-  // ----------------------------------------
   // Styles
-  // ----------------------------------------
 
   const containerStyle: CSSProperties = {
     minHeight: "100vh",
@@ -199,19 +200,19 @@ export default function HomePage() {
     justifyContent: "center",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif',
-    transition: "all 0.2s ease",
+    transition: "all 0.2s ease"
   };
 
   const cardStyle: CSSProperties = {
     maxWidth: "1180px",
-    width: "100%",
+    width: "100%"
   };
 
   const layout: CSSProperties = {
     display: "flex",
     flexWrap: "wrap",
     gap: "28px",
-    marginTop: "24px",
+    marginTop: "24px"
   };
 
   const panel: CSSProperties = {
@@ -220,7 +221,7 @@ export default function HomePage() {
     borderRadius: "14px",
     padding: "24px",
     boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
-    transition: "all 0.2s ease",
+    transition: "all 0.2s ease"
   };
 
   const input: CSSProperties = {
@@ -230,7 +231,7 @@ export default function HomePage() {
     border: `1px solid ${colors.inputBorder}`,
     background: colors.inputBg,
     color: colors.text,
-    fontSize: "14px",
+    fontSize: "14px"
   };
 
   const label: CSSProperties = {
@@ -239,13 +240,13 @@ export default function HomePage() {
     display: "block",
     fontWeight: 600,
     color: colors.textSecondary,
-    letterSpacing: ".02em",
+    letterSpacing: ".02em"
   };
 
   const grid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "20px",
+    gap: "20px"
   };
 
   const btn: CSSProperties = {
@@ -261,12 +262,8 @@ export default function HomePage() {
     opacity: loading ? 0.6 : 1,
     fontSize: "14px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-    transition: "all 0.2s ease",
+    transition: "all 0.2s ease"
   };
-
-  // ----------------------------------------
-  // Render
-  // ----------------------------------------
 
   return (
     <main style={containerStyle}>
@@ -277,7 +274,7 @@ export default function HomePage() {
             display: "flex",
             justifyContent: "space-between",
             gap: "20px",
-            alignItems: "center",
+            alignItems: "center"
           }}
         >
           <div>
@@ -285,7 +282,19 @@ export default function HomePage() {
               BHPH Deal Analyzer
             </h1>
             <p style={{ color: colors.textSecondary, fontSize: "15px" }}>
-              Calculate payment, profit, PTI, LTV & AI underwriting instantly.
+              Calculate payment, profit, PTI, LTV and AI underwriting instantly.
+            </p>
+            <p
+              style={{
+                marginTop: 6,
+                fontSize: 13,
+                color: colors.textSecondary
+              }}
+            >
+              Policy in use max LTV about{" "}
+              {(policy.maxLTV * 100).toFixed(0)} percent, max PTI{" "}
+              {(policy.maxPTI * 100).toFixed(0)} percent, max term{" "}
+              {policy.maxTermWeeks} weeks.
             </p>
           </div>
 
@@ -295,7 +304,7 @@ export default function HomePage() {
               ...btn,
               padding: "10px 20px",
               fontSize: "13px",
-              whiteSpace: "nowrap",
+              whiteSpace: "nowrap"
             }}
           >
             Upgrade to Pro
@@ -315,10 +324,10 @@ export default function HomePage() {
                   borderRadius: "10px",
                   marginBottom: "16px",
                   fontSize: "13px",
-                  color: "#facc15",
+                  color: "#facc15"
                 }}
               >
-                Not logged in — deals will not be saved.
+                Not logged in, deals will not be saved.
               </div>
             )}
 
@@ -383,7 +392,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label style={label}>Term (months)</label>
+                  <label style={label}>Term months</label>
                   <input
                     type="number"
                     style={input}
@@ -462,10 +471,10 @@ export default function HomePage() {
               flex: "1 1 260px",
               display: "flex",
               flexDirection: "column",
-              gap: "20px",
+              gap: "20px"
             }}
           >
-            {/* Usage Panel */}
+            {/* Usage */}
             <div style={panel}>
               <h2 style={{ fontSize: "17px", marginBottom: 8 }}>
                 Monthly usage
@@ -478,7 +487,7 @@ export default function HomePage() {
                 </p>
               ) : (
                 <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                  Free plan includes 25 analyzed deals per month.
+                  Free plan includes 25 analyzed deals each month.
                 </p>
               )}
             </div>
@@ -494,38 +503,36 @@ export default function HomePage() {
             {/* Summary */}
             {result ? (
               <>
-                {/* Deal Summary */}
                 <div style={panel}>
                   <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                     Deal summary
                   </h2>
-
                   <ul
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7,
+                      lineHeight: 1.7
                     }}
                   >
                     <li>
-                      Payment: <strong>${result.payment.toFixed(2)}</strong>
+                      Payment{" "}
+                      <strong>${result.payment.toFixed(2)}</strong>
                     </li>
                     <li>
-                      Total interest:{" "}
+                      Total interest{" "}
                       <strong>${result.totalInterest.toFixed(2)}</strong>
                     </li>
                     <li>
-                      Total profit:{" "}
+                      Total profit{" "}
                       <strong>${result.totalProfit.toFixed(2)}</strong>
                     </li>
                     <li>
-                      Break even (week):{" "}
+                      Break even week{" "}
                       <strong>{result.breakEvenWeek}</strong>
                     </li>
                   </ul>
                 </div>
 
-                {/* Risk */}
                 <div style={panel}>
                   <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                     Basic risk
@@ -534,22 +541,21 @@ export default function HomePage() {
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7,
+                      lineHeight: 1.7
                     }}
                   >
                     <li>
-                      Payment-to-income:{" "}
+                      Payment to income{" "}
                       <strong>
-                        {(result.paymentToIncome * 100).toFixed(1)}%
+                        {(result.paymentToIncome * 100).toFixed(1)} percent
                       </strong>
                     </li>
                     <li>
-                      Risk score: <strong>{result.riskScore}</strong>
+                      Risk score <strong>{result.riskScore}</strong>
                     </li>
                   </ul>
                 </div>
 
-                {/* Underwriting */}
                 {result.underwriting && (
                   <div style={panel}>
                     <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
@@ -564,7 +570,7 @@ export default function HomePage() {
                         style={{
                           marginTop: 8,
                           paddingLeft: 18,
-                          lineHeight: 1.6,
+                          lineHeight: 1.6
                         }}
                       >
                         {result.underwriting.reasons.map(
@@ -577,18 +583,16 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {/* AI Explanation */}
                 {result.aiExplanation && (
                   <div style={panel}>
                     <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                       AI deal opinion
                     </h2>
-
                     <p
                       style={{
                         fontSize: "14px",
                         lineHeight: 1.6,
-                        whiteSpace: "pre-wrap",
+                        whiteSpace: "pre-wrap"
                       }}
                     >
                       {result.aiExplanation}
@@ -602,7 +606,7 @@ export default function HomePage() {
                   Deal summary
                 </h2>
                 <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                  Run a deal to see payment, profit, PTI, LTV, and underwriting.
+                  Run a deal to see payment, profit, PTI, LTV and underwriting.
                 </p>
               </div>
             )}
