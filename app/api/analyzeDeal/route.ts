@@ -7,7 +7,7 @@ import {
 import { saveDeal } from "@/lib/deals";
 import { resolveDealerSettings } from "@/lib/dealerSettings";
 import { getMonthlyDealCountForUser, FREE_DEALS_PER_MONTH } from "@/lib/usage";
-
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 type DealInput = {
   vehicleCost: number;
@@ -244,10 +244,54 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as DealInput;
     const userId = body.userId ?? null;
 
+    // Dealer settings (APR, PTI, LTV, etc)
     const settings = await resolveDealerSettings(userId);
 
-    // monthly usage for this user
+    // Default plan + limit
+    let planType: "free" | "pro" = "free";
+    let freeDealsPerMonth = FREE_DEALS_PER_MONTH;
+
+    // If logged in, read plan from profiles
+    if (userId) {
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .select("plan_type, free_deals_per_month")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!profileError && profile) {
+        if (profile.plan_type === "pro") {
+          planType = "pro";
+        }
+        if (
+          typeof profile.free_deals_per_month === "number" &&
+          !Number.isNaN(profile.free_deals_per_month)
+        ) {
+          freeDealsPerMonth = profile.free_deals_per_month;
+        }
+      }
+    }
+
+    // Monthly usage for this user
     const dealsThisMonth = await getMonthlyDealCountForUser(userId);
+
+    // Enforce free tier limit only for logged in free users
+    if (
+      userId &&
+      planType === "free" &&
+      dealsThisMonth >= freeDealsPerMonth
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Free tier limit reached. Upgrade to Pro for unlimited deal analyses.",
+          dealsThisMonth,
+          freeDealsPerMonth,
+          planType
+        },
+        { status: 403 }
+      );
+    }
 
     const core = calculateSchedule(body, settings);
     const risk = basicRiskScore(body, core.payment, settings);
@@ -257,7 +301,6 @@ export async function POST(req: NextRequest) {
 
     const effectiveApr =
       body.apr && body.apr > 0 ? body.apr : settings.defaultAPR;
-
 
     const underwritingInput = {
       income: body.monthlyIncome || 0,
@@ -293,7 +336,7 @@ export async function POST(req: NextRequest) {
       underwriting
     );
 
-        await saveDeal({
+    await saveDeal({
       userId: body.userId ?? null,
       input: {
         vehicleCost: body.vehicleCost,
@@ -321,8 +364,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-
-        return NextResponse.json({
+    return NextResponse.json({
       payment: core.payment,
       totalInterest: core.totalInterest,
       totalProfit: core.totalProfit,
@@ -334,9 +376,9 @@ export async function POST(req: NextRequest) {
       aiExplanation,
       dealerSettings: settings,
       dealsThisMonth,
-      freeDealsPerMonth: FREE_DEALS_PER_MONTH
+      freeDealsPerMonth,
+      planType
     });
-
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Internal server error" },
