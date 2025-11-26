@@ -1,7 +1,7 @@
 // app/deals/[id]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { supabaseAdmin } from "@/lib/supabaseAdmin"; // you already have this
+import { supabaseAdmin } from "@/lib/supabase"; // you already have this
 import { DealCard } from "@/components/DealCard";
 
 type Deal = {
