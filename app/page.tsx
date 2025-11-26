@@ -4,7 +4,6 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 // Types
-
 type PaymentFrequency = "monthly" | "biweekly" | "weekly";
 
 type FormState = {
@@ -20,8 +19,9 @@ type FormState = {
   pastRepo: boolean;
 };
 
-// Theme tokens
+type PlanType = "free" | "pro";
 
+// Theme tokens
 const theme = {
   light: {
     bg: "#f8fafc",
@@ -62,7 +62,6 @@ export default function HomePage() {
   }, []);
 
   // Form state
-
   const [form, setForm] = useState<FormState>({
     vehicleCost: 6000,
     reconCost: 1000,
@@ -78,6 +77,8 @@ export default function HomePage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
+  const [planType, setPlanType] = useState<PlanType | null>(null);
+
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,9 +86,6 @@ export default function HomePage() {
     dealsThisMonth: number;
     freeDealsPerMonth: number;
   } | null>(null);
-
-  // Plan type (free / pro) – drive UI from here
-  const [planType, setPlanType] = useState<"free" | "pro">("free");
 
   // Default policy before any API call
   const defaultPolicy = {
@@ -98,46 +96,42 @@ export default function HomePage() {
 
   const policy = result?.dealerSettings ?? defaultPolicy;
 
-  // Load user
-
+  // Load user and plan from Supabase
   useEffect(() => {
-    async function loadUser() {
+    async function loadUserAndPlan() {
       try {
         const { data } = await supabaseClient.auth.getUser();
-        setUserId(data.user ? data.user.id : null);
+        const uid = data.user ? data.user.id : null;
+        setUserId(uid);
+
+        if (uid) {
+          const { data: profile, error } = await supabaseClient
+            .from("profiles")
+            .select("plan_type")
+            .eq("id", uid)
+            .maybeSingle();
+
+          if (!error && profile && profile.plan_type === "pro") {
+            setPlanType("pro");
+          } else if (!error && profile) {
+            setPlanType("free");
+          } else {
+            setPlanType("free");
+          }
+        } else {
+          setPlanType(null);
+        }
       } catch {
         setUserId(null);
+        setPlanType(null);
       } finally {
         setAuthLoaded(true);
       }
     }
-    loadUser();
+    loadUserAndPlan();
   }, []);
 
-  // After we know the user, read plan_type directly from Supabase
-
-  useEffect(() => {
-    if (!authLoaded || !userId) return;
-
-    async function loadPlan() {
-      const { data, error } = await supabaseClient
-        .from("profiles")
-        .select("plan_type")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (!error && data && data.plan_type === "pro") {
-        setPlanType("pro");
-      } else {
-        setPlanType("free");
-      }
-    }
-
-    loadPlan();
-  }, [authLoaded, userId]);
-
   // Input handler
-
   function handleChange(
     field: keyof FormState,
     value: string | number | boolean
@@ -154,7 +148,6 @@ export default function HomePage() {
   }
 
   // Submit
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -198,11 +191,9 @@ export default function HomePage() {
 
       setResult(data);
 
-      // If API returns planType, keep plan state in sync
-      if (data.planType === "pro") {
-        setPlanType("pro");
-      } else if (data.planType === "free") {
-        setPlanType("free");
+      // Keep plan type in sync with backend response
+      if (data.planType === "pro" || data.planType === "free") {
+        setPlanType(data.planType);
       }
 
       if (
@@ -222,7 +213,6 @@ export default function HomePage() {
   }
 
   // Styles
-
   const containerStyle: CSSProperties = {
     minHeight: "100vh",
     padding: "32px",
@@ -298,16 +288,14 @@ export default function HomePage() {
   };
 
   const proBadge: CSSProperties = {
-    padding: "8px 18px",
-    borderRadius: "999px",
-    border: "1px solid rgba(52,211,153,0.6)",
-    background: "rgba(22,163,74,0.15)",
-    color: "#bbf7d0",
-    fontSize: "13px",
+    padding: "4px 10px",
+    borderRadius: 999,
+    background: "linear-gradient(to right, #22c55e, #4ade80)",
+    color: "#052e16",
+    fontSize: "11px",
     fontWeight: 700,
     letterSpacing: ".08em",
-    textTransform: "uppercase",
-    whiteSpace: "nowrap"
+    textTransform: "uppercase"
   };
 
   return (
@@ -323,9 +311,20 @@ export default function HomePage() {
           }}
         >
           <div>
-            <h1 style={{ fontSize: "30px", fontWeight: 700, marginBottom: 6 }}>
-              BHPH Deal Analyzer
-            </h1>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 6
+              }}
+            >
+              <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
+                BHPH Deal Analyzer
+              </h1>
+              {planType === "pro" && <span style={proBadge}>Pro</span>}
+            </div>
+
             <p style={{ color: colors.textSecondary, fontSize: "15px" }}>
               Calculate payment, profit, PTI, LTV and AI underwriting instantly.
             </p>
@@ -343,9 +342,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {planType === "pro" ? (
-            <div style={proBadge}>Pro plan active</div>
-          ) : (
+          {planType !== "pro" && (
             <a
               href="/billing"
               style={{
@@ -529,19 +526,7 @@ export default function HomePage() {
                 Monthly usage
               </h2>
 
-              {planType === "pro" ? (
-                <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                  Pro plan active.{" "}
-                  {usage ? (
-                    <>
-                      You have run{" "}
-                      <strong>{usage.dealsThisMonth}</strong> deals this month.
-                    </>
-                  ) : (
-                    "Unlimited deal analyses."
-                  )}
-                </p>
-              ) : usage ? (
+              {usage ? (
                 <p style={{ fontSize: "14px", color: colors.textSecondary }}>
                   Used <strong>{usage.dealsThisMonth}</strong> of{" "}
                   <strong>{usage.freeDealsPerMonth}</strong> free deals.
