@@ -9,7 +9,7 @@ export type SavedDealInput = {
     downPayment: number;
     apr: number;
     termWeeks: number;
-    paymentFrequency: "weekly" | "biweekly";
+    paymentFrequency: "monthly" | "biweekly" | "weekly";
     monthlyIncome: number | null;
     monthsOnJob: number | null;
     pastRepo: boolean;
