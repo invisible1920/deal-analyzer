@@ -7,7 +7,7 @@ import {
 import { saveDeal } from "@/lib/deals";
 import { resolveDealerSettings } from "@/lib/dealerSettings";
 import { getMonthlyDealCountForUser, FREE_DEALS_PER_MONTH } from "@/lib/usage";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase";
 
 type DealInput = {
   vehicleCost: number;
