@@ -30,7 +30,7 @@ const theme = {
     text: "#0f172a",
     textSecondary: "#475569",
     inputBg: "#ffffff",
-    inputBorder: "#cbd5e1"
+    inputBorder: "#cbd5e1",
   },
   dark: {
     bg: "#0b1120",
@@ -39,8 +39,8 @@ const theme = {
     text: "#e2e8f0",
     textSecondary: "#94a3b8",
     inputBg: "#1e293b",
-    inputBorder: "#475569"
-  }
+    inputBorder: "#475569",
+  },
 };
 
 function getSystemTheme() {
@@ -72,7 +72,7 @@ export default function HomePage() {
     paymentFrequency: "monthly",
     monthlyIncome: 2400,
     monthsOnJob: 6,
-    pastRepo: false
+    pastRepo: false,
   });
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export default function HomePage() {
   const defaultPolicy = {
     maxPTI: 0.25,
     maxLTV: 1.75,
-    maxTermWeeks: 104
+    maxTermWeeks: 104,
   };
 
   const policy = result?.dealerSettings ?? defaultPolicy;
@@ -143,7 +143,7 @@ export default function HomePage() {
           ? Number(value)
           : typeof value === "string"
           ? value
-          : value
+          : value,
     }));
   }
 
@@ -160,13 +160,13 @@ export default function HomePage() {
       const payload = {
         ...form,
         termWeeks,
-        userId
+        userId,
       };
 
       const res = await fetch("/api/analyzeDeal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       let data: any;
@@ -202,7 +202,7 @@ export default function HomePage() {
       ) {
         setUsage({
           dealsThisMonth: data.dealsThisMonth,
-          freeDealsPerMonth: data.freeDealsPerMonth
+          freeDealsPerMonth: data.freeDealsPerMonth,
         });
       }
     } catch (err: any) {
@@ -222,19 +222,19 @@ export default function HomePage() {
     justifyContent: "center",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif',
-    transition: "all 0.2s ease"
+    transition: "all 0.2s ease",
   };
 
   const cardStyle: CSSProperties = {
     maxWidth: "1180px",
-    width: "100%"
+    width: "100%",
   };
 
   const layout: CSSProperties = {
     display: "flex",
     flexWrap: "wrap",
     gap: "28px",
-    marginTop: "24px"
+    marginTop: "24px",
   };
 
   const panel: CSSProperties = {
@@ -243,7 +243,7 @@ export default function HomePage() {
     borderRadius: "14px",
     padding: "24px",
     boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
-    transition: "all 0.2s ease"
+    transition: "all 0.2s ease",
   };
 
   const input: CSSProperties = {
@@ -253,7 +253,7 @@ export default function HomePage() {
     border: `1px solid ${colors.inputBorder}`,
     background: colors.inputBg,
     color: colors.text,
-    fontSize: "14px"
+    fontSize: "14px",
   };
 
   const label: CSSProperties = {
@@ -262,13 +262,13 @@ export default function HomePage() {
     display: "block",
     fontWeight: 600,
     color: colors.textSecondary,
-    letterSpacing: ".02em"
+    letterSpacing: ".02em",
   };
 
   const grid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "20px"
+    gap: "20px",
   };
 
   const btn: CSSProperties = {
@@ -284,7 +284,7 @@ export default function HomePage() {
     opacity: loading ? 0.6 : 1,
     fontSize: "14px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-    transition: "all 0.2s ease"
+    transition: "all 0.2s ease",
   };
 
   const proBadge: CSSProperties = {
@@ -295,7 +295,7 @@ export default function HomePage() {
     fontSize: "11px",
     fontWeight: 700,
     letterSpacing: ".08em",
-    textTransform: "uppercase"
+    textTransform: "uppercase",
   };
 
   return (
@@ -307,7 +307,7 @@ export default function HomePage() {
             display: "flex",
             justifyContent: "space-between",
             gap: "20px",
-            alignItems: "center"
+            alignItems: "center",
           }}
         >
           <div>
@@ -316,7 +316,7 @@ export default function HomePage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                marginBottom: 6
+                marginBottom: 6,
               }}
             >
               <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
@@ -332,7 +332,7 @@ export default function HomePage() {
               style={{
                 marginTop: 6,
                 fontSize: 13,
-                color: colors.textSecondary
+                color: colors.textSecondary,
               }}
             >
               Policy in use max LTV about{" "}
@@ -349,7 +349,7 @@ export default function HomePage() {
                 ...btn,
                 padding: "10px 20px",
                 fontSize: "13px",
-                whiteSpace: "nowrap"
+                whiteSpace: "nowrap",
               }}
             >
               Upgrade to Pro
@@ -370,7 +370,7 @@ export default function HomePage() {
                   borderRadius: "10px",
                   marginBottom: "16px",
                   fontSize: "13px",
-                  color: "#facc15"
+                  color: "#facc15",
                 }}
               >
                 Not logged in, deals will not be saved.
@@ -517,7 +517,7 @@ export default function HomePage() {
               flex: "1 1 260px",
               display: "flex",
               flexDirection: "column",
-              gap: "20px"
+              gap: "20px",
             }}
           >
             {/* Usage */}
@@ -526,7 +526,18 @@ export default function HomePage() {
                 Monthly usage
               </h2>
 
-              {usage ? (
+              {planType === "pro" ? (
+                usage ? (
+                  <p style={{ fontSize: "14px", color: colors.textSecondary }}>
+                    Pro plan unlimited deals. You have run{" "}
+                    <strong>{usage.dealsThisMonth}</strong> deals this month.
+                  </p>
+                ) : (
+                  <p style={{ fontSize: "14px", color: colors.textSecondary }}>
+                    Pro plan unlimited deals. No usage recorded yet this month.
+                  </p>
+                )
+              ) : usage ? (
                 <p style={{ fontSize: "14px", color: colors.textSecondary }}>
                   Used <strong>{usage.dealsThisMonth}</strong> of{" "}
                   <strong>{usage.freeDealsPerMonth}</strong> free deals.
@@ -557,7 +568,7 @@ export default function HomePage() {
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7
+                      lineHeight: 1.7,
                     }}
                   >
                     <li>
@@ -587,7 +598,7 @@ export default function HomePage() {
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7
+                      lineHeight: 1.7,
                     }}
                   >
                     <li>
@@ -616,7 +627,7 @@ export default function HomePage() {
                         style={{
                           marginTop: 8,
                           paddingLeft: 18,
-                          lineHeight: 1.6
+                          lineHeight: 1.6,
                         }}
                       >
                         {result.underwriting.reasons.map(
@@ -638,7 +649,7 @@ export default function HomePage() {
                       style={{
                         fontSize: "14px",
                         lineHeight: 1.6,
-                        whiteSpace: "pre-wrap"
+                        whiteSpace: "pre-wrap",
                       }}
                     >
                       {result.aiExplanation}
