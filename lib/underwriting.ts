@@ -43,35 +43,87 @@ export function runUnderwritingEngine(
   const reasons: string[] = [];
   let verdict: UnderwritingVerdict = "APPROVE";
 
+  // Current financed amount
+  const currentAdvance = deal.salePrice - deal.downPayment;
+
+  // We will fill this as we go
+  const adjustments: UnderwritingResult["adjustments"] = {};
+
   // PTI check
   if (deal.pti > rules.maxPTI) {
     verdict = "COUNTER";
     reasons.push(
-      `Payment to income is ${(deal.pti * 100).toFixed(1)} percent, dealer max is ${(rules.maxPTI * 100).toFixed(1)} percent.`
+      `Payment to income is ${(deal.pti * 100).toFixed(
+        1
+      )} percent, dealer max is ${(rules.maxPTI * 100).toFixed(1)} percent.`
     );
+
+    // Suggest a higher down payment that would bring PTI down near the max
+    // Assumption: payment is roughly proportional to amount financed
+    if (currentAdvance > 0 && deal.pti > 0) {
+      const factor = rules.maxPTI / deal.pti; // for example 0.25 / 0.265
+      if (factor > 0 && factor < 1) {
+        const targetAdvance = currentAdvance * factor;
+        const rawNewDown = deal.salePrice - targetAdvance;
+
+        // Respect policy minimum and ensure it is at least a bit higher
+        let suggestedDown = Math.max(rawNewDown, rules.minDownPayment);
+
+        if (suggestedDown < deal.downPayment + 50) {
+          suggestedDown = deal.downPayment + 50;
+        }
+
+        // Do not exceed sale price
+        if (suggestedDown > deal.salePrice) {
+          suggestedDown = deal.salePrice;
+        }
+
+        // Round to nearest 50 for a cleaner number
+        const roundedDown = Math.round(suggestedDown / 50) * 50;
+
+        if (roundedDown > deal.downPayment) {
+          adjustments.newDownPayment = roundedDown;
+        }
+      }
+    }
   }
 
   // LTV check
   if (deal.ltv > rules.maxLTV) {
     verdict = "COUNTER";
     reasons.push(
-      `LTV is ${(deal.ltv * 100).toFixed(1)} percent, dealer max is ${(rules.maxLTV * 100).toFixed(1)} percent.`
+      `LTV is ${(deal.ltv * 100).toFixed(
+        1
+      )} percent, dealer max is ${(rules.maxLTV * 100).toFixed(1)} percent.`
     );
   }
 
-  // Down payment adequacy
+  // Down payment adequacy vs minimum
   if (deal.downPayment < rules.minDownPayment) {
     verdict = "COUNTER";
     reasons.push(
-      `Down payment is ${deal.downPayment.toFixed(2)}, minimum required is ${rules.minDownPayment.toFixed(2)}.`
+      `Down payment is ${deal.downPayment.toFixed(
+        2
+      )}, minimum required is ${rules.minDownPayment.toFixed(2)}.`
     );
+
+    // Only set if we do not already have a PTI based suggestion,
+    // or if the PTI suggestion is still below the policy minimum
+    if (
+      adjustments.newDownPayment === undefined ||
+      adjustments.newDownPayment < rules.minDownPayment
+    ) {
+      adjustments.newDownPayment = rules.minDownPayment;
+    }
   }
 
   // Profitability check
   if (deal.profit < 1500) {
     verdict = "COUNTER";
     reasons.push(
-      `Total profit is ${deal.profit.toFixed(2)}, below the preferred floor of 1500.`
+      `Total profit is ${deal.profit.toFixed(
+        2
+      )}, below the preferred floor of 1500.`
     );
   }
 
@@ -81,6 +133,8 @@ export function runUnderwritingEngine(
     reasons.push(
       `Term is ${deal.termWeeks} weeks, dealer max is ${rules.maxTermWeeks} weeks.`
     );
+
+    adjustments.newTermWeeks = rules.maxTermWeeks;
   }
 
   // Job time
@@ -118,34 +172,16 @@ export function runUnderwritingEngine(
     return {
       verdict,
       reasons: [
-        "Deal meets dealer criteria for PTI, LTV, down payment, term, and profit."
-      ]
+        "Deal meets dealer criteria for PTI, LTV, down payment, term, and profit.",
+      ],
     };
   }
 
-  // Counter offer suggestions
-  const adjustments: UnderwritingResult["adjustments"] = {};
-
-  // Suggest raising down payment
-  if (deal.downPayment < rules.minDownPayment) {
-    adjustments.newDownPayment = rules.minDownPayment;
-  }
-
-  // Suggest reducing term
-  if (deal.termWeeks > rules.maxTermWeeks) {
-    adjustments.newTermWeeks = rules.maxTermWeeks;
-  }
-
-  // Suggest reducing sale price when LTV is high
-  if (deal.ltv > rules.maxLTV) {
-    const allowedAdvance = deal.vehicleCost * rules.maxLTV;
-    const suggestedSalePrice = allowedAdvance + deal.downPayment;
-    adjustments.newSalePrice = Math.round(suggestedSalePrice);
-  }
-
+  // If verdict is DECLINE, we still return any adjustments that were computed,
+  // but they are suggestions rather than an approved counter.
   return {
     verdict,
     reasons,
-    adjustments
+    adjustments,
   };
 }
