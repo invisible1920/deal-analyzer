@@ -175,15 +175,16 @@ export default function HomePage() {
   };
 
   const inputStyle: CSSProperties = {
-    width: "100%",
-    padding: "8px 10px",
-    borderRadius: "8px",
-    border: "1px solid "#374151",
-    background: "#020617",
-    color: "#e5e7eb",
-    fontSize: "13px",
-    outline: "none"
-  };
+  width: "100%",
+  padding: "8px 10px",
+  borderRadius: "8px",
+  border: "1px solid #374151",
+  background: "#020617",
+  color: "#e5e7eb",
+  fontSize: "13px",
+  outline: "none"
+};
+
 
   const labelStyle: CSSProperties = {
     fontSize: "11px",
