@@ -136,7 +136,6 @@ export default function HomePage() {
             });
           }
         } else {
-          // On error just fall back to free so page still works
           setPlanType("free");
         }
       } catch (_err) {
@@ -209,7 +208,6 @@ export default function HomePage() {
 
       setResult(data);
 
-      // Keep plan type in sync with backend response
       if (data.planType === "pro" || data.planType === "free") {
         setPlanType(data.planType);
       }
@@ -259,6 +257,179 @@ export default function HomePage() {
             : prev.apr,
       };
     });
+  }
+
+  // Print customer offer sheet (Pro feature)
+  function printOfferSheet() {
+    if (!result) return;
+    if (typeof window === "undefined") return;
+
+    const offerWindow = window.open("", "_blank", "width=800,height=1000");
+    if (!offerWindow) return;
+
+    const dealerName =
+      result.dealerSettings?.dealerName || "BHPH Deal Analyzer";
+    const {
+      salePrice,
+      downPayment,
+      vehicleCost,
+      reconCost,
+      apr,
+      termMonths,
+      paymentFrequency,
+      monthlyIncome,
+    } = form;
+
+    const amountFinanced = salePrice - downPayment;
+    const totalCost = vehicleCost + reconCost;
+    const ptiPercent =
+      typeof result.paymentToIncome === "number"
+        ? (result.paymentToIncome * 100).toFixed(1) + " percent"
+        : "N A";
+    const ltvPercent =
+      typeof result.ltv === "number"
+        ? (result.ltv * 100).toFixed(1) + " percent"
+        : "N A";
+
+    const verdictText =
+      result.underwriting?.verdict || "PENDING";
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Customer Offer Sheet</title>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            padding: 32px;
+            color: #0f172a;
+            background: #f8fafc;
+          }
+          .sheet {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px 28px;
+          }
+          h1 {
+            font-size: 22px;
+            margin: 0;
+          }
+          h2 {
+            font-size: 16px;
+            margin-top: 24px;
+            margin-bottom: 8px;
+          }
+          .sub {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 2px;
+          }
+          .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 14px;
+          }
+          .label {
+            color: #64748b;
+          }
+          .value {
+            font-weight: 600;
+          }
+          .divider {
+            margin: 18px 0;
+            border-top: 1px solid #e2e8f0;
+          }
+          .verdict {
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 10px;
+          }
+          .footer {
+            margin-top: 28px;
+            font-size: 12px;
+            color: #94a3b8;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="sheet">
+          <h1>${dealerName}</h1>
+          <div class="sub">Customer payment offer summary</div>
+
+          <div class="divider"></div>
+
+          <h2>Loan overview</h2>
+          <div class="row">
+            <span class="label">Sale price</span>
+            <span class="value">$${salePrice.toFixed(2)}</span>
+          </div>
+          <div class="row">
+            <span class="label">Down payment</span>
+            <span class="value">$${downPayment.toFixed(2)}</span>
+          </div>
+          <div class="row">
+            <span class="label">Amount financed</span>
+            <span class="value">$${amountFinanced.toFixed(2)}</span>
+          </div>
+          <div class="row">
+            <span class="label">Estimated payment</span>
+            <span class="value">$${result.payment.toFixed(2)} per ${paymentFrequency}</span>
+          </div>
+          <div class="row">
+            <span class="label">APR</span>
+            <span class="value">${apr.toFixed(2)} percent</span>
+          </div>
+          <div class="row">
+            <span class="label">Term</span>
+            <span class="value">${termMonths} months</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Deal strength</h2>
+          <div class="row">
+            <span class="label">Payment to income</span>
+            <span class="value">${ptiPercent}</span>
+          </div>
+          <div class="row">
+            <span class="label">LTV</span>
+            <span class="value">${ltvPercent}</span>
+          </div>
+          <div class="row">
+            <span class="label">Monthly income (reported)</span>
+            <span class="value">$${monthlyIncome.toFixed(2)}</span>
+          </div>
+          <div class="row">
+            <span class="label">Total cost (vehicle plus recon)</span>
+            <span class="value">$${totalCost.toFixed(2)}</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Dealer verdict</h2>
+          <div class="verdict">${verdictText}</div>
+
+          <div class="footer">
+            This sheet is an estimate only and does not represent a final loan contract. Terms are subject to verification of income, residency and underwriting approval.
+          </div>
+        </div>
+        <script>
+          window.focus();
+          window.print();
+        </script>
+      </body>
+      </html>
+    `;
+
+    offerWindow.document.open();
+    offerWindow.document.write(html);
+    offerWindow.document.close();
   }
 
   // Styles
@@ -800,6 +971,54 @@ export default function HomePage() {
                       </button>
                     </div>
                   )}
+
+                {/* Customer offer sheet for Pro users */}
+                {isPro && (
+                  <div style={panel}>
+                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                      Customer offer sheet
+                    </h2>
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: colors.textSecondary,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Generate a clean one page offer you can print or save as
+                      PDF for the customer with payment, term and structure.
+                    </p>
+                    <button
+                      type="button"
+                      style={btnSecondary}
+                      onClick={printOfferSheet}
+                    >
+                      Print customer offer
+                    </button>
+                  </div>
+                )}
+
+                {!isPro && (
+                  <div style={panel}>
+                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                      Customer offer sheet
+                    </h2>
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: colors.textSecondary,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Pro users can generate a printable one page customer offer
+                      sheet with payment, term, down payment and verdict ready
+                      to sign.
+                    </p>
+                    <a href="/billing" style={btn}>
+                      Upgrade to unlock offer sheet
+                    </a>
+                  </div>
+                )}
 
                 {result.aiExplanation && (
                   <div style={panel}>
