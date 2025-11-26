@@ -15,7 +15,7 @@ type FormState = {
   salePrice: number;
   downPayment: number;
   apr: number;
-  termMonths: number; // UI uses months now
+  termMonths: number;
   paymentFrequency: PaymentFrequency;
   monthlyIncome: number;
   monthsOnJob: number;
@@ -23,7 +23,7 @@ type FormState = {
 };
 
 // ----------------------------------------
-// Color Tokens (Automatic Light/Dark)
+// Theme Tokens
 // ----------------------------------------
 
 const theme = {
@@ -47,7 +47,6 @@ const theme = {
   },
 };
 
-// Auto-detect system theme
 function getSystemTheme() {
   if (typeof window === "undefined") return "dark";
   return window.matchMedia("(prefers-color-scheme: light)").matches
@@ -63,7 +62,6 @@ export default function HomePage() {
   const [mode, setMode] = useState<"light" | "dark">(getSystemTheme());
   const colors = theme[mode];
 
-  // Listen for OS theme changes
   useEffect(() => {
     const matcher = window.matchMedia("(prefers-color-scheme: light)");
     const handler = () => setMode(matcher.matches ? "light" : "dark");
@@ -81,7 +79,7 @@ export default function HomePage() {
     salePrice: 12900,
     downPayment: 1000,
     apr: 24.99,
-    termMonths: 36, // default monthly term
+    termMonths: 36,
     paymentFrequency: "monthly",
     monthlyIncome: 2400,
     monthsOnJob: 6,
@@ -117,7 +115,7 @@ export default function HomePage() {
   }, []);
 
   // ----------------------------------------
-  // Input hander
+  // Input handler
   // ----------------------------------------
 
   function handleChange(
@@ -146,8 +144,7 @@ export default function HomePage() {
     setResult(null);
 
     try {
-      // Convert months → weeks before sending
-      const termWeeks = Math.round(form.termMonths * 4.345); // accurate conversion
+      const termWeeks = Math.round(form.termMonths * 4.345);
 
       const payload = {
         ...form,
@@ -161,31 +158,22 @@ export default function HomePage() {
         body: JSON.stringify(payload),
       });
 
-      let data: any = null;
-      let rawText = "";
-
+      let data: any;
       try {
         const clone = res.clone();
         data = await clone.json();
       } catch {
-        rawText = await res.text();
+        data = { error: await res.text() };
       }
 
       if (!res.ok) {
-        setError(
-          data?.error ||
-            rawText ||
-            `Server returned ${res.status} — could not analyze deal.`
-        );
+        setError(data.error || `Server error ${res.status}`);
         return;
       }
 
       setResult(data);
 
-      if (
-        typeof data.dealsThisMonth === "number" &&
-        typeof data.freeDealsPerMonth === "number"
-      ) {
+      if (data.dealsThisMonth && data.freeDealsPerMonth) {
         setUsage({
           dealsThisMonth: data.dealsThisMonth,
           freeDealsPerMonth: data.freeDealsPerMonth,
@@ -199,7 +187,7 @@ export default function HomePage() {
   }
 
   // ----------------------------------------
-  // Shared Styles
+  // Styles
   // ----------------------------------------
 
   const containerStyle: CSSProperties = {
@@ -224,7 +212,6 @@ export default function HomePage() {
     flexWrap: "wrap",
     gap: "28px",
     marginTop: "24px",
-    alignItems: "flex-start",
   };
 
   const panel: CSSProperties = {
@@ -232,7 +219,7 @@ export default function HomePage() {
     border: `1px solid ${colors.border}`,
     borderRadius: "14px",
     padding: "24px",
-    boxShadow: `0 12px 32px rgba(0,0,0,0.32)`,
+    boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
     transition: "all 0.2s ease",
   };
 
@@ -266,7 +253,7 @@ export default function HomePage() {
     borderRadius: "999px",
     border: "none",
     background:
-      "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)", // works on light & dark
+      "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
     color: "white",
     fontWeight: 600,
     letterSpacing: ".04em",
@@ -317,7 +304,7 @@ export default function HomePage() {
 
         {/* Layout */}
         <div style={layout}>
-          {/* Left panel */}
+          {/* Left side */}
           <section style={{ flex: "1 1 380px", ...panel }}>
             {authLoaded && !userId && (
               <div
@@ -335,10 +322,8 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Form */}
             <form onSubmit={handleSubmit} style={{ display: "grid", gap: 24 }}>
               <div style={grid}>
-                {/* Inputs */}
                 <div>
                   <label style={label}>Vehicle cost</label>
                   <input
@@ -471,7 +456,7 @@ export default function HomePage() {
             </form>
           </section>
 
-          {/* Right column */}
+          {/* Right side */}
           <section
             style={{
               flex: "1 1 260px",
@@ -507,7 +492,7 @@ export default function HomePage() {
             )}
 
             {/* Summary */}
-            {(result && (
+            {result ? (
               <>
                 {/* Deal Summary */}
                 <div style={panel}>
@@ -515,24 +500,23 @@ export default function HomePage() {
                     Deal summary
                   </h2>
 
-                  <ul style={{ paddingLeft: 0, listStyle: "none", lineHeight: 1.7 }}>
+                  <ul
+                    style={{
+                      paddingLeft: 0,
+                      listStyle: "none",
+                      lineHeight: 1.7,
+                    }}
+                  >
                     <li>
-                      Weekly payment:{" "}
-                      <strong>
-                        ${result.payment.toFixed(2)}
-                      </strong>
+                      Payment: <strong>${result.payment.toFixed(2)}</strong>
                     </li>
                     <li>
                       Total interest:{" "}
-                      <strong>
-                        ${result.totalInterest.toFixed(2)}
-                      </strong>
+                      <strong>${result.totalInterest.toFixed(2)}</strong>
                     </li>
                     <li>
-                      Total profit (incl interest):{" "}
-                      <strong>
-                        ${result.totalProfit.toFixed(2)}
-                      </strong>
+                      Total profit:{" "}
+                      <strong>${result.totalProfit.toFixed(2)}</strong>
                     </li>
                     <li>
                       Break even (week):{" "}
@@ -546,7 +530,13 @@ export default function HomePage() {
                   <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                     Basic risk
                   </h2>
-                  <ul style={{ paddingLeft: 0, listStyle: "none", lineHeight: 1.7 }}>
+                  <ul
+                    style={{
+                      paddingLeft: 0,
+                      listStyle: "none",
+                      lineHeight: 1.7,
+                    }}
+                  >
                     <li>
                       Payment-to-income:{" "}
                       <strong>
@@ -570,10 +560,18 @@ export default function HomePage() {
                     </p>
 
                     {result.underwriting.reasons?.length > 0 && (
-                      <ul style={{ marginTop: 8, paddingLeft: 18, lineHeight: 1.6 }}>
-                        {result.underwriting.reasons.map((r: string, i: number) => (
-                          <li key={i}>{r}</li>
-                        ))}
+                      <ul
+                        style={{
+                          marginTop: 8,
+                          paddingLeft: 18,
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {result.underwriting.reasons.map(
+                          (r: string, i: number) => (
+                            <li key={i}>{r}</li>
+                          )
+                        )}
                       </ul>
                     )}
                   </div>
@@ -585,6 +583,7 @@ export default function HomePage() {
                     <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                       AI deal opinion
                     </h2>
+
                     <p
                       style={{
                         fontSize: "14px",
@@ -597,7 +596,7 @@ export default function HomePage() {
                   </div>
                 )}
               </>
-            )) || (
+            ) : (
               <div style={panel}>
                 <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                   Deal summary
