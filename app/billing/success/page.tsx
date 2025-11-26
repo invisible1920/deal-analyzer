@@ -11,11 +11,31 @@ type SuccessPageProps = {
 
 export default function BillingSuccessPage({ searchParams }: SuccessPageProps) {
   const [sessionId] = useState<string | undefined>(searchParams.session_id);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    // Optional: you could call an API route here to verify the session
-    // and refresh the user profile, but your webhook should already
-    // upgrade the plan on checkout.session.completed.
+    if (!sessionId) return;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/stripe/confirm-pro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          setSaveError(data.error || `Error ${res.status}`);
+        } else {
+          setSaved(true);
+        }
+      } catch (err: any) {
+        setSaveError(err?.message || "Failed to confirm Pro plan");
+      }
+    })();
   }, [sessionId]);
 
   return (
@@ -29,7 +49,7 @@ export default function BillingSuccessPage({ searchParams }: SuccessPageProps) {
         background: "#0b1120",
         color: "#e2e8f0",
         fontFamily:
-          '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif',
+          '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif'
       }}
     >
       <div
@@ -41,14 +61,14 @@ export default function BillingSuccessPage({ searchParams }: SuccessPageProps) {
           border: "1px solid #1f2937",
           padding: 32,
           boxShadow: "0 18px 40px rgba(0,0,0,0.55)",
-          textAlign: "center",
+          textAlign: "center"
         }}
       >
         <h1
           style={{
             fontSize: 26,
             fontWeight: 700,
-            marginBottom: 8,
+            marginBottom: 8
           }}
         >
           Pro plan activated (test mode)
@@ -58,7 +78,7 @@ export default function BillingSuccessPage({ searchParams }: SuccessPageProps) {
           style={{
             fontSize: 15,
             color: "#9ca3af",
-            marginBottom: 16,
+            marginBottom: 16
           }}
         >
           Thank you for your payment. Your BHPH Deal Analyzer account will now
@@ -72,10 +92,35 @@ export default function BillingSuccessPage({ searchParams }: SuccessPageProps) {
               fontSize: 12,
               color: "#6b7280",
               marginBottom: 16,
-              wordBreak: "break-all",
+              wordBreak: "break-all"
             }}
           >
-            Stripe session: <span style={{ fontFamily: "monospace" }}>{sessionId}</span>
+            Stripe session{" "}
+            <span style={{ fontFamily: "monospace" }}>{sessionId}</span>
+          </p>
+        )}
+
+        {saved && !saveError && (
+          <p
+            style={{
+              fontSize: 13,
+              color: "#22c55e",
+              marginBottom: 16
+            }}
+          >
+            Account updated in Supabase, you can now use Pro features.
+          </p>
+        )}
+
+        {saveError && (
+          <p
+            style={{
+              fontSize: 13,
+              color: "#f97373",
+              marginBottom: 16
+            }}
+          >
+            Could not update account in database: {saveError}
           </p>
         )}
 
@@ -93,7 +138,7 @@ export default function BillingSuccessPage({ searchParams }: SuccessPageProps) {
               fontWeight: 600,
               letterSpacing: ".04em",
               textDecoration: "none",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
             }}
           >
             Back to analyzer
@@ -108,7 +153,7 @@ export default function BillingSuccessPage({ searchParams }: SuccessPageProps) {
               background: "transparent",
               color: "#e5e7eb",
               fontSize: 14,
-              textDecoration: "none",
+              textDecoration: "none"
             }}
           >
             View account settings
