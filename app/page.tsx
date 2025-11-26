@@ -178,7 +178,7 @@ export default function HomePage() {
     width: "100%",
     padding: "8px 10px",
     borderRadius: "8px",
-    border: "1px solid #374151",
+    border: "1px solid "#374151",
     background: "#020617",
     color: "#e5e7eb",
     fontSize: "13px",
@@ -226,6 +226,32 @@ export default function HomePage() {
     color: "#9ca3af",
     fontSize: "13px",
     marginBottom: "4px"
+  };
+
+  const headerRowStyle: CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "12px",
+    marginBottom: "4px"
+  };
+
+  const upgradeButtonStyle: CSSProperties = {
+    padding: "7px 14px",
+    borderRadius: "999px",
+    border: "1px solid rgba(59, 130, 246, 0.7)",
+    background:
+      "linear-gradient(to right, rgba(79, 70, 229, 0.9), rgba(59, 130, 246, 0.9))",
+    color: "#f9fafb",
+    fontSize: "12px",
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+    textDecoration: "none",
+    boxShadow:
+      "0 10px 25px rgba(37, 99, 235, 0.55), 0 0 0 1px rgba(30, 64, 175, 0.75)",
+    whiteSpace: "nowrap",
+    alignSelf: "flex-start"
   };
 
   const pillRowStyle: CSSProperties = {
@@ -299,38 +325,44 @@ export default function HomePage() {
   return (
     <main style={containerStyle}>
       <div style={cardStyle}>
-        <header>
-          <h1 style={headerTitleStyle}>BHPH Deal Analyzer</h1>
-          <p style={headerSubTitleStyle}>
-            Enter a deal and see payment, profit, PTI, LTV, and AI underwriting in seconds.
-          </p>
+        <header style={headerRowStyle}>
+          <div>
+            <h1 style={headerTitleStyle}>BHPH Deal Analyzer</h1>
+            <p style={headerSubTitleStyle}>
+              Enter a deal and see payment, profit, PTI, LTV, and AI underwriting in seconds.
+            </p>
 
-          <div style={pillRowStyle}>
-            <span style={pillStyle}>
-              <span
-                style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "999px",
-                  background: "#22c55e"
-                }}
-              />
-              <span>Backend</span>
-              <span style={{ color: "#e5e7eb", fontWeight: 600 }}>Supabase</span>
-            </span>
-            <span style={pillStyle}>
-              <span
-                style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "999px",
-                  background: "#38bdf8"
-                }}
-              />
-              <span>AI underwriting</span>
-              <span style={{ color: "#e5e7eb", fontWeight: 600 }}>GPT 4.1 mini</span>
-            </span>
+            <div style={pillRowStyle}>
+              <span style={pillStyle}>
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "999px",
+                    background: "#22c55e"
+                  }}
+                />
+                <span>Backend</span>
+                <span style={{ color: "#e5e7eb", fontWeight: 600 }}>Supabase</span>
+              </span>
+              <span style={pillStyle}>
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "999px",
+                    background: "#38bdf8"
+                  }}
+                />
+                <span>AI underwriting</span>
+                <span style={{ color: "#e5e7eb", fontWeight: 600 }}>GPT 4.1 mini</span>
+              </span>
+            </div>
           </div>
+
+          <a href="/billing" style={upgradeButtonStyle}>
+            Upgrade to Pro
+          </a>
         </header>
 
         <div style={layoutStyle}>
@@ -545,21 +577,15 @@ export default function HomePage() {
                   <ul style={summaryListStyle}>
                     <li style={listItemStyle}>
                       Weekly payment:{" "}
-                      <strong>
-                        {formatCurrency(result.payment, 2)}
-                      </strong>
+                      <strong>{formatCurrency(result.payment, 2)}</strong>
                     </li>
                     <li style={listItemStyle}>
                       Total interest:{" "}
-                      <strong>
-                        {formatCurrency(result.totalInterest, 2)}
-                      </strong>
+                      <strong>{formatCurrency(result.totalInterest, 2)}</strong>
                     </li>
                     <li style={listItemStyle}>
                       Total profit including interest:{" "}
-                      <strong>
-                        {formatCurrency(result.totalProfit, 2)}
-                      </strong>
+                      <strong>{formatCurrency(result.totalProfit, 2)}</strong>
                     </li>
                     <li style={listItemStyle}>
                       Break even week:{" "}
@@ -573,13 +599,12 @@ export default function HomePage() {
                   <ul style={summaryListStyle}>
                     <li style={listItemStyle}>
                       Payment to income ratio:{" "}
-                      <strong>
-                        {formatPercentFromFraction(result.paymentToIncome)}
-                      </strong>
+                        <strong>
+                          {formatPercentFromFraction(result.paymentToIncome)}
+                        </strong>
                     </li>
                     <li style={listItemStyle}>
-                      Risk score:{" "}
-                      <strong>{result.riskScore}</strong>
+                      Risk score: <strong>{result.riskScore}</strong>
                     </li>
                   </ul>
                 </div>
