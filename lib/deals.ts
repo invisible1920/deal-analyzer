@@ -37,7 +37,7 @@ export async function saveDeal(payload: SavedDealInput): Promise<void> {
   const { error } = await supabaseAdmin.from("deals").insert({
     user_id: payload.userId,
     input: payload.input,
-    result: payload.result
+    result: payload.result,
   });
 
   if (error) {
@@ -75,7 +75,7 @@ export async function listDeals(
       createdAt: row.created_at as string,
       userId: (row.user_id as string | null) ?? null,
       input: row.input,
-      result: row.result
+      result: row.result,
     })
   );
 }
@@ -101,6 +101,6 @@ export async function getDealById(id: string): Promise<SavedDeal | null> {
     createdAt: data.created_at as string,
     userId: (data.user_id as string | null) ?? null,
     input: data.input,
-    result: data.result
+    result: data.result,
   } as SavedDeal;
 }
