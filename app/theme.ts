@@ -12,7 +12,7 @@ export const themeColors = {
     text: "#0f172a",
     textSecondary: "#475569",
     inputBg: "#ffffff",
-    inputBorder: "#cbd5e1"
+    inputBorder: "#cbd5e1",
   },
   dark: {
     bg: "#0b1120",
@@ -21,8 +21,8 @@ export const themeColors = {
     text: "#e2e8f0",
     textSecondary: "#94a3b8",
     inputBg: "#1e293b",
-    inputBorder: "#475569"
-  }
+    inputBorder: "#475569",
+  },
 };
 
 export function useSystemTheme(): ThemeName {
