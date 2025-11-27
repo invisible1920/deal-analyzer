@@ -10,12 +10,32 @@ export default function AuthCallbackPage() {
   const colors = themeColors.light;
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      // After cookie is set by the server, redirect into the app
-      router.replace("/dealer/settings");
-    }, 600);
+    let cancelled = false;
 
-    return () => clearTimeout(timeout);
+    async function finishAuth() {
+      try {
+        // Call API route to set dealer_session cookie on the server
+        await fetch("/api/dealer/session", {
+          method: "POST"
+        });
+
+        if (!cancelled) {
+          // After cookie is set, send user into dealer app
+          router.replace("/dealer/settings");
+        }
+      } catch (e) {
+        // If something fails, fall back to login
+        if (!cancelled) {
+          router.replace("/login");
+        }
+      }
+    }
+
+    finishAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   return (
@@ -40,7 +60,7 @@ export default function AuthCallbackPage() {
             border: `1px solid ${colors.border}`,
             background: colors.panel,
             textAlign: "center",
-            boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)"
+            boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)`
           }}
         >
           <h1
