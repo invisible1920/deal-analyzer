@@ -188,11 +188,7 @@ export default async function DealDetailPage(props: {
                   value={ptiPercent !== null ? ptiPercent : "N A"}
                   suffix={ptiPercent !== null ? "%" : undefined}
                 />
-                <Row
-                  label="LTV"
-                  value={ltvPercent}
-                  suffix="%"
-                />
+                <Row label="LTV" value={ltvPercent} suffix="%" />
                 <Row
                   label="Risk score"
                   value={deal.result.riskScore}
