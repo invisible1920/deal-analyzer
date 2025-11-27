@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { themeColors } from "@/app/theme";
 
 type SavedDeal = {
   id: string;
@@ -34,6 +35,8 @@ type SavedDeal = {
 };
 
 export default function HistoryPage() {
+  const colors = themeColors.light;
+
   const [deals, setDeals] = useState<SavedDeal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,8 +77,8 @@ export default function HistoryPage() {
   const pageStyle: CSSProperties = {
     minHeight: "100vh",
     padding: "24px",
-    background: "radial-gradient(circle at top, #0f172a, #020617 55%)",
-    color: "#e5e7eb",
+    background: colors.bg,
+    color: colors.text,
     fontFamily:
       'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif'
   };
@@ -112,26 +115,24 @@ export default function HistoryPage() {
     gap: "4px",
     padding: "4px 8px",
     borderRadius: "999px",
-    background: "rgba(15, 23, 42, 0.85)",
-    border: "1px solid rgba(51, 65, 85, 0.9)",
-    color: "#9ca3af"
+    background: colors.panel,
+    border: `1px solid ${colors.border}`,
+    color: colors.textSecondary
   };
 
   const panelStyle: CSSProperties = {
-    background: "rgba(15, 23, 42, 0.95)",
-    border: "1px solid #1f2937",
+    background: colors.panel,
+    border: `1px solid ${colors.border}`,
     borderRadius: "16px",
     padding: "16px",
-    boxShadow:
-      "0 18px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(15, 23, 42, 0.7)"
+    boxShadow: "0 18px 40px rgba(0, 0, 0, 0.08)"
   };
 
   const tableWrapperStyle: CSSProperties = {
     overflowX: "auto",
     borderRadius: "12px",
-    border: "1px solid #1f2937",
-    background:
-      "linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.95))"
+    border: `1px solid ${colors.border}`,
+    background: colors.panel
   };
 
   const tableStyle: CSSProperties = {
@@ -143,11 +144,10 @@ export default function HistoryPage() {
   const thStyle: CSSProperties = {
     textAlign: "left",
     padding: "10px 12px",
-    borderBottom: "1px solid #1f2937",
-    color: "#9ca3af",
+    borderBottom: `1px solid ${colors.border}`,
+    color: colors.textSecondary,
     fontWeight: 500,
-    background:
-      "linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.75))",
+    background: colors.panel,
     position: "sticky",
     top: 0,
     zIndex: 1,
@@ -156,7 +156,7 @@ export default function HistoryPage() {
 
   const tdStyle: CSSProperties = {
     padding: "9px 12px",
-    borderBottom: "1px solid #020617",
+    borderBottom: `1px solid ${colors.border}`,
     fontSize: "13px",
     whiteSpace: "nowrap"
   };
@@ -167,10 +167,9 @@ export default function HistoryPage() {
   };
 
   const rowHoverStyle: CSSProperties = {
-    background:
-      "radial-gradient(circle at left, rgba(56, 189, 248, 0.08), transparent 55%)",
+    background: "rgba(59, 130, 246, 0.06)",
     transform: "translateY(-1px)",
-    boxShadow: "0 6px 18px rgba(15, 23, 42, 0.9)"
+    boxShadow: "0 6px 18px rgba(148, 163, 184, 0.35)"
   };
 
   const verdictBadgeBase: CSSProperties = {
@@ -189,32 +188,32 @@ export default function HistoryPage() {
   const verdictStyles: Record<string, CSSProperties> = {
     APPROVE: {
       ...verdictBadgeBase,
-      background: "rgba(22, 163, 74, 0.12)",
-      color: "#4ade80",
-      border: "1px solid rgba(34, 197, 94, 0.6)"
+      background: "rgba(22, 163, 74, 0.08)",
+      color: "#15803d",
+      border: "1px solid rgba(22, 163, 74, 0.5)"
     },
     COUNTER: {
       ...verdictBadgeBase,
-      background: "rgba(234, 179, 8, 0.14)",
-      color: "#facc15",
-      border: "1px solid rgba(250, 204, 21, 0.6)"
+      background: "rgba(234, 179, 8, 0.1)",
+      color: "#92400e",
+      border: "1px solid rgba(245, 158, 11, 0.6)"
     },
     DECLINE: {
       ...verdictBadgeBase,
-      background: "rgba(248, 113, 113, 0.15)",
-      color: "#fb7185",
+      background: "rgba(248, 113, 113, 0.12)",
+      color: "#b91c1c",
       border: "1px solid rgba(248, 113, 113, 0.7)"
     },
     DEFAULT: {
       ...verdictBadgeBase,
-      background: "rgba(75, 85, 99, 0.2)",
-      color: "#e5e7eb",
-      border: "1px solid rgba(75, 85, 99, 0.8)"
+      background: "rgba(148, 163, 184, 0.12)",
+      color: colors.textSecondary,
+      border: `1px solid ${colors.border}`
     }
   };
 
   const linkStyle: CSSProperties = {
-    color: "#60a5fa",
+    color: "#2563eb",
     textDecoration: "none",
     cursor: "pointer",
     fontSize: "12px",
@@ -224,7 +223,7 @@ export default function HistoryPage() {
   };
 
   const mutedTextStyle: CSSProperties = {
-    color: "#9ca3af",
+    color: colors.textSecondary,
     fontSize: "13px"
   };
 
@@ -241,11 +240,6 @@ export default function HistoryPage() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
-  }
-
-  function formatPercentFromFraction(value: number | null | undefined) {
-    if (value == null || Number.isNaN(value)) return "n/a";
-    return `${(value * 100).toFixed(1)}%`;
   }
 
   const totalDeals = deals.length;
@@ -267,11 +261,11 @@ export default function HistoryPage() {
             </h1>
             <p
               style={{
-                color: "#9ca3af",
+                color: colors.textSecondary,
                 fontSize: "13px"
               }}
             >
-              Review saved deals with payment, profit, PTI, LTV, and underwriting verdict.
+              Review saved deals with payment, profit, PTI, LTV and underwriting verdict.
             </p>
           </div>
 
@@ -287,7 +281,7 @@ export default function HistoryPage() {
                   }}
                 />
                 <span>Deals this account</span>
-                <span style={{ color: "#e5e7eb", fontWeight: 600 }}>
+                <span style={{ color: colors.text, fontWeight: 600 }}>
                   {totalDeals}
                 </span>
               </span>
@@ -298,7 +292,7 @@ export default function HistoryPage() {
         {!userId && !loading && (
           <p
             style={{
-              color: "#facc15",
+              color: "#92400e",
               fontSize: "13px",
               marginBottom: "12px",
               display: "inline-flex",
@@ -306,8 +300,8 @@ export default function HistoryPage() {
               gap: "6px",
               padding: "6px 10px",
               borderRadius: "999px",
-              background: "rgba(161, 98, 7, 0.12)",
-              border: "1px solid rgba(250, 204, 21, 0.45)"
+              background: "#fef3c7",
+              border: "1px solid #facc15"
             }}
           >
             <span
@@ -337,7 +331,7 @@ export default function HistoryPage() {
                   height: "14px",
                   borderRadius: "999px",
                   border: "2px solid rgba(148, 163, 184, 0.5)",
-                  borderTopColor: "#60a5fa",
+                  borderTopColor: "#2563eb",
                   animation: "spin 700ms linear infinite"
                 }}
               />
@@ -348,7 +342,7 @@ export default function HistoryPage() {
           {error && (
             <p
               style={{
-                color: "#f87171",
+                color: "#b91c1c",
                 marginBottom: "8px",
                 fontSize: "13px"
               }}
@@ -362,9 +356,8 @@ export default function HistoryPage() {
               style={{
                 padding: "14px 12px",
                 borderRadius: "12px",
-                border: "1px dashed #4b5563",
-                background:
-                  "linear-gradient(to bottom right, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.7))"
+                border: `1px dashed ${colors.border}`,
+                background: colors.bg
               }}
             >
               <p style={{ ...mutedTextStyle, marginBottom: "2px" }}>
@@ -394,14 +387,14 @@ export default function HistoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {deals.map((deal) => {
+                  {deals.map(deal => {
                     const date = new Date(deal.createdAt);
                     const ptiDisplay =
                       deal.result.paymentToIncome != null
-                        ? `${(deal.result.paymentToIncome * 100).toFixed(1)}%`
+                        ? `${(deal.result.paymentToIncome * 100).toFixed(1)} percent`
                         : "n/a";
                     const ltvPercent =
-                      (deal.result.ltv * 100).toFixed(1) + "%";
+                      (deal.result.ltv * 100).toFixed(1) + " percent";
 
                     const verdict = deal.result.underwritingVerdict || "";
                     const verdictStyle =
@@ -415,13 +408,13 @@ export default function HistoryPage() {
                       <tr
                         key={deal.id}
                         style={combinedRowStyle}
-                        onMouseEnter={(e) => {
+                        onMouseEnter={e => {
                           Object.assign(
                             (e.currentTarget as HTMLTableRowElement).style,
                             rowHoverStyle
                           );
                         }}
-                        onMouseLeave={(e) => {
+                        onMouseLeave={e => {
                           Object.assign(
                             (e.currentTarget as HTMLTableRowElement).style,
                             rowStyle
@@ -442,7 +435,7 @@ export default function HistoryPage() {
                             <span
                               style={{
                                 fontSize: "11px",
-                                color: "#6b7280"
+                                color: colors.textSecondary
                               }}
                             >
                               {date.toLocaleTimeString()}
@@ -482,7 +475,7 @@ export default function HistoryPage() {
                                 opacity: 0.8
                               }}
                             >
-                              ›
+                              {"›"}
                             </span>
                           </a>
                         </td>
