@@ -3,13 +3,18 @@
 import { useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { themeColors } from "@/app/theme";
+import PageContainer from "@/components/PageContainer";
 
 export default function LoginPage() {
   const router = useRouter();
+  const colors = themeColors.light;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -50,128 +55,296 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    try {
+      setError(null);
+      setMessage(null);
+      setGoogleLoading(true);
+
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google"
+        // If you have an auth callback route configured:
+        // options: { redirectTo: `${window.location.origin}/auth/callback` }
+      });
+
+      if (error) {
+        setError(error.message);
+        setGoogleLoading(false);
+      }
+      // On success, Supabase will redirect according to your settings
+    } catch (err: any) {
+      setError(err?.message || "Google sign in failed");
+      setGoogleLoading(false);
+    }
+  }
+
+  // Styles using the shared theme
   const pageStyle: CSSProperties = {
     minHeight: "100vh",
-    padding: "24px",
-    background: "#020617",
-    color: "#e5e7eb"
+    background: colors.bg,
+    color: colors.text,
+    fontFamily:
+      'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+    display: "flex",
+    alignItems: "center"
+  };
+
+  const shellStyle: CSSProperties = {
+    width: "100%",
+    maxWidth: "420px",
+    margin: "0 auto"
   };
 
   const cardStyle: CSSProperties = {
-    maxWidth: "400px",
-    margin: "0 auto",
-    border: "1px solid #1f2937",
-    borderRadius: "12px",
-    padding: "16px",
-    marginTop: "40px",
-    background: "#020617"
+    background: colors.panel,
+    border: `1px solid ${colors.border}`,
+    borderRadius: "16px",
+    padding: "24px",
+    boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)"
+  };
+
+  const titleStyle: CSSProperties = {
+    fontSize: "24px",
+    fontWeight: 700,
+    marginBottom: "4px",
+    textAlign: "center" as const,
+    letterSpacing: "-0.03em"
+  };
+
+  const subtitleStyle: CSSProperties = {
+    color: colors.textSecondary,
+    fontSize: "13px",
+    textAlign: "center" as const,
+    marginBottom: "20px"
+  };
+
+  const labelStyle: CSSProperties = {
+    fontSize: "12px",
+    color: colors.textSecondary,
+    marginBottom: "4px"
   };
 
   const inputStyle: CSSProperties = {
     width: "100%",
-    padding: "8px",
-    borderRadius: "6px",
-    border: "1px solid #374151",
-    background: "#020617",
-    color: "#e5e7eb",
-    marginBottom: "8px"
+    padding: "10px 12px",
+    borderRadius: "10px",
+    border: `1px solid ${colors.border}`,
+    background: colors.bg,
+    color: colors.text,
+    fontSize: "14px",
+    outline: "none",
+    marginBottom: "12px"
   };
 
-  const buttonStyle: CSSProperties = {
+  const primaryButtonStyle: CSSProperties = {
     width: "100%",
-    padding: "8px",
-    borderRadius: "6px",
+    padding: "10px 12px",
+    borderRadius: "999px",
     border: "none",
     background: "#4f46e5",
     color: "white",
+    fontSize: "14px",
+    fontWeight: 600,
     cursor: loading ? "default" : "pointer",
-    opacity: loading ? 0.6 : 1,
-    marginTop: "8px"
+    opacity: loading ? 0.7 : 1,
+    marginTop: "4px"
+  };
+
+  const googleButtonStyle: CSSProperties = {
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: "999px",
+    border: `1px solid ${colors.border}`,
+    background: colors.bg,
+    color: colors.text,
+    fontSize: "14px",
+    fontWeight: 500,
+    cursor: googleLoading ? "default" : "pointer",
+    opacity: googleLoading ? 0.7 : 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    marginBottom: "8px"
+  };
+
+  const dividerRowStyle: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    margin: "16px 0"
+  };
+
+  const dividerLineStyle: CSSProperties = {
+    flex: 1,
+    height: "1px",
+    background: colors.border
+  };
+
+  const dividerTextStyle: CSSProperties = {
+    fontSize: "11px",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.12em",
+    color: colors.textSecondary
   };
 
   const toggleStyle: CSSProperties = {
     fontSize: "13px",
-    marginTop: "8px",
-    color: "#9ca3af",
+    marginTop: "16px",
+    color: colors.textSecondary,
+    textAlign: "center" as const
+  };
+
+  const toggleButtonStyle: CSSProperties = {
+    border: "none",
+    background: "transparent",
+    color: "#2563eb",
+    padding: 0,
+    marginLeft: "4px",
     cursor: "pointer",
-    textAlign: "center"
+    fontSize: "13px",
+    fontWeight: 500
+  };
+
+  const alertErrorStyle: CSSProperties = {
+    marginTop: "10px",
+    borderRadius: "10px",
+    padding: "8px 10px",
+    fontSize: "13px",
+    background: "rgba(248,113,113,0.08)",
+    border: "1px solid rgba(248,113,113,0.6)",
+    color: "#b91c1c"
+  };
+
+  const alertSuccessStyle: CSSProperties = {
+    marginTop: "10px",
+    borderRadius: "10px",
+    padding: "8px 10px",
+    fontSize: "13px",
+    background: "rgba(34,197,94,0.08)",
+    border: "1px solid rgba(34,197,94,0.6)",
+    color: "#15803d"
   };
 
   return (
     <main style={pageStyle}>
-      <div style={cardStyle}>
-        <h1
-          style={{
-            fontSize: "20px",
-            fontWeight: 700,
-            marginBottom: "8px",
-            textAlign: "center"
-          }}
-        >
-          {mode === "login" ? "Dealer login" : "Create dealer account"}
-        </h1>
-        <p
-          style={{
-            color: "#9ca3af",
-            fontSize: "13px",
-            textAlign: "center",
-            marginBottom: "16px"
-          }}
-        >
-          Use your email and password to access your deals.
-        </p>
+      <PageContainer>
+        <div style={shellStyle}>
+          <div style={cardStyle}>
+            <h1 style={titleStyle}>
+              {mode === "login" ? "Dealer login" : "Create dealer account"}
+            </h1>
+            <p style={subtitleStyle}>
+              Sign in to run deals, save history and keep your BHPH numbers tight.
+            </p>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            style={inputStyle}
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            style={inputStyle}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            {/* Google SSO */}
+            <button
+              type="button"
+              style={googleButtonStyle}
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading || loading}
+            >
+              {/* Simple G icon substitute so you do not need an asset set up */}
+              <span
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: "4px",
+                  border: "1px solid rgba(148,163,184,0.6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "11px",
+                  fontWeight: 700
+                }}
+              >
+                G
+              </span>
+              <span>
+                {googleLoading ? "Connecting to Google..." : "Continue with Google"}
+              </span>
+            </button>
 
-          <button type="submit" disabled={loading} style={buttonStyle}>
-            {loading
-              ? mode === "login"
-                ? "Logging in..."
-                : "Signing up..."
-              : mode === "login"
-              ? "Log in"
-              : "Sign up"}
-          </button>
-        </form>
+            <div style={dividerRowStyle}>
+              <div style={dividerLineStyle} />
+              <span style={dividerTextStyle}>or use email</span>
+              <div style={dividerLineStyle} />
+            </div>
 
-        {error && (
-          <p style={{ color: "#f87171", fontSize: "13px", marginTop: "8px" }}>
-            Error: {error}
-          </p>
-        )}
-        {message && (
-          <p style={{ color: "#4ade80", fontSize: "13px", marginTop: "8px" }}>
-            {message}
-          </p>
-        )}
+            {/* Email login form */}
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: "6px" }}>
+                <label style={labelStyle} htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  style={inputStyle}
+                  placeholder="you@dealership.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-        <div
-          style={toggleStyle}
-          onClick={() =>
-            setMode((prev) => (prev === "login" ? "signup" : "login"))
-          }
-        >
-          {mode === "login"
-            ? "New here? Create an account."
-            : "Already have an account? Log in."}
+              <div style={{ marginBottom: "4px" }}>
+                <label style={labelStyle} htmlFor="password">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  style={inputStyle}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || googleLoading}
+                style={primaryButtonStyle}
+              >
+                {loading
+                  ? mode === "login"
+                    ? "Logging in..."
+                    : "Signing up..."
+                  : mode === "login"
+                  ? "Log in"
+                  : "Sign up"}
+              </button>
+            </form>
+
+            {error && (
+              <div style={alertErrorStyle}>
+                <strong style={{ marginRight: 4 }}>Error:</strong>
+                <span>{error}</span>
+              </div>
+            )}
+
+            {message && (
+              <div style={alertSuccessStyle}>{message}</div>
+            )}
+
+            <div style={toggleStyle}>
+              {mode === "login" ? "New here?" : "Already have an account?"}
+              <button
+                type="button"
+                style={toggleButtonStyle}
+                onClick={() =>
+                  setMode((prev) => (prev === "login" ? "signup" : "login"))
+                }
+              >
+                {mode === "login" ? "Create an account" : "Log in"}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </PageContainer>
     </main>
   );
 }
