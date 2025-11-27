@@ -127,6 +127,121 @@ export default function HomePage() {
     }));
   }
 
+
+  function printUnderwritingPacket() {
+  if (!result) return;
+  if (typeof window === "undefined") return;
+
+  const dealerName =
+    result.dealerSettings?.dealerName || "BHPH Deal Analyzer";
+
+  const ptiPercent =
+    typeof result.paymentToIncome === "number"
+      ? (result.paymentToIncome * 100).toFixed(1) + " percent"
+      : "N A";
+  const ltvPercent =
+    typeof result.ltv === "number"
+      ? (result.ltv * 100).toFixed(1) + " percent"
+      : "N A";
+
+  const verdictText =
+    result.underwriting?.verdict || result.underwritingVerdict || "PENDING";
+
+  const reasons =
+    result.underwriting?.reasons ||
+    result.underwritingReasons ||
+    [];
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Underwriting packet</title>
+      <meta charset="utf-8" />
+      <style>
+        body {
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          padding: 32px;
+          color: #0f172a;
+          background: #f8fafc;
+        }
+        h1 { font-size: 22px; margin: 0; }
+        h2 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; }
+        .sub { font-size: 13px; color: #64748b; margin-top: 2px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
+        .label { color: #64748b; }
+        .value { font-weight: 600; }
+        .divider { margin: 18px 0; border-top: 1px solid #e2e8f0; }
+        ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+        .ai-block { margin-top: 12px; font-size: 13px; white-space: pre-wrap; }
+      </style>
+    </head>
+    <body>
+      <h1>${dealerName}</h1>
+      <div class="sub">Underwriting packet</div>
+
+      <div class="divider"></div>
+
+      <h2>Summary</h2>
+      <div class="row">
+        <span class="label">Payment</span>
+        <span class="value">$${result.payment.toFixed(2)}</span>
+      </div>
+      <div class="row">
+        <span class="label">Total profit</span>
+        <span class="value">$${result.totalProfit.toFixed(2)}</span>
+      </div>
+      <div class="row">
+        <span class="label">PTI</span>
+        <span class="value">${ptiPercent}</span>
+      </div>
+      <div class="row">
+        <span class="label">LTV</span>
+        <span class="value">${ltvPercent}</span>
+      </div>
+      <div class="row">
+        <span class="label">Verdict</span>
+        <span class="value">${verdictText}</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <h2>Underwriting reasons</h2>
+      ${
+        reasons.length
+          ? `<ul>${reasons.map((r: string) => `<li>${r}</li>`).join("")}</ul>`
+          : "<p>No detailed reasons recorded.</p>"
+      }
+
+      ${
+        result.aiExplanation
+          ? `
+      <div class="divider"></div>
+      <h2>AI underwriting commentary</h2>
+      <div class="ai-block">${result.aiExplanation.replace(
+        /</g,
+        "&lt;"
+      )}</div>
+      `
+          : ""
+      }
+
+      <script>
+        window.focus();
+        window.print();
+      </script>
+    </body>
+    </html>
+  `;
+
+  const w = window.open("", "_blank", "width=900,height=1100");
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+
   async function runAnalysis(formState: FormState) {
     setError(null);
     setLoading(true);
