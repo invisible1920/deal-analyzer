@@ -28,8 +28,9 @@ export function setSessionCookie() {
     name: SESSION_COOKIE,
     value: signed,
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production", // important: not secure on localhost
     sameSite: "lax",
+    path: "/",                                     // important: send cookie to all routes
     maxAge: 60 * 60 * 24 * 7
   });
 }
@@ -38,7 +39,8 @@ export function clearSessionCookie() {
   cookies().set({
     name: SESSION_COOKIE,
     value: "",
-    maxAge: 0
+    maxAge: 0,
+    path: "/"
   });
 }
 
