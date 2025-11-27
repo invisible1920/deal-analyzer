@@ -5,7 +5,6 @@ import { supabaseClient } from "@/lib/supabaseClient";
 import { themeColors } from "@/app/theme";
 import PageContainer from "@/components/PageContainer";
 
-// Types
 type PaymentFrequency = "monthly" | "biweekly" | "weekly";
 
 type FormState = {
@@ -26,20 +25,18 @@ type PlanType = "free" | "pro";
 export default function HomePage() {
   const colors = themeColors.light;
 
- const [form, setForm] = useState<FormState>({
-  vehicleCost: 6000,
-  reconCost: 1000,
-  // tuned so the first analyze click is a clean approval
-  salePrice: 11800,
-  downPayment: 1000,
-  apr: 24.99,
-  termMonths: 23, // about 100 weeks, under your 104 week cap
-  paymentFrequency: "monthly",
-  monthlyIncome: 2400,
-  monthsOnJob: 6,
-  pastRepo: false
-});
-
+  const [form, setForm] = useState<FormState>({
+    vehicleCost: 6000,
+    reconCost: 1000,
+    salePrice: 11800,
+    downPayment: 1000,
+    apr: 24.99,
+    termMonths: 23,
+    paymentFrequency: "monthly",
+    monthlyIncome: 2400,
+    monthsOnJob: 6,
+    pastRepo: false
+  });
 
   const [userId, setUserId] = useState<string | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
@@ -54,10 +51,10 @@ export default function HomePage() {
   } | null>(null);
 
   const defaultPolicy = {
-  maxPTI: 0.25,
-  maxLTV: 1.75,
-  maxTermWeeks: 160
-};
+    maxPTI: 0.25,
+    maxLTV: 1.75,
+    maxTermWeeks: 160
+  };
 
   const policy = result?.dealerSettings ?? defaultPolicy;
   const isPro = planType === "pro";
@@ -109,7 +106,7 @@ export default function HomePage() {
       }
     }
 
-    loadUserAndPlan();
+    void loadUserAndPlan();
   }, []);
 
   function handleChange(
@@ -127,149 +124,119 @@ export default function HomePage() {
     }));
   }
 
-
   function printUnderwritingPacket() {
-  if (!result) return;
-  if (typeof window === "undefined") return;
+    if (!result) return;
+    if (typeof window === "undefined") return;
 
-  const dealerName =
-    result.dealerSettings?.dealerName || "BHPH Deal Analyzer";
+    const dealerName =
+      result.dealerSettings?.dealerName || "BHPH Deal Analyzer";
 
-  const ptiPercent =
-    typeof result.paymentToIncome === "number"
-      ? (result.paymentToIncome * 100).toFixed(1) + " percent"
-      : "N A";
-  const ltvPercent =
-    typeof result.ltv === "number"
-      ? (result.ltv * 100).toFixed(1) + " percent"
-      : "N A";
+    const ptiPercent =
+      typeof result.paymentToIncome === "number"
+        ? (result.paymentToIncome * 100).toFixed(1) + " percent"
+        : "N A";
 
-  const verdictText =
-    result.underwriting?.verdict || result.underwritingVerdict || "PENDING";
+    const ltvPercent =
+      typeof result.ltv === "number"
+        ? (result.ltv * 100).toFixed(1) + " percent"
+        : "N A";
 
-  const reasons =
-    result.underwriting?.reasons ||
-    result.underwritingReasons ||
-    [];
+    const verdictText =
+      result.underwriting?.verdict || result.underwritingVerdict || "PENDING";
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Underwriting packet</title>
-      <meta charset="utf-8" />
-      <style>
-        body {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-          padding: 32px;
-          color: #0f172a;
-          background: #f8fafc;
+    const reasons =
+      result.underwriting?.reasons || result.underwritingReasons || [];
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Underwriting packet</title>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            padding: 32px;
+            color: #0f172a;
+            background: #f8fafc;
+          }
+          h1 { font-size: 22px; margin: 0; }
+          h2 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; }
+          .sub { font-size: 13px; color: #64748b; margin-top: 2px; }
+          .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
+          .label { color: #64748b; }
+          .value { font-weight: 600; }
+          .divider { margin: 18px 0; border-top: 1px solid #e2e8f0; }
+          ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+          .ai-block { margin-top: 12px; font-size: 13px; white-space: pre-wrap; }
+        </style>
+      </head>
+      <body>
+        <h1>${dealerName}</h1>
+        <div class="sub">Underwriting packet</div>
+
+        <div class="divider"></div>
+
+        <h2>Summary</h2>
+        <div class="row">
+          <span class="label">Payment</span>
+          <span class="value">$${result.payment.toFixed(2)}</span>
+        </div>
+        <div class="row">
+          <span class="label">Total profit</span>
+          <span class="value">$${result.totalProfit.toFixed(2)}</span>
+        </div>
+        <div class="row">
+          <span class="label">PTI</span>
+          <span class="value">${ptiPercent}</span>
+        </div>
+        <div class="row">
+          <span class="label">LTV</span>
+          <span class="value">${ltvPercent}</span>
+        </div>
+        <div class="row">
+          <span class="label">Verdict</span>
+          <span class="value">${verdictText}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Underwriting reasons</h2>
+        ${
+          reasons.length
+            ? `<ul>${reasons
+                .map((r: string) => `<li>${r}</li>`)
+                .join("")}</ul>`
+            : "<p>No detailed reasons recorded.</p>"
         }
-        h1 { font-size: 22px; margin: 0; }
-        h2 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; }
-        .sub { font-size: 13px; color: #64748b; margin-top: 2px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
-        .label { color: #64748b; }
-        .value { font-weight: 600; }
-        .divider { margin: 18px 0; border-top: 1px solid #e2e8f0; }
-        ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
-        .ai-block { margin-top: 12px; font-size: 13px; white-space: pre-wrap; }
-      </style>
-    </head>
-    <body>
-      <h1>${dealerName}</h1>
-      <div class="sub">Underwriting packet</div>
 
-      <div class="divider"></div>
+        ${
+          result.aiExplanation
+            ? `
+        <div class="divider"></div>
+        <h2>AI underwriting commentary</h2>
+        <div class="ai-block">${String(result.aiExplanation).replace(
+          /</g,
+          "&lt;"
+        )}</div>
+        `
+            : ""
+        }
 
-      <h2>Summary</h2>
-      <div class="row">
-        <span class="label">Payment</span>
-        <span class="value">$${result.payment.toFixed(2)}</span>
-      </div>
-      <div class="row">
-        <span class="label">Total profit</span>
-        <span class="value">$${result.totalProfit.toFixed(2)}</span>
-      </div>
-      <div class="row">
-        <span class="label">PTI</span>
-        <span class="value">${ptiPercent}</span>
-      </div>
-      <div class="row">
-        <span class="label">LTV</span>
-        <span class="value">${ltvPercent}</span>
-      </div>
-      <div class="row">
-        <span class="label">Verdict</span>
-        <span class="value">${verdictText}</span>
-      </div>
+        <script>
+          window.focus();
+          window.print();
+        </script>
+      </body>
+      </html>
+    `;
 
-      <div class="divider"></div>
-
-      <h2>Underwriting reasons</h2>
-      ${
-        reasons.length
-          ? `<ul>${reasons.map((r: string) => `<li>${r}</li>`).join("")}</ul>`
-          : "<p>No detailed reasons recorded.</p>"
-      }
-
-      ${
-        result.aiExplanation
-          ? `
-      <div class="divider"></div>
-      <h2>AI underwriting commentary</h2>
-      <div class="ai-block">${result.aiExplanation.replace(
-        /</g,
-        "&lt;"
-      )}</div>
-      `
-          : ""
-      }
-
-      <script>
-        window.focus();
-        window.print();
-      </script>
-    </body>
-    </html>
-  `;
-
-    <section style={panel}>
-  <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-    Underwriting packet
-  </h2>
-  <p
-    style={{
-      fontSize: "14px",
-      color: colors.textSecondary,
-      marginBottom: 12
-    }}
-  >
-    Print a full underwriting summary with verdict, reasons, PTI, LTV and AI commentary.
-  </p>
-  {isPro ? (
-    <button
-      type="button"
-      style={btnSecondary}
-      onClick={printUnderwritingPacket}
-    >
-      Print underwriting packet
-    </button>
-  ) : (
-    <a href="/billing" style={btnSecondary}>
-      Upgrade to unlock underwriting packet
-    </a>
-  )}
-</section>
-
-
-  const w = window.open("", "_blank", "width=900,height=1100");
-  if (!w) return;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-}
-
+    const w = window.open("", "_blank", "width=900,height=1100");
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
 
   async function runAnalysis(formState: FormState) {
     setError(null);
@@ -737,56 +704,6 @@ export default function HomePage() {
     transition: "width 0.25s ease"
   };
 
-{result?.schedulePreview && (
-  <section style={panel}>
-    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-      Payment schedule preview
-    </h2>
-    <table
-      style={{
-        width: "100%",
-        borderCollapse: "collapse",
-        fontSize: "12px"
-      }}
-    >
-      <thead>
-        <tr>
-          <th style={{ textAlign: "left", paddingBottom: 6 }}>Period</th>
-          <th style={{ textAlign: "right", paddingBottom: 6 }}>Interest</th>
-          <th style={{ textAlign: "right", paddingBottom: 6 }}>Principal</th>
-          <th style={{ textAlign: "right", paddingBottom: 6 }}>Balance</th>
-        </tr>
-      </thead>
-      <tbody>
-        {result.schedulePreview.map((row: any) => (
-          <tr key={row.period}>
-            <td>{row.period}</td>
-            <td style={{ textAlign: "right" }}>
-              {row.interest.toFixed(2)}
-            </td>
-            <td style={{ textAlign: "right" }}>
-              {row.principal.toFixed(2)}
-            </td>
-            <td style={{ textAlign: "right" }}>
-              {row.balance.toFixed(2)}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-    <p
-      style={{
-        marginTop: 8,
-        fontSize: 11,
-        color: colors.textSecondary
-      }}
-    >
-      Showing first 12 periods only for a quick glance.
-    </p>
-  </section>
-)}
-
-  
   const riskChipStyle = (riskScore: string): CSSProperties => {
     const base: CSSProperties = {
       display: "inline-flex",
@@ -1178,7 +1095,7 @@ export default function HomePage() {
                 Deal analysis
               </h2>
 
-              {/* two row three column results grid */}
+              {/* results grid */}
               <div style={resultsGrid}>
                 {/* row one */}
                 <section style={panel}>
@@ -1317,7 +1234,85 @@ export default function HomePage() {
                   </section>
                 )}
 
-                {/* row two */}
+                {/* row two panels */}
+
+                {result?.schedulePreview && (
+                  <section style={panel}>
+                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                      Payment schedule preview
+                    </h2>
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: "12px"
+                      }}
+                    >
+                      <thead>
+                        <tr>
+                          <th
+                            style={{
+                              textAlign: "left",
+                              paddingBottom: 6
+                            }}
+                          >
+                            Period
+                          </th>
+                          <th
+                            style={{
+                              textAlign: "right",
+                              paddingBottom: 6
+                            }}
+                          >
+                            Interest
+                          </th>
+                          <th
+                            style={{
+                              textAlign: "right",
+                              paddingBottom: 6
+                            }}
+                          >
+                            Principal
+                          </th>
+                          <th
+                            style={{
+                              textAlign: "right",
+                              paddingBottom: 6
+                            }}
+                          >
+                            Balance
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.schedulePreview.map((row: any) => (
+                          <tr key={row.period}>
+                            <td>{row.period}</td>
+                            <td style={{ textAlign: "right" }}>
+                              {row.interest.toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              {row.principal.toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              {row.balance.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p
+                      style={{
+                        marginTop: 8,
+                        fontSize: 11,
+                        color: colors.textSecondary
+                      }}
+                    >
+                      Showing first 12 periods only for a quick glance.
+                    </p>
+                  </section>
+                )}
+
                 {isPro &&
                   result.underwriting &&
                   result.underwriting.adjustments &&
@@ -1356,10 +1351,7 @@ export default function HomePage() {
                           <li style={summaryRow}>
                             <span style={summaryLabel}>Term target</span>
                             <span style={summaryValue}>
-                              {
-                                result.underwriting.adjustments
-                                  .newTermWeeks
-                              }{" "}
+                              {result.underwriting.adjustments.newTermWeeks}{" "}
                               weeks
                             </span>
                           </li>
@@ -1430,6 +1422,35 @@ export default function HomePage() {
                   ) : (
                     <a href="/billing" style={btnSecondary}>
                       Upgrade to unlock offer sheet
+                    </a>
+                  )}
+                </section>
+
+                <section style={panel}>
+                  <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                    Underwriting packet
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      color: colors.textSecondary,
+                      marginBottom: 12
+                    }}
+                  >
+                    Print a full underwriting summary with verdict, reasons,
+                    PTI, LTV and AI commentary.
+                  </p>
+                  {isPro ? (
+                    <button
+                      type="button"
+                      style={btnSecondary}
+                      onClick={printUnderwritingPacket}
+                    >
+                      Print underwriting packet
+                    </button>
+                  ) : (
+                    <a href="/billing" style={btnSecondary}>
+                      Upgrade to unlock underwriting packet
                     </a>
                   )}
                 </section>
