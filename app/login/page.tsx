@@ -19,41 +19,59 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setMessage(null);
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  setMessage(null);
 
-    try {
-      if (mode === "signup") {
-        const { error } = await supabaseClient.auth.signUp({
-          email,
-          password
-        });
-        if (error) {
-          setError(error.message);
-          return;
-        }
-        setMessage(
-          "Sign up successful. If email confirmation is required, check your inbox."
-        );
-      } else {
-        const { error } = await supabaseClient.auth.signInWithPassword({
-          email,
-          password
-        });
-        if (error) {
-          setError(error.message);
-          return;
-        }
-        router.push("/");
+  try {
+    if (mode === "signup") {
+      const { error } = await supabaseClient.auth.signUp({
+        email,
+        password
+      });
+      if (error) {
+        setError(error.message);
+        return;
       }
-    } catch (err: any) {
-      setError(err?.message || "Auth error");
-    } finally {
-      setLoading(false);
+      setMessage(
+        "Sign up successful. If email confirmation is required, check your inbox."
+      );
+    } else {
+      // First, Supabase email + password auth
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Then, hit your API route to set the dealer_session cookie
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password })
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || "Failed to create session cookie");
+        return;
+      }
+
+      router.push("/");
     }
+  } catch (err: any) {
+    setError(err?.message || "Auth error");
+  } finally {
+    setLoading(false);
   }
+}
+
 
   async function handleGoogleSignIn() {
   try {
