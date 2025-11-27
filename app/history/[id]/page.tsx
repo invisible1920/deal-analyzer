@@ -176,15 +176,16 @@ export default function DealDetailPage() {
 
   <button
   onClick={() => {
-    if (!userId) return;
+    const uid = deal.user_id;
+    if (!uid) return;
     window.location.href = `/api/deals/export?userId=${encodeURIComponent(
-      userId
+      uid
     )}`;
   }}
-  className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white"
 >
-  Export CSV
+  Export deals CSV
 </button>
+
 
 
   const buttonGhost: CSSProperties = {
