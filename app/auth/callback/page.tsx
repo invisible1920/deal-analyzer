@@ -14,17 +14,15 @@ export default function AuthCallbackPage() {
 
     async function finishAuth() {
       try {
-        // Call API route to set dealer_session cookie on the server
+        // Call API route to set dealer_session cookie
         await fetch("/api/dealer/session", {
           method: "POST"
         });
 
         if (!cancelled) {
-          // After cookie is set, send user into dealer app
           router.replace("/dealer/settings");
         }
       } catch (e) {
-        // If something fails, fall back to login
         if (!cancelled) {
           router.replace("/login");
         }
@@ -60,7 +58,7 @@ export default function AuthCallbackPage() {
             border: `1px solid ${colors.border}`,
             background: colors.panel,
             textAlign: "center",
-            boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)`
+            boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)" // FIXED
           }}
         >
           <h1
