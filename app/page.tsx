@@ -52,10 +52,10 @@ export default function HomePage() {
   } | null>(null);
 
   const defaultPolicy = {
-    maxPTI: 0.25,
-    maxLTV: 1.75,
-    maxTermWeeks: 104
-  };
+  maxPTI: 0.25,
+  maxLTV: 1.75,
+  maxTermWeeks: 160
+};
 
   const policy = result?.dealerSettings ?? defaultPolicy;
   const isPro = planType === "pro";
