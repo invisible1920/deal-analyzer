@@ -19,14 +19,17 @@ export default function SettingsPage() {
 
   const [loadingUser, setLoadingUser] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // friendlier defaults that will approve the sample deal
   const [form, setForm] = useState<SettingsForm>({
     dealerName: "My BHPH Store",
     defaultAPR: 24.99,
     maxPTI: 0.25,
-    maxLTV: 1.4,
-    minDownPayment: 800,
-    maxTermWeeks: 104
+    maxLTV: 1.75,
+    minDownPayment: 1000,
+    maxTermWeeks: 160
   });
+
   const [loadingSettings, setLoadingSettings] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,9 +68,9 @@ export default function SettingsPage() {
             dealerName: settingsRow.dealer_name ?? "My BHPH Store",
             defaultAPR: Number(settingsRow.default_apr ?? 24.99),
             maxPTI: Number(settingsRow.max_pti ?? 0.25),
-            maxLTV: Number(settingsRow.max_ltv ?? 1.4),
-            minDownPayment: Number(settingsRow.min_down_payment ?? 800),
-            maxTermWeeks: Number(settingsRow.max_term_weeks ?? 104)
+            maxLTV: Number(settingsRow.max_ltv ?? 1.75),
+            minDownPayment: Number(settingsRow.min_down_payment ?? 1000),
+            maxTermWeeks: Number(settingsRow.max_term_weeks ?? 160)
           });
         }
       } catch (err: any) {
@@ -294,7 +297,7 @@ export default function SettingsPage() {
 
                   <div>
                     <label style={labelStyle}>
-                      Max LTV (1.40 for 140 percent)
+                      Max LTV (1.75 for 175 percent)
                     </label>
                     <input
                       type="number"
