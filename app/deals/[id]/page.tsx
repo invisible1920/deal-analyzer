@@ -56,8 +56,6 @@ export default async function DealDetailPage(props: {
       ? (deal.result.paymentToIncome * 100).toFixed(1)
       : null;
 
-  const ltvPercent = (deal.result.ltv * 100).toFixed(1);
-
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-5xl px-4 pb-12 pt-6">
@@ -188,7 +186,7 @@ export default async function DealDetailPage(props: {
                   value={ptiPercent !== null ? ptiPercent : "N A"}
                   suffix={ptiPercent !== null ? "%" : undefined}
                 />
-                <Row label="LTV" value={ltvPercent} suffix="%" />
+                {/* LTV row removed to avoid duplication with DealCard */}
                 <Row
                   label="Risk score"
                   value={deal.result.riskScore}
