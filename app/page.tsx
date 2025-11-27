@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { themeColors } from "@/app/theme";
 
 // Types
 type PaymentFrequency = "monthly" | "biweekly" | "weekly";
@@ -21,31 +22,9 @@ type FormState = {
 
 type PlanType = "free" | "pro";
 
-// Theme tokens
-const theme = {
-  light: {
-    bg: "#f8fafc",
-    panel: "#ffffff",
-    border: "#e2e8f0",
-    text: "#0f172a",
-    textSecondary: "#475569",
-    inputBg: "#ffffff",
-    inputBorder: "#cbd5e1",
-  },
-  dark: {
-    bg: "#0b1120",
-    panel: "#111827",
-    border: "#334155",
-    text: "#e2e8f0",
-    textSecondary: "#94a3b8",
-    inputBg: "#1e293b",
-    inputBorder: "#475569",
-  },
-};
-
 export default function HomePage() {
   // Force light mode to avoid dark to light flicker
-  const colors = theme.light;
+  const colors = themeColors.light;
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -58,7 +37,7 @@ export default function HomePage() {
     paymentFrequency: "monthly",
     monthlyIncome: 2400,
     monthsOnJob: 6,
-    pastRepo: false,
+    pastRepo: false
   });
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -77,7 +56,7 @@ export default function HomePage() {
   const defaultPolicy = {
     maxPTI: 0.25,
     maxLTV: 1.75,
-    maxTermWeeks: 104,
+    maxTermWeeks: 104
   };
 
   const policy = result?.dealerSettings ?? defaultPolicy;
@@ -100,7 +79,7 @@ export default function HomePage() {
         const res = await fetch("/api/profile-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: uid }),
+          body: JSON.stringify({ userId: uid })
         });
 
         if (res.ok) {
@@ -118,7 +97,7 @@ export default function HomePage() {
           ) {
             setUsage({
               dealsThisMonth: json.dealsThisMonth,
-              freeDealsPerMonth: json.freeDealsPerMonth,
+              freeDealsPerMonth: json.freeDealsPerMonth
             });
           }
         } else {
@@ -139,14 +118,14 @@ export default function HomePage() {
     field: keyof FormState,
     value: string | number | boolean
   ) {
-    setForm((prev) => ({
+    setForm(prev => ({
       ...prev,
       [field]:
         typeof prev[field] === "number"
           ? Number(value)
           : typeof value === "string"
           ? value
-          : value,
+          : value
     }));
   }
 
@@ -162,13 +141,13 @@ export default function HomePage() {
       const payload = {
         ...formState,
         termWeeks,
-        userId,
+        userId
       };
 
       const res = await fetch("/api/analyzeDeal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
       let data: any;
@@ -203,7 +182,7 @@ export default function HomePage() {
       ) {
         setUsage({
           dealsThisMonth: data.dealsThisMonth,
-          freeDealsPerMonth: data.freeDealsPerMonth,
+          freeDealsPerMonth: data.freeDealsPerMonth
         });
       }
     } catch (err: any) {
@@ -241,7 +220,7 @@ export default function HomePage() {
       termMonths:
         typeof adj.newTermWeeks === "number" && adj.newTermWeeks > 0
           ? Math.round(adj.newTermWeeks / 4.345)
-          : form.termMonths,
+          : form.termMonths
     };
 
     setForm(nextForm);
@@ -266,7 +245,7 @@ export default function HomePage() {
       apr,
       termMonths,
       paymentFrequency,
-      monthlyIncome,
+      monthlyIncome
     } = form;
 
     const amountFinanced = salePrice - downPayment;
@@ -432,19 +411,19 @@ export default function HomePage() {
     justifyContent: "center",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif',
-    transition: "all 0.2s ease",
+    transition: "all 0.2s ease"
   };
 
   const cardStyle: CSSProperties = {
     maxWidth: "1180px",
-    width: "100%",
+    width: "100%"
   };
 
   const layout: CSSProperties = {
     display: "flex",
     flexWrap: "wrap",
     gap: "28px",
-    marginTop: "24px",
+    marginTop: "24px"
   };
 
   const panel: CSSProperties = {
@@ -453,7 +432,7 @@ export default function HomePage() {
     borderRadius: "14px",
     padding: "24px",
     boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
-    transition: "all 0.2s ease",
+    transition: "all 0.2s ease"
   };
 
   const input: CSSProperties = {
@@ -463,7 +442,7 @@ export default function HomePage() {
     border: `1px solid ${colors.inputBorder}`,
     background: colors.inputBg,
     color: colors.text,
-    fontSize: "14px",
+    fontSize: "14px"
   };
 
   const label: CSSProperties = {
@@ -472,13 +451,13 @@ export default function HomePage() {
     display: "block",
     fontWeight: 600,
     color: colors.textSecondary,
-    letterSpacing: ".02em",
+    letterSpacing: ".02em"
   };
 
   const grid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "20px",
+    gap: "20px"
   };
 
   const btn: CSSProperties = {
@@ -493,14 +472,14 @@ export default function HomePage() {
     opacity: loading ? 0.6 : 1,
     fontSize: "14px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-    transition: "all 0.2s ease",
+    transition: "all 0.2s ease"
   };
 
   const btnSecondary: CSSProperties = {
     ...btn,
     padding: "8px 16px",
     fontSize: "13px",
-    boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.2)"
   };
 
   const proBadge: CSSProperties = {
@@ -511,13 +490,13 @@ export default function HomePage() {
     fontSize: "11px",
     fontWeight: 700,
     letterSpacing: ".08em",
-    textTransform: "uppercase",
+    textTransform: "uppercase"
   };
 
   const smallUpsell: CSSProperties = {
     marginTop: 10,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: colors.textSecondary
   };
 
   // Helper for PTI display to avoid weird output when there is no income
@@ -535,7 +514,7 @@ export default function HomePage() {
             display: "flex",
             justifyContent: "space-between",
             gap: "20px",
-            alignItems: "center",
+            alignItems: "center"
           }}
         >
           <div>
@@ -544,7 +523,7 @@ export default function HomePage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                marginBottom: 6,
+                marginBottom: 6
               }}
             >
               <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
@@ -560,7 +539,7 @@ export default function HomePage() {
               style={{
                 marginTop: 6,
                 fontSize: 13,
-                color: colors.textSecondary,
+                color: colors.textSecondary
               }}
             >
               Policy in use max LTV about{" "}
@@ -577,7 +556,7 @@ export default function HomePage() {
                 ...btn,
                 padding: "10px 20px",
                 fontSize: "13px",
-                whiteSpace: "nowrap",
+                whiteSpace: "nowrap"
               }}
             >
               Upgrade to Pro
@@ -598,7 +577,7 @@ export default function HomePage() {
                   borderRadius: "10px",
                   marginBottom: "16px",
                   fontSize: "13px",
-                  color: "#facc15",
+                  color: "#facc15"
                 }}
               >
                 Not logged in, deals will not be saved.
@@ -613,7 +592,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.vehicleCost}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("vehicleCost", e.target.value)
                     }
                   />
@@ -625,9 +604,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.reconCost}
-                    onChange={(e) =>
-                      handleChange("reconCost", e.target.value)
-                    }
+                    onChange={e => handleChange("reconCost", e.target.value)}
                   />
                 </div>
 
@@ -637,9 +614,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.salePrice}
-                    onChange={(e) =>
-                      handleChange("salePrice", e.target.value)
-                    }
+                    onChange={e => handleChange("salePrice", e.target.value)}
                   />
                 </div>
 
@@ -649,7 +624,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.downPayment}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("downPayment", e.target.value)
                     }
                   />
@@ -661,7 +636,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.apr}
-                    onChange={(e) => handleChange("apr", e.target.value)}
+                    onChange={e => handleChange("apr", e.target.value)}
                   />
                 </div>
 
@@ -671,7 +646,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.termMonths}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("termMonths", e.target.value)
                     }
                   />
@@ -682,7 +657,7 @@ export default function HomePage() {
                   <select
                     style={input}
                     value={form.paymentFrequency}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("paymentFrequency", e.target.value)
                     }
                   >
@@ -698,7 +673,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.monthlyIncome}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("monthlyIncome", e.target.value)
                     }
                   />
@@ -710,7 +685,7 @@ export default function HomePage() {
                     type="number"
                     style={input}
                     value={form.monthsOnJob}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("monthsOnJob", e.target.value)
                     }
                   />
@@ -721,7 +696,7 @@ export default function HomePage() {
                     id="pastRepo"
                     type="checkbox"
                     checked={form.pastRepo}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("pastRepo", e.target.checked)
                     }
                   />
@@ -745,7 +720,7 @@ export default function HomePage() {
               flex: "1 1 260px",
               display: "flex",
               flexDirection: "column",
-              gap: "20px",
+              gap: "20px"
             }}
           >
             {/* Usage */}
@@ -796,7 +771,7 @@ export default function HomePage() {
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7,
+                      lineHeight: 1.7
                     }}
                   >
                     <li>
@@ -826,7 +801,7 @@ export default function HomePage() {
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7,
+                      lineHeight: 1.7
                     }}
                   >
                     <li>
@@ -866,7 +841,7 @@ export default function HomePage() {
                         style={{
                           marginTop: 8,
                           paddingLeft: 18,
-                          lineHeight: 1.6,
+                          lineHeight: 1.6
                         }}
                       >
                         {result.underwriting.reasons.map(
@@ -903,7 +878,7 @@ export default function HomePage() {
                           paddingLeft: 0,
                           listStyle: "none",
                           lineHeight: 1.7,
-                          marginBottom: 12,
+                          marginBottom: 12
                         }}
                       >
                         {typeof result.underwriting.adjustments
@@ -978,7 +953,7 @@ export default function HomePage() {
                       style={{
                         fontSize: "14px",
                         color: colors.textSecondary,
-                        marginBottom: 12,
+                        marginBottom: 12
                       }}
                     >
                       Generate a clean one page offer you can print or save as
@@ -1003,7 +978,7 @@ export default function HomePage() {
                       style={{
                         fontSize: "14px",
                         color: colors.textSecondary,
-                        marginBottom: 12,
+                        marginBottom: 12
                       }}
                     >
                       Pro users can generate a printable one page customer offer
@@ -1023,7 +998,7 @@ export default function HomePage() {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        marginBottom: 10,
+                        marginBottom: 10
                       }}
                     >
                       <h2 style={{ fontSize: "17px" }}>AI deal opinion</h2>
@@ -1034,7 +1009,7 @@ export default function HomePage() {
                       style={{
                         fontSize: "14px",
                         lineHeight: 1.6,
-                        whiteSpace: "pre-wrap",
+                        whiteSpace: "pre-wrap"
                       }}
                     >
                       {result.aiExplanation}
@@ -1055,7 +1030,12 @@ export default function HomePage() {
                 <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                   Deal summary
                 </h2>
-                <p style={{ fontSize: "14px", color: colors.textSecondary }}>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: colors.textSecondary
+                  }}
+                >
                   Run a deal to see payment, profit, PTI, LTV and underwriting.
                 </p>
               </div>
