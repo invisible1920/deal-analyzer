@@ -1,3 +1,4 @@
+// lib/auth.ts
 import { cookies } from "next/headers";
 import crypto from "crypto";
 
@@ -28,9 +29,9 @@ export function setSessionCookie() {
     name: SESSION_COOKIE,
     value: signed,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // important: not secure on localhost
+    secure: process.env.NODE_ENV === "production", // key change
     sameSite: "lax",
-    path: "/",                                     // important: send cookie to all routes
+    path: "/",                                     // important
     maxAge: 60 * 60 * 24 * 7
   });
 }
