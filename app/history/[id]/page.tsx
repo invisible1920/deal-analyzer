@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { themeColors } from "@/app/theme";
 
 type SavedDeal = {
   id: string;
@@ -33,6 +34,8 @@ type SavedDeal = {
 };
 
 export default function DealDetailPage() {
+  const colors = themeColors.light;
+
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -73,8 +76,8 @@ export default function DealDetailPage() {
   const pageStyle: CSSProperties = {
     minHeight: "100vh",
     padding: "24px",
-    background: "#020617",
-    color: "#e5e7eb"
+    background: colors.bg,
+    color: colors.text
   };
 
   const cardStyle: CSSProperties = {
@@ -83,8 +86,8 @@ export default function DealDetailPage() {
   };
 
   const panelStyle: CSSProperties = {
-    background: "#020617",
-    border: "1px solid #1f2937",
+    background: colors.panel,
+    border: `1px solid ${colors.border}`,
     borderRadius: "12px",
     padding: "16px",
     marginTop: "16px"
@@ -99,7 +102,7 @@ export default function DealDetailPage() {
 
   const labelStyle: CSSProperties = {
     fontSize: "12px",
-    color: "#9ca3af"
+    color: colors.textSecondary
   };
 
   const valueStyle: CSSProperties = {
@@ -139,20 +142,26 @@ export default function DealDetailPage() {
           style={{
             marginBottom: "8px",
             fontSize: "13px",
-            color: "#60a5fa",
+            color: "#2563eb",
             background: "transparent",
             border: "none",
             cursor: "pointer"
           }}
         >
-          ← Back to history
+          {"←"} Back to history
         </button>
 
-        <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "4px" }}>
+        <h1
+          style={{
+            fontSize: "24px",
+            fontWeight: 700,
+            marginBottom: "4px"
+          }}
+        >
           Deal sheet
         </h1>
-        <p style={{ color: "#9ca3af", marginBottom: "8px" }}>
-          Printable summary for this deal, including payment, profit, risk, and underwriting notes.
+        <p style={{ color: colors.textSecondary, marginBottom: "8px" }}>
+          Printable summary for this deal, including payment, profit, risk and underwriting notes.
         </p>
 
         <div
@@ -169,9 +178,9 @@ export default function DealDetailPage() {
             style={{
               padding: "6px 12px",
               borderRadius: "6px",
-              border: "1px solid #4b5563",
-              background: "#020617",
-              color: "#e5e7eb",
+              border: `1px solid ${colors.border}`,
+              background: colors.panel,
+              color: colors.text,
               fontSize: "13px",
               cursor: "pointer"
             }}
@@ -183,7 +192,7 @@ export default function DealDetailPage() {
         <div style={panelStyle}>
           {loading && <p style={{ fontSize: "14px" }}>Loading...</p>}
           {error && (
-            <p style={{ color: "#f87171", fontSize: "14px" }}>Error: {error}</p>
+            <p style={{ color: "#b91c1c", fontSize: "14px" }}>Error: {error}</p>
           )}
           {!loading && !error && !deal && (
             <p style={{ fontSize: "14px" }}>Deal not found.</p>
@@ -204,10 +213,20 @@ export default function DealDetailPage() {
                   <div style={{ fontSize: "18px", fontWeight: 600 }}>
                     BHPH Deal Analyzer
                   </div>
-                  <div style={{ fontSize: "13px", color: "#9ca3af" }}>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: colors.textSecondary
+                    }}
+                  >
                     Deal ID: {deal.id}
                   </div>
-                  <div style={{ fontSize: "13px", color: "#9ca3af" }}>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: colors.textSecondary
+                    }}
+                  >
                     Created: {new Date(deal.createdAt).toLocaleString()}
                   </div>
                 </div>
@@ -230,19 +249,27 @@ export default function DealDetailPage() {
                   <h2 style={sectionTitleStyle}>Vehicle and structure</h2>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Vehicle cost</div>
-                    <div style={valueStyle}>${deal.input.vehicleCost.toFixed(0)}</div>
+                    <div style={valueStyle}>
+                      ${deal.input.vehicleCost.toFixed(0)}
+                    </div>
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Recon cost</div>
-                    <div style={valueStyle}>${deal.input.reconCost.toFixed(0)}</div>
+                    <div style={valueStyle}>
+                      ${deal.input.reconCost.toFixed(0)}
+                    </div>
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Sale price</div>
-                    <div style={valueStyle}>${deal.input.salePrice.toFixed(0)}</div>
+                    <div style={valueStyle}>
+                      ${deal.input.salePrice.toFixed(0)}
+                    </div>
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Down payment</div>
-                    <div style={valueStyle}>${deal.input.downPayment.toFixed(0)}</div>
+                    <div style={valueStyle}>
+                      ${deal.input.downPayment.toFixed(0)}
+                    </div>
                   </div>
                 </div>
 
@@ -250,21 +277,28 @@ export default function DealDetailPage() {
                   <h2 style={sectionTitleStyle}>Finance summary</h2>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>APR</div>
-                    <div style={valueStyle}>{deal.input.apr.toFixed(2)} percent</div>
+                    <div style={valueStyle}>
+                      {deal.input.apr.toFixed(2)} percent
+                    </div>
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Term</div>
                     <div style={valueStyle}>
-                      {deal.input.termWeeks} weeks ({deal.input.paymentFrequency})
+                      {deal.input.termWeeks} weeks (
+                      {deal.input.paymentFrequency})
                     </div>
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Weekly payment</div>
-                    <div style={valueStyle}>${deal.result.payment.toFixed(2)}</div>
+                    <div style={valueStyle}>
+                      ${deal.result.payment.toFixed(2)}
+                    </div>
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Total interest</div>
-                    <div style={valueStyle}>${deal.result.totalInterest.toFixed(2)}</div>
+                    <div style={valueStyle}>
+                      ${deal.result.totalInterest.toFixed(2)}
+                    </div>
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Total profit including interest</div>
@@ -274,7 +308,9 @@ export default function DealDetailPage() {
                   </div>
                   <div style={{ marginBottom: "4px" }}>
                     <div style={labelStyle}>Break even week</div>
-                    <div style={valueStyle}>{deal.result.breakEvenWeek}</div>
+                    <div style={valueStyle}>
+                      {deal.result.breakEvenWeek}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -313,7 +349,9 @@ export default function DealDetailPage() {
                     <div style={labelStyle}>Payment to income</div>
                     <div style={valueStyle}>
                       {deal.result.paymentToIncome != null
-                        ? `${(deal.result.paymentToIncome * 100).toFixed(1)} percent`
+                        ? `${(deal.result.paymentToIncome * 100).toFixed(
+                            1
+                          )} percent`
                         : "n/a"}
                     </div>
                   </div>
@@ -380,12 +418,17 @@ export default function DealDetailPage() {
               <div
                 style={{
                   marginTop: "24px",
-                  borderTop: "1px solid #1f2937",
+                  borderTop: `1px solid ${colors.border}`,
                   paddingTop: "16px",
                   fontSize: "13px"
                 }}
               >
-                <p style={{ marginBottom: "24px", color: "#9ca3af" }}>
+                <p
+                  style={{
+                    marginBottom: "24px",
+                    color: colors.textSecondary
+                  }}
+                >
                   Customer acknowledges the above payment terms and structure:
                 </p>
                 <div
@@ -398,7 +441,7 @@ export default function DealDetailPage() {
                   <div style={{ flex: 1 }}>
                     <div
                       style={{
-                        borderBottom: "1px solid #4b5563",
+                        borderBottom: `1px solid ${colors.border}`,
                         height: "24px",
                         marginBottom: "4px"
                       }}
@@ -408,7 +451,7 @@ export default function DealDetailPage() {
                   <div style={{ flex: 1 }}>
                     <div
                       style={{
-                        borderBottom: "1px solid #4b5563",
+                        borderBottom: `1px solid ${colors.border}`,
                         height: "24px",
                         marginBottom: "4px"
                       }}
