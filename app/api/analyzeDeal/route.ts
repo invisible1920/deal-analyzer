@@ -76,7 +76,7 @@ function calculateSchedule(
   // APR
   const apr = input.apr && input.apr > 0 ? input.apr : settings.defaultAPR;
 
-  // Silent cap
+  // Silent cap on term
   const cappedTermWeeks =
     input.termWeeks && input.termWeeks > 0
       ? Math.min(input.termWeeks, settings.maxTermWeeks)
@@ -86,15 +86,12 @@ function calculateSchedule(
   let periods: number;
   let ratePerPeriod: number;
 
-  let weeklyPaymentForRisk: number = 0;
-
   // ========================================================================
   // Monthly Payments
   // ========================================================================
   if (input.paymentFrequency === "monthly") {
     const termMonths = cappedTermWeeks / 4.345;
     periods = Math.round(termMonths);
-
     if (periods < 1) periods = 1;
 
     ratePerPeriod = apr / 100 / 12;
@@ -104,9 +101,6 @@ function calculateSchedule(
         ? amountFinanced / periods
         : (amountFinanced * ratePerPeriod) /
           (1 - Math.pow(1 + ratePerPeriod, -periods));
-
-    // Convert monthly to weekly for PTI calculations
-    weeklyPaymentForRisk = payment / 4.345;
 
     // Build amort schedule (monthly)
     let balance = amountFinanced;
@@ -124,7 +118,7 @@ function calculateSchedule(
     // Profit
     const totalProfit = input.salePrice - totalCost + totalInterest;
 
-    // Break even in weeks (convert months to weeks for uniformity)
+    // Break even in weeks, convert months to weeks for uniformity
     let cumPrincipal = 0;
     let breakEvenWeek = cappedTermWeeks;
 
@@ -161,8 +155,6 @@ function calculateSchedule(
         ? amountFinanced / periods
         : (amountFinanced * ratePerPeriod) /
           (1 - Math.pow(1 + ratePerPeriod, -periods));
-
-    weeklyPaymentForRisk = payment / 2;
 
     let balance = amountFinanced;
     let totalInterest = 0;
@@ -207,15 +199,12 @@ function calculateSchedule(
   if (periods < 1) periods = 1;
 
   ratePerPeriod = apr / 100 / 52;
-  weeklyPaymentForRisk = 0;
 
   const payment =
     ratePerPeriod === 0
       ? amountFinanced / periods
       : (amountFinanced * ratePerPeriod) /
         (1 - Math.pow(1 + ratePerPeriod, -periods));
-
-  weeklyPaymentForRisk = payment;
 
   let balance = amountFinanced;
   let totalInterest = 0;
@@ -234,7 +223,7 @@ function calculateSchedule(
   let cumPrincipal = 0;
   let breakEvenWeek = cappedTermWeeks;
 
-  for (let row of schedule) {
+  for (const row of schedule) {
     cumPrincipal += row.principal;
     if (cumPrincipal >= totalCost) break;
   }
@@ -251,7 +240,7 @@ function calculateSchedule(
 }
 
 // ============================================================================
-// Basic Risk + PTI
+// Basic Risk and PTI
 // ============================================================================
 
 function basicRiskScore(
@@ -311,7 +300,7 @@ async function getAiOpinion(
     : "N/A";
 
   const prompt = `
-You are a senior buy-here-pay-here finance manager.
+You are a senior buy here pay here finance manager.
 
 Dealer policy:
 - Default APR: ${settings.defaultAPR}
@@ -346,8 +335,8 @@ Underwriting:
 
 Instructions:
 1. Your verdict must match underwriting.
-2. Start with a one-line verdict.
-3. Include 2–3 sentences explaining using real numbers.
+2. Start with a one line verdict.
+3. Include 2 to 3 sentences explaining using real numbers.
 4. End with one suggestion to improve structure.
 No AI disclaimers.
   `.trim();
@@ -440,9 +429,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ========================================================================
+    // ======================================================================
     // Core calculations
-    // ========================================================================
+    // ======================================================================
 
     const core = calculateSchedule(body, settings);
 
@@ -508,20 +497,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Underwriting returned to client is richer for Pro
-    const responseUnderwriting: UnderwritingResult | { verdict: string; reasons: string[] } =
-      isPro
-        ? underwriting
-        : {
-            verdict: underwriting.verdict,
-            reasons: [
-              "Basic policy check complete.",
-              "Upgrade to Pro to see detailed underwriting reasons, PTI and LTV violations, and recommended counter terms.",
-            ],
-          };
+    const responseUnderwriting:
+      | UnderwritingResult
+      | { verdict: string; reasons: string[] } = isPro
+      ? underwriting
+      : {
+          verdict: underwriting.verdict,
+          reasons: [
+            "Basic policy check complete.",
+            "Upgrade to Pro to see detailed underwriting reasons, PTI and LTV violations, and recommended counter terms.",
+          ],
+        };
 
-    // ========================================================================
+    // ======================================================================
     // Save deal to DB
-    // ========================================================================
+    // ======================================================================
 
     await saveDeal({
       userId,
@@ -551,29 +541,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Right before the final return
-const previewSchedule = core.schedule.slice(0, 12); // first 12 periods
+    // Build schedule preview for UI
+    const schedulePreview = core.schedule.slice(0, 12);
 
-return NextResponse.json({
-  payment: core.payment,
-  totalInterest: core.totalInterest,
-  totalProfit: core.totalProfit,
-  breakEvenWeek: core.breakEvenWeek,
-  paymentToIncome: risk.paymentToIncome,
-  ltv,
-  riskScore: risk.riskScore,
-  underwriting: responseUnderwriting,
-  aiExplanation,
-  dealerSettings: settings,
-  dealsThisMonth,
-  freeDealsPerMonth,
-  planType,
-  schedulePreview: previewSchedule
-});
-
-    // ========================================================================
+    // ======================================================================
     // Response
-    // ========================================================================
+    // ======================================================================
 
     return NextResponse.json({
       payment: core.payment,
@@ -589,6 +562,7 @@ return NextResponse.json({
       dealsThisMonth,
       freeDealsPerMonth,
       planType,
+      schedulePreview,
     });
   } catch (err: any) {
     return NextResponse.json(
