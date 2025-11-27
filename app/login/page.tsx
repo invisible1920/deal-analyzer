@@ -56,27 +56,44 @@ export default function LoginPage() {
   }
 
   async function handleGoogleSignIn() {
-    try {
-      setError(null);
-      setMessage(null);
-      setGoogleLoading(true);
+  try {
+    setError(null);
+    setMessage(null);
+    setGoogleLoading(true);
 
-      const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: "google"
-        // If you have an auth callback route configured:
-        // options: { redirectTo: `${window.location.origin}/auth/callback` }
-      });
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback`
+        : undefined;
 
-      if (error) {
-        setError(error.message);
-        setGoogleLoading(false);
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo
       }
-      // On success, Supabase will redirect according to your settings
-    } catch (err: any) {
-      setError(err?.message || "Google sign in failed");
+    });
+
+    if (error) {
+      if (
+        error.message?.includes("provider is not enabled") ||
+        error.message?.includes("Unsupported provider")
+      ) {
+        setError(
+          "Google sign in is not configured yet. Please contact the admin or use email login."
+        );
+      } else {
+        setError(error.message);
+      }
       setGoogleLoading(false);
     }
+
+    // On success, Supabase will redirect to redirectTo
+  } catch (err: any) {
+    setError(err?.message || "Google sign in failed");
+    setGoogleLoading(false);
   }
+}
+
 
   // Styles using the shared theme
   const pageStyle: CSSProperties = {
