@@ -393,6 +393,8 @@ export default function HomePage() {
     offerWindow.document.close();
   }
 
+  // styles
+
   const pageStyle: CSSProperties = {
     minHeight: "100vh",
     padding: "32px 16px",
@@ -410,10 +412,18 @@ export default function HomePage() {
 
   const contentGrid: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1.1fr)",
     gap: "20px",
     marginTop: "24px",
     alignItems: "start"
+  };
+
+  const resultsGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "20px",
+    marginTop: "24px",
+    alignItems: "stretch"
   };
 
   const panel: CSSProperties = {
@@ -440,7 +450,8 @@ export default function HomePage() {
     display: "block",
     fontWeight: 600,
     color: colors.textSecondary,
-    letterSpacing: ".02em"
+    letterSpacing: ".02em",
+    textTransform: "uppercase"
   };
 
   const formGrid: CSSProperties = {
@@ -488,10 +499,109 @@ export default function HomePage() {
     color: colors.textSecondary
   };
 
+  const summaryRow: CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: "14px",
+    marginBottom: 6
+  };
+
+  const summaryLabel: CSSProperties = {
+    color: colors.textSecondary
+  };
+
+  const summaryValue: CSSProperties = {
+    fontWeight: 600
+  };
+
+  const summaryBar: CSSProperties = {
+    marginTop: "24px",
+    padding: "14px 20px",
+    borderRadius: 999,
+    border: `1px solid ${colors.border}`,
+    background: "rgba(15, 23, 42, 0.92)",
+    color: "#e5e7eb",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "18px",
+    alignItems: "center",
+    justifyContent: "space-between",
+    position: "sticky",
+    top: 16,
+    zIndex: 10,
+    backdropFilter: "blur(16px)"
+  };
+
+  const summaryChipLabel: CSSProperties = {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: ".08em",
+    opacity: 0.85
+  };
+
+  const summaryChipValue: CSSProperties = {
+    fontSize: 16,
+    fontWeight: 600
+  };
+
+  const summaryChipGroup: CSSProperties = {
+    display: "flex",
+    gap: 20,
+    flexWrap: "wrap"
+  };
+
   const ptiDisplay =
     result && typeof result.paymentToIncome === "number"
       ? `${(result.paymentToIncome * 100).toFixed(1)} percent`
       : "N A";
+
+  const riskChipStyle = (riskScore: string): CSSProperties => {
+    const base: CSSProperties = {
+      display: "inline-flex",
+      alignItems: "center",
+      padding: "4px 10px",
+      borderRadius: 999,
+      fontSize: 12,
+      fontWeight: 600
+    };
+
+    if (riskScore.toLowerCase().includes("low")) {
+      return { ...base, background: "#dcfce7", color: "#166534" };
+    }
+    if (riskScore.toLowerCase().includes("medium")) {
+      return { ...base, background: "#fef9c3", color: "#854d0e" };
+    }
+    return { ...base, background: "#fee2e2", color: "#b91c1c" };
+  };
+
+  const verdictChipStyle = (verdict: string): CSSProperties => {
+    const base: CSSProperties = {
+      display: "inline-flex",
+      alignItems: "center",
+      padding: "4px 10px",
+      borderRadius: 999,
+      fontSize: 13,
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: ".08em"
+    };
+
+    const v = verdict.toLowerCase();
+    if (v.includes("approve")) {
+      return { ...base, background: "#dcfce7", color: "#166534" };
+    }
+    if (v.includes("counter")) {
+      return { ...base, background: "#fef9c3", color: "#854d0e" };
+    }
+    if (v.includes("decline") || v.includes("deny")) {
+      return { ...base, background: "#fee2e2", color: "#b91c1c" };
+    }
+    return { ...base, background: "#e5e7eb", color: "#111827" };
+  };
+
+  const verdictText =
+    result?.underwriting?.verdict || result?.underwriting?.status || "Pending";
 
   return (
     <main style={pageStyle}>
@@ -553,14 +663,9 @@ export default function HomePage() {
             )}
           </header>
 
+          {/* top grid: form plus usage */}
           <div style={contentGrid}>
-            {/* Form card spans two columns */}
-            <section
-              style={{
-                ...panel,
-                gridColumn: "span 2"
-              }}
-            >
+            <section style={panel}>
               {authLoaded && !userId && (
                 <div
                   style={{
@@ -570,7 +675,7 @@ export default function HomePage() {
                     borderRadius: "10px",
                     marginBottom: "16px",
                     fontSize: "13px",
-                    color: "#facc15"
+                    color: "#92400e"
                   }}
                 >
                   Not logged in, deals will not be saved.
@@ -712,13 +817,12 @@ export default function HomePage() {
 
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
                   <button type="submit" style={btn} disabled={loading}>
-                    {loading ? "Analyzing…" : "Analyze deal"}
+                    {loading ? "Analyzing..." : "Analyze deal"}
                   </button>
                 </div>
               </form>
             </section>
 
-            {/* Usage card in first row third column */}
             <section style={panel}>
               <h2 style={{ fontSize: "17px", marginBottom: 8 }}>
                 Monthly usage
@@ -746,23 +850,92 @@ export default function HomePage() {
                 </p>
               )}
             </section>
+          </div>
 
-            {/* Error card spans all columns */}
-            {error && (
-              <section
+          {/* error message */}
+          {error && (
+            <section
+              style={{
+                ...panel,
+                marginTop: 24
+              }}
+            >
+              <h2 style={{ fontSize: "17px", marginBottom: 10 }}>Error</h2>
+              <p style={{ color: "#ef4444", fontSize: "14px" }}>{error}</p>
+            </section>
+          )}
+
+          {/* nothing run yet */}
+          {!result && !error && (
+            <section
+              style={{
+                ...panel,
+                marginTop: 24
+              }}
+            >
+              <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                Deal summary
+              </h2>
+              <p
                 style={{
-                  ...panel,
-                  gridColumn: "1 / -1"
+                  fontSize: "14px",
+                  color: colors.textSecondary
                 }}
               >
-                <h2 style={{ fontSize: "17px", marginBottom: 10 }}>Error</h2>
-                <p style={{ color: "#ef4444", fontSize: "14px" }}>{error}</p>
-              </section>
-            )}
+                Run a deal to see payment, profit, PTI, LTV and underwriting.
+              </p>
+            </section>
+          )}
 
-            {/* Results grid */}
-            {result ? (
-              <>
+          {/* results */}
+          {result && (
+            <>
+              {/* sticky summary bar */}
+              <div style={summaryBar}>
+                <div style={summaryChipGroup}>
+                  <div>
+                    <div style={summaryChipLabel}>Payment</div>
+                    <div style={summaryChipValue}>
+                      ${result.payment.toFixed(2)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={summaryChipLabel}>Total profit</div>
+                    <div style={summaryChipValue}>
+                      ${result.totalProfit.toFixed(2)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={summaryChipLabel}>PTI</div>
+                    <div style={summaryChipValue}>{ptiDisplay}</div>
+                  </div>
+                  <div>
+                    <div style={summaryChipLabel}>Verdict</div>
+                    <div style={summaryChipValue}>
+                      <span style={verdictChipStyle(verdictText)}>
+                        {verdictText}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {planType !== "pro" && (
+                  <a
+                    href="/billing"
+                    style={{
+                      ...btnSecondary,
+                      background:
+                        "linear-gradient(to right, #22c55e, #4ade80, #22c55e)",
+                      color: "#052e16"
+                    }}
+                  >
+                    Upgrade to save and export
+                  </a>
+                )}
+              </div>
+
+              {/* two row three column results grid */}
+              <div style={resultsGrid}>
+                {/* row one */}
                 <section style={panel}>
                   <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                     Deal summary
@@ -771,24 +944,30 @@ export default function HomePage() {
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7
+                      margin: 0
                     }}
                   >
-                    <li>
-                      Payment{" "}
-                      <strong>${result.payment.toFixed(2)}</strong>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Payment</span>
+                      <span style={summaryValue}>
+                        ${result.payment.toFixed(2)}
+                      </span>
                     </li>
-                    <li>
-                      Total interest{" "}
-                      <strong>${result.totalInterest.toFixed(2)}</strong>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Total interest</span>
+                      <span style={summaryValue}>
+                        ${result.totalInterest.toFixed(2)}
+                      </span>
                     </li>
-                    <li>
-                      Total profit{" "}
-                      <strong>${result.totalProfit.toFixed(2)}</strong>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Total profit</span>
+                      <span style={summaryValue}>
+                        ${result.totalProfit.toFixed(2)}
+                      </span>
                     </li>
-                    <li>
-                      Break even week{" "}
-                      <strong>{result.breakEvenWeek}</strong>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Break even week</span>
+                      <span style={summaryValue}>{result.breakEvenWeek}</span>
                     </li>
                   </ul>
                 </section>
@@ -801,28 +980,34 @@ export default function HomePage() {
                     style={{
                       paddingLeft: 0,
                       listStyle: "none",
-                      lineHeight: 1.7
+                      margin: 0
                     }}
                   >
-                    <li>
-                      Payment to income <strong>{ptiDisplay}</strong>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Payment to income</span>
+                      <span style={summaryValue}>{ptiDisplay}</span>
                     </li>
-                    <li>
-                      Risk score <strong>{result.riskScore}</strong>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Risk score</span>
+                      <span style={summaryValue}>
+                        <span style={riskChipStyle(result.riskScore)}>
+                          {result.riskScore}
+                        </span>
+                      </span>
                     </li>
-                    {isPro && typeof result.ltv === "number" && (
-                      <li>
-                        LTV{" "}
-                        <strong>
+                    {typeof result.ltv === "number" && (
+                      <li style={summaryRow}>
+                        <span style={summaryLabel}>LTV</span>
+                        <span style={summaryValue}>
                           {(result.ltv * 100).toFixed(1)} percent
-                        </strong>
+                        </span>
                       </li>
                     )}
                   </ul>
                   {!isPro && (
                     <p style={smallUpsell}>
-                      Upgrade to Pro to see live LTV on every deal and catch
-                      over advanced cars before funding.
+                      Upgrade to Pro to save risk history and catch over
+                      advanced cars before funding.
                     </p>
                   )}
                 </section>
@@ -832,16 +1017,19 @@ export default function HomePage() {
                     <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                       Underwriting verdict
                     </h2>
-                    <p style={{ fontWeight: 600 }}>
-                      {result.underwriting.verdict}
+                    <p style={{ marginBottom: 10 }}>
+                      <span style={verdictChipStyle(verdictText)}>
+                        {verdictText}
+                      </span>
                     </p>
 
                     {result.underwriting.reasons?.length > 0 && (
                       <ul
                         style={{
-                          marginTop: 8,
+                          marginTop: 4,
                           paddingLeft: 18,
-                          lineHeight: 1.6
+                          lineHeight: 1.6,
+                          fontSize: 14
                         }}
                       >
                         {result.underwriting.reasons.map(
@@ -854,13 +1042,14 @@ export default function HomePage() {
 
                     {!isPro && (
                       <p style={smallUpsell}>
-                        Pro users see full policy reasons for PTI, LTV, term,
-                        down payment and profit, plus suggested counter terms.
+                        Pro users see full policy reasoning for PTI, LTV, term,
+                        down payment and profit with every deal.
                       </p>
                     )}
                   </section>
                 )}
 
+                {/* row two */}
                 {isPro &&
                   result.underwriting &&
                   result.underwriting.adjustments &&
@@ -876,54 +1065,59 @@ export default function HomePage() {
                         style={{
                           paddingLeft: 0,
                           listStyle: "none",
-                          lineHeight: 1.7,
+                          margin: 0,
                           marginBottom: 12
                         }}
                       >
                         {typeof result.underwriting.adjustments
                           .newDownPayment === "number" && (
-                          <li>
-                            Down payment target{" "}
-                            <strong>
+                          <li style={summaryRow}>
+                            <span style={summaryLabel}>
+                              Down payment target
+                            </span>
+                            <span style={summaryValue}>
                               $
                               {result.underwriting.adjustments.newDownPayment.toFixed(
                                 2
                               )}
-                            </strong>
+                            </span>
                           </li>
                         )}
                         {typeof result.underwriting.adjustments
                           .newTermWeeks === "number" && (
-                          <li>
-                            Term target{" "}
-                            <strong>
-                              {result.underwriting.adjustments.newTermWeeks}{" "}
+                          <li style={summaryRow}>
+                            <span style={summaryLabel}>Term target</span>
+                            <span style={summaryValue}>
+                              {
+                                result.underwriting.adjustments
+                                  .newTermWeeks
+                              }{" "}
                               weeks
-                            </strong>
+                            </span>
                           </li>
                         )}
                         {typeof result.underwriting.adjustments
                           .newSalePrice === "number" && (
-                          <li>
-                            Suggested sale price{" "}
-                            <strong>
+                          <li style={summaryRow}>
+                            <span style={summaryLabel}>Sale price target</span>
+                            <span style={summaryValue}>
                               $
                               {result.underwriting.adjustments.newSalePrice.toFixed(
                                 2
                               )}
-                            </strong>
+                            </span>
                           </li>
                         )}
                         {typeof result.underwriting.adjustments.newApr ===
                           "number" && (
-                          <li>
-                            Suggested APR{" "}
-                            <strong>
+                          <li style={summaryRow}>
+                            <span style={summaryLabel}>APR target</span>
+                            <span style={summaryValue}>
                               {result.underwriting.adjustments.newApr.toFixed(
                                 2
                               )}{" "}
                               percent
-                            </strong>
+                            </span>
                           </li>
                         )}
                       </ul>
@@ -942,21 +1136,22 @@ export default function HomePage() {
                     </section>
                   )}
 
-                {isPro && (
-                  <section style={panel}>
-                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                      Customer offer sheet
-                    </h2>
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        color: colors.textSecondary,
-                        marginBottom: 12
-                      }}
-                    >
-                      Generate a clean one page offer you can print or save as
-                      PDF for the customer with payment, term and structure.
-                    </p>
+                <section style={panel}>
+                  <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                    Customer offer sheet
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      color: colors.textSecondary,
+                      marginBottom: 12
+                    }}
+                  >
+                    Generate a one page customer offer with payment, term and
+                    structure that you can print or save as PDF.
+                  </p>
+
+                  {isPro ? (
                     <button
                       type="button"
                       style={btnSecondary}
@@ -964,86 +1159,86 @@ export default function HomePage() {
                     >
                       Print customer offer
                     </button>
-                  </section>
-                )}
-
-                {!isPro && (
-                  <section style={panel}>
-                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                      Customer offer sheet
-                    </h2>
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        color: colors.textSecondary,
-                        marginBottom: 12
-                      }}
-                    >
-                      Pro users can generate a printable one page customer offer
-                      sheet with payment, term, down payment and verdict ready
-                      to sign.
-                    </p>
-                    <a href="/billing" style={btn}>
+                  ) : (
+                    <a href="/billing" style={btnSecondary}>
                       Upgrade to unlock offer sheet
                     </a>
-                  </section>
-                )}
+                  )}
+                </section>
 
-                {result.aiExplanation && (
-                  <section
+                <section style={panel}>
+                  <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                    Policy snapshot
+                  </h2>
+                  <ul
                     style={{
-                      ...panel,
-                      gridColumn: "1 / -1"
+                      paddingLeft: 0,
+                      listStyle: "none",
+                      margin: 0
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 10
-                      }}
-                    >
-                      <h2 style={{ fontSize: "17px" }}>AI deal opinion</h2>
-                      {!isPro && <span style={proBadge}>Pro</span>}
-                    </div>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Max PTI</span>
+                      <span style={summaryValue}>
+                        {(policy.maxPTI * 100).toFixed(0)} percent
+                      </span>
+                    </li>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Max LTV</span>
+                      <span style={summaryValue}>
+                        {(policy.maxLTV * 100).toFixed(0)} percent
+                      </span>
+                    </li>
+                    <li style={summaryRow}>
+                      <span style={summaryLabel}>Max term</span>
+                      <span style={summaryValue}>
+                        {policy.maxTermWeeks} weeks
+                      </span>
+                    </li>
+                  </ul>
+                </section>
+              </div>
 
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        lineHeight: 1.6,
-                        whiteSpace: "pre-wrap"
-                      }}
-                    >
-                      {result.aiExplanation}
-                    </p>
-
-                    {!isPro && (
-                      <div style={{ marginTop: 12 }}>
-                        <a href="/billing" style={btn}>
-                          Unlock full AI underwriting with Pro
-                        </a>
-                      </div>
-                    )}
-                  </section>
-                )}
-              </>
-            ) : (
-              <section style={panel}>
-                <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                  Deal summary
-                </h2>
-                <p
+              {result.aiExplanation && (
+                <section
                   style={{
-                    fontSize: "14px",
-                    color: colors.textSecondary
+                    ...panel,
+                    marginTop: 24
                   }}
                 >
-                  Run a deal to see payment, profit, PTI, LTV and underwriting.
-                </p>
-              </section>
-            )}
-          </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 10
+                    }}
+                  >
+                    <h2 style={{ fontSize: "17px" }}>AI deal opinion</h2>
+                    {!isPro && <span style={proBadge}>Pro</span>}
+                  </div>
+
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      lineHeight: 1.6,
+                      whiteSpace: "pre-wrap"
+                    }}
+                  >
+                    {result.aiExplanation}
+                  </p>
+
+                  {!isPro && (
+                    <div style={{ marginTop: 12 }}>
+                      <a href="/billing" style={btnSecondary}>
+                        Unlock full AI underwriting with Pro
+                      </a>
+                    </div>
+                  )}
+                </section>
+              )}
+            </>
+          )}
         </div>
       </PageContainer>
     </main>
