@@ -1,13 +1,13 @@
 // app/deals/[id]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { supabaseAdmin } from "@/lib/supabase"; // you already have this
+import { supabaseAdmin } from "@/lib/supabase";
 import { DealCard } from "@/components/DealCard";
 
 type Deal = {
   id: string;
   created_at: string;
-  user_id: string;
+  user_id: string | null;
   input: {
     vehicleCost: number;
     reconCost: number;
@@ -15,20 +15,22 @@ type Deal = {
     downPayment: number;
     apr: number;
     termWeeks: number;
-    paymentFrequency: "weekly" | "biweekly";
-    monthlyIncome: number;
-    monthsOnJob: number;
+    paymentFrequency: "weekly" | "biweekly" | "monthly";
+    monthlyIncome: number | null;
+    monthsOnJob: number | null;
     pastRepo: boolean;
   };
   result: {
-    weeklyPayment: number;
+    payment: number;
     totalInterest: number;
     totalProfit: number;
     breakEvenWeek: number;
-    pti: number;
+    paymentToIncome: number | null;
     ltv: number;
-    verdict: string;
-    explanation: string;
+    riskScore: string;
+    underwritingVerdict: string;
+    underwritingReasons: string[];
+    aiExplanation?: string;
   };
 };
 
@@ -48,6 +50,13 @@ export default async function DealDetailPage(props: {
   }
 
   const deal = data as Deal;
+
+  const ptiPercent =
+    deal.result.paymentToIncome !== null
+      ? (deal.result.paymentToIncome * 100).toFixed(1)
+      : null;
+
+  const ltvPercent = (deal.result.ltv * 100).toFixed(1);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -83,14 +92,14 @@ export default async function DealDetailPage(props: {
           <DealCard
             id={deal.id}
             createdAt={deal.created_at}
-            income={deal.input.monthlyIncome}
+            income={deal.input.monthlyIncome ?? 0}
             salePrice={deal.input.salePrice}
             downPayment={deal.input.downPayment}
-            payment={deal.result.weeklyPayment}
+            payment={deal.result.payment}
             profit={deal.result.totalProfit}
-            pti={deal.result.pti}
+            pti={deal.result.paymentToIncome}
             ltv={deal.result.ltv}
-            verdict={deal.result.verdict}
+            verdict={deal.result.underwritingVerdict}
           />
         </section>
 
@@ -102,16 +111,49 @@ export default async function DealDetailPage(props: {
               Deal inputs
             </h2>
             <dl className="space-y-2 text-xs text-slate-600">
-              <Row label="Vehicle cost" value={deal.input.vehicleCost} type="currency" />
-              <Row label="Recon cost" value={deal.input.reconCost} type="currency" />
-              <Row label="Sale price" value={deal.input.salePrice} type="currency" />
-              <Row label="Down payment" value={deal.input.downPayment} type="currency" />
+              <Row
+                label="Vehicle cost"
+                value={deal.input.vehicleCost}
+                type="currency"
+              />
+              <Row
+                label="Recon cost"
+                value={deal.input.reconCost}
+                type="currency"
+              />
+              <Row
+                label="Sale price"
+                value={deal.input.salePrice}
+                type="currency"
+              />
+              <Row
+                label="Down payment"
+                value={deal.input.downPayment}
+                type="currency"
+              />
               <Row label="APR" value={deal.input.apr} suffix="%" />
-              <Row label="Term" value={deal.input.termWeeks} suffix=" weeks" />
-              <Row label="Payment frequency" value={deal.input.paymentFrequency} />
-              <Row label="Monthly income" value={deal.input.monthlyIncome} type="currency" />
-              <Row label="Months on job" value={deal.input.monthsOnJob} />
-              <Row label="Past repo" value={deal.input.pastRepo ? "Yes" : "No"} />
+              <Row
+                label="Term"
+                value={deal.input.termWeeks}
+                suffix=" weeks"
+              />
+              <Row
+                label="Payment frequency"
+                value={deal.input.paymentFrequency}
+              />
+              <Row
+                label="Monthly income"
+                value={deal.input.monthlyIncome ?? 0}
+                type="currency"
+              />
+              <Row
+                label="Months on job"
+                value={deal.input.monthsOnJob ?? 0}
+              />
+              <Row
+                label="Past repo"
+                value={deal.input.pastRepo ? "Yes" : "No"}
+              />
             </dl>
           </div>
 
@@ -123,8 +165,8 @@ export default async function DealDetailPage(props: {
               </h2>
               <dl className="space-y-2 text-xs text-slate-600">
                 <Row
-                  label="Weekly payment"
-                  value={deal.result.weeklyPayment}
+                  label="Payment"
+                  value={deal.result.payment}
                   type="currency"
                 />
                 <Row
@@ -143,25 +185,52 @@ export default async function DealDetailPage(props: {
                 />
                 <Row
                   label="PTI"
-                  value={deal.result.pti}
-                  suffix="%"
+                  value={ptiPercent !== null ? ptiPercent : "N A"}
+                  suffix={ptiPercent !== null ? "%" : undefined}
                 />
                 <Row
                   label="LTV"
-                  value={deal.result.ltv}
+                  value={ltvPercent}
                   suffix="%"
+                />
+                <Row
+                  label="Risk score"
+                  value={deal.result.riskScore}
+                />
+                <Row
+                  label="Underwriting verdict"
+                  value={deal.result.underwritingVerdict}
                 />
               </dl>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-5">
               <h2 className="mb-2 text-sm font-semibold text-slate-900">
-                AI underwriting explanation
+                Underwriting reasons
               </h2>
-              <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line">
-                {deal.result.explanation}
-              </p>
+              {deal.result.underwritingReasons?.length ? (
+                <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-700">
+                  {deal.result.underwritingReasons.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  No detailed reasons stored.
+                </p>
+              )}
             </div>
+
+            {deal.result.aiExplanation && (
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="mb-2 text-sm font-semibold text-slate-900">
+                  AI underwriting explanation
+                </h2>
+                <p className="whitespace-pre-line text-xs leading-relaxed text-slate-700">
+                  {deal.result.aiExplanation}
+                </p>
+              </div>
+            )}
           </div>
         </section>
       </div>
@@ -176,7 +245,7 @@ function Row(props: {
   suffix?: string;
 }) {
   const { label, value, type, suffix } = props;
-  let display = value;
+  let display: string | number = value;
 
   if (type === "currency" && typeof value === "number") {
     display = Intl.NumberFormat("en-US", {
