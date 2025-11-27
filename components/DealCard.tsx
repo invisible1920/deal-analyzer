@@ -9,7 +9,7 @@ type DealCardProps = {
   downPayment: number;
   payment: number;
   profit: number;
-  pti: number;
+  pti: number | null;
   ltv: number;
   verdict: string;
   href?: string;
@@ -39,6 +39,10 @@ export function DealCard(props: DealCardProps) {
   const verdictClass =
     verdictColorMap[verdict] ?? "bg-slate-100 text-slate-700";
 
+  // Convert ratios to percentages for display
+  const ptiPercentValue = typeof pti === "number" ? pti * 100 : null;
+  const ltvPercentValue = ltv * 100;
+
   const content = (
     <article className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <header className="mb-3 flex items-start justify-between gap-3">
@@ -55,11 +59,13 @@ export function DealCard(props: DealCardProps) {
             deal
           </h2>
           <p className="text-xs text-slate-500">
-            Income {Intl.NumberFormat("en-US", {
+            Income{" "}
+            {Intl.NumberFormat("en-US", {
               style: "currency",
               currency: "USD",
               maximumFractionDigits: 0,
-            }).format(income)} per month
+            }).format(income)}{" "}
+            per month
           </p>
         </div>
 
@@ -74,8 +80,12 @@ export function DealCard(props: DealCardProps) {
         <Stat label="Down" value={downPayment} format="currency" />
         <Stat label="Payment" value={payment} format="currency" />
         <Stat label="Profit" value={profit} format="currency" />
-        <Stat label="PTI" value={pti} format="percent" />
-        <Stat label="LTV" value={ltv} format="percent" />
+        <Stat
+          label="PTI"
+          value={ptiPercentValue !== null ? ptiPercentValue : "N A"}
+          format={ptiPercentValue !== null ? "percent" : "raw"}
+        />
+        <Stat label="LTV" value={ltvPercentValue} format="percent" />
       </div>
 
       <footer className="mt-4 flex items-center justify-between text-xs text-slate-400">
@@ -101,20 +111,27 @@ export function DealCard(props: DealCardProps) {
 
 function Stat(props: {
   label: string;
-  value: number;
+  value: number | string;
   format?: "currency" | "percent" | "raw";
 }) {
   const { label, value, format = "raw" } = props;
 
-  let display = value.toString();
-  if (format === "currency") {
-    display = Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
-  } else if (format === "percent") {
-    display = `${value.toFixed(1)} %`;
+  let display: string;
+
+  if (typeof value === "number") {
+    if (format === "currency") {
+      display = Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(value);
+    } else if (format === "percent") {
+      display = `${value.toFixed(1)} %`;
+    } else {
+      display = value.toString();
+    }
+  } else {
+    display = value;
   }
 
   return (
