@@ -234,6 +234,35 @@ export default function HomePage() {
     </html>
   `;
 
+    <section style={panel}>
+  <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+    Underwriting packet
+  </h2>
+  <p
+    style={{
+      fontSize: "14px",
+      color: colors.textSecondary,
+      marginBottom: 12
+    }}
+  >
+    Print a full underwriting summary with verdict, reasons, PTI, LTV and AI commentary.
+  </p>
+  {isPro ? (
+    <button
+      type="button"
+      style={btnSecondary}
+      onClick={printUnderwritingPacket}
+    >
+      Print underwriting packet
+    </button>
+  ) : (
+    <a href="/billing" style={btnSecondary}>
+      Upgrade to unlock underwriting packet
+    </a>
+  )}
+</section>
+
+
   const w = window.open("", "_blank", "width=900,height=1100");
   if (!w) return;
   w.document.open();
