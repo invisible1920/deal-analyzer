@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { themeColors } from "@/app/theme";
 
 type SettingsForm = {
   dealerName: string;
@@ -13,6 +14,8 @@ type SettingsForm = {
 };
 
 export default function SettingsPage() {
+  const colors = themeColors.light;
+
   const [loadingUser, setLoadingUser] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [form, setForm] = useState<SettingsForm>({
@@ -59,17 +62,11 @@ export default function SettingsPage() {
         if (settingsRow) {
           setForm({
             dealerName: settingsRow.dealer_name ?? "My BHPH Store",
-            defaultAPR: Number(
-              settingsRow.default_apr ?? 24.99
-            ),
+            defaultAPR: Number(settingsRow.default_apr ?? 24.99),
             maxPTI: Number(settingsRow.max_pti ?? 0.25),
             maxLTV: Number(settingsRow.max_ltv ?? 1.4),
-            minDownPayment: Number(
-              settingsRow.min_down_payment ?? 800
-            ),
-            maxTermWeeks: Number(
-              settingsRow.max_term_weeks ?? 104
-            )
+            minDownPayment: Number(settingsRow.min_down_payment ?? 800),
+            maxTermWeeks: Number(settingsRow.max_term_weeks ?? 104)
           });
         }
       } catch (err: any) {
@@ -84,14 +81,14 @@ export default function SettingsPage() {
   }, []);
 
   function handleChange(field: keyof SettingsForm, value: string) {
-    setForm((prev) => {
+    setForm(prev => {
       if (field === "dealerName") {
         return { ...prev, dealerName: value };
       }
       const num = parseFloat(value);
       return {
         ...prev,
-        [field]: isNaN(num) ? prev[field] : num
+        [field]: Number.isNaN(num) ? prev[field] : num
       };
     });
   }
@@ -140,8 +137,8 @@ export default function SettingsPage() {
   const pageStyle: CSSProperties = {
     minHeight: "100vh",
     padding: "24px",
-    background: "#020617",
-    color: "#e5e7eb"
+    background: colors.bg,
+    color: colors.text
   };
 
   const cardStyle: CSSProperties = {
@@ -150,8 +147,8 @@ export default function SettingsPage() {
   };
 
   const panelStyle: CSSProperties = {
-    background: "#020617",
-    border: "1px solid #1f2937",
+    background: colors.panel,
+    border: `1px solid ${colors.border}`,
     borderRadius: "12px",
     padding: "16px"
   };
@@ -165,26 +162,38 @@ export default function SettingsPage() {
   const labelStyle: CSSProperties = {
     fontSize: "12px",
     marginBottom: "4px",
-    display: "block"
+    display: "block",
+    color: colors.textSecondary
   };
 
   const inputStyle: CSSProperties = {
     width: "100%",
     padding: "8px",
     borderRadius: "6px",
-    border: "1px solid #374151",
-    background: "#020617",
-    color: "#e5e7eb"
+    border: `1px solid ${colors.inputBorder}`,
+    background: colors.inputBg,
+    color: colors.text
   };
 
   return (
     <main style={pageStyle}>
       <div style={cardStyle}>
-        <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "4px" }}>
+        <h1
+          style={{
+            fontSize: "24px",
+            fontWeight: 700,
+            marginBottom: "4px"
+          }}
+        >
           Dealer settings
         </h1>
-        <p style={{ color: "#9ca3af", marginBottom: "16px" }}>
-          Set your store rules for PTI, LTV, down payment, APR, and max term.
+        <p
+          style={{
+            color: colors.textSecondary,
+            marginBottom: "16px"
+          }}
+        >
+          Set your store rules for PTI, LTV, down payment, APR and max term.
           New deals will use these values.
         </p>
 
@@ -194,15 +203,11 @@ export default function SettingsPage() {
           ) : null}
 
           {error && (
-            <p style={{ color: "#f87171", marginBottom: "12px" }}>
-              {error}
-            </p>
+            <p style={{ color: "#b91c1c", marginBottom: "12px" }}>{error}</p>
           )}
 
           {message && (
-            <p style={{ color: "#4ade80", marginBottom: "12px" }}>
-              {message}
-            </p>
+            <p style={{ color: "#15803d", marginBottom: "12px" }}>{message}</p>
           )}
 
           {!loadingUser && userId && (
@@ -214,7 +219,7 @@ export default function SettingsPage() {
                     type="text"
                     style={inputStyle}
                     value={form.dealerName}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("dealerName", e.target.value)
                     }
                   />
@@ -227,46 +232,52 @@ export default function SettingsPage() {
                     step="0.01"
                     style={inputStyle}
                     value={form.defaultAPR}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("defaultAPR", e.target.value)
                     }
                   />
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Max PTI (0.25 for 25 percent)</label>
+                  <label style={labelStyle}>
+                    Max PTI (0.25 for 25 percent)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     style={inputStyle}
                     value={form.maxPTI}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("maxPTI", e.target.value)
                     }
                   />
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Max LTV (1.40 for 140 percent)</label>
+                  <label style={labelStyle}>
+                    Max LTV (1.40 for 140 percent)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     style={inputStyle}
                     value={form.maxLTV}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("maxLTV", e.target.value)
                     }
                   />
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Min down payment (dollars)</label>
+                  <label style={labelStyle}>
+                    Min down payment (dollars)
+                  </label>
                   <input
                     type="number"
                     step="1"
                     style={inputStyle}
                     value={form.minDownPayment}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("minDownPayment", e.target.value)
                     }
                   />
@@ -279,7 +290,7 @@ export default function SettingsPage() {
                     step="1"
                     style={inputStyle}
                     value={form.maxTermWeeks}
-                    onChange={(e) =>
+                    onChange={e =>
                       handleChange("maxTermWeeks", e.target.value)
                     }
                   />
