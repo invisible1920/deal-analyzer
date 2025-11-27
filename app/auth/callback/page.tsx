@@ -10,11 +10,11 @@ export default function AuthCallbackPage() {
   const colors = themeColors.light;
 
   useEffect(() => {
-    // Supabase stores the session in local storage on redirect
-    // we just move the user into the app
     const timeout = setTimeout(() => {
-      router.replace("/");
+      // After cookie is set by the server, redirect into the app
+      router.replace("/dealer/settings");
     }, 600);
+
     return () => clearTimeout(timeout);
   }, [router]);
 
