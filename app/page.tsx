@@ -26,18 +26,20 @@ type PlanType = "free" | "pro";
 export default function HomePage() {
   const colors = themeColors.light;
 
-  const [form, setForm] = useState<FormState>({
-    vehicleCost: 6000,
-    reconCost: 1000,
-    salePrice: 12900,
-    downPayment: 1000,
-    apr: 24.99,
-    termMonths: 36,
-    paymentFrequency: "monthly",
-    monthlyIncome: 2400,
-    monthsOnJob: 6,
-    pastRepo: false
-  });
+ const [form, setForm] = useState<FormState>({
+  vehicleCost: 6000,
+  reconCost: 1000,
+  // tuned so the first analyze click is a clean approval
+  salePrice: 11800,
+  downPayment: 1000,
+  apr: 24.99,
+  termMonths: 23, // about 100 weeks, under your 104 week cap
+  paymentFrequency: "monthly",
+  monthlyIncome: 2400,
+  monthsOnJob: 6,
+  pastRepo: false
+});
+
 
   const [userId, setUserId] = useState<string | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
