@@ -174,6 +174,19 @@ export default function DealDetailPage() {
     marginBottom: "12px"
   };
 
+  <button
+  onClick={() => {
+    if (!userId) return;
+    window.location.href = `/api/deals/export?userId=${encodeURIComponent(
+      userId
+    )}`;
+  }}
+  className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white"
+>
+  Export CSV
+</button>
+
+
   const buttonGhost: CSSProperties = {
     padding: "6px 12px",
     borderRadius: "999px",
