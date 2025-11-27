@@ -2,14 +2,37 @@
 
 import { useEffect, useState } from "react";
 
-export function useSystemTheme() {
+export type ThemeName = "light" | "dark";
+
+export const themeColors = {
+  light: {
+    bg: "#f8fafc",
+    panel: "#ffffff",
+    border: "#e2e8f0",
+    text: "#0f172a",
+    textSecondary: "#475569",
+    inputBg: "#ffffff",
+    inputBorder: "#cbd5e1"
+  },
+  dark: {
+    bg: "#0b1120",
+    panel: "#111827",
+    border: "#334155",
+    text: "#e2e8f0",
+    textSecondary: "#94a3b8",
+    inputBg: "#1e293b",
+    inputBorder: "#475569"
+  }
+};
+
+export function useSystemTheme(): ThemeName {
   const getTheme = () =>
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
 
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<ThemeName>("light");
 
   useEffect(() => {
     setTheme(getTheme());
@@ -22,4 +45,9 @@ export function useSystemTheme() {
   }, []);
 
   return theme;
+}
+
+export function useThemeColors() {
+  const mode = useSystemTheme();
+  return themeColors[mode];
 }
