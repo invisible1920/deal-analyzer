@@ -547,23 +547,27 @@ export default function HomePage() {
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)"
   };
 
+  // updated input styling so all boxes match and feel like the screenshot
   const input: CSSProperties = {
     width: "100%",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    border: `1px solid ${colors.inputBorder}`,
-    background: colors.inputBg,
+    padding: "10px 14px",
+    borderRadius: "10px",
+    border: "1px solid #e5e7eb",
+    background: "#ffffff",
     color: colors.text,
-    fontSize: "14px"
+    fontSize: "14px",
+    boxSizing: "border-box",
+    outline: "none",
+    fontVariantNumeric: "tabular-nums"
   };
 
   const label: CSSProperties = {
-    fontSize: "12px",
+    fontSize: "11px",
     marginBottom: "6px",
     display: "block",
     fontWeight: 600,
     color: colors.textSecondary,
-    letterSpacing: ".02em",
+    letterSpacing: ".08em",
     textTransform: "uppercase"
   };
 
@@ -571,6 +575,32 @@ export default function HomePage() {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: "16px"
+  };
+
+  // new checkbox styles (fixes alignment and appearance)
+  const checkboxRow: CSSProperties = {
+    gridColumn: "1 / span 2",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8
+  };
+
+  const checkboxInput: CSSProperties = {
+    width: 18,
+    height: 18,
+    borderRadius: 6,
+    border: "1px solid #e5e7eb",
+    background: "#ffffff",
+    cursor: "pointer",
+    accentColor: "#4f46e5" as any
+  };
+
+  const checkboxLabel: CSSProperties = {
+    fontSize: 13,
+    color: colors.text,
+    cursor: "pointer",
+    userSelect: "none"
   };
 
   const btn: CSSProperties = {
@@ -941,14 +971,7 @@ export default function HomePage() {
                     />
                   </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      marginTop: "22px"
-                    }}
-                  >
+                  <div style={checkboxRow}>
                     <input
                       id="pastRepo"
                       type="checkbox"
@@ -956,8 +979,9 @@ export default function HomePage() {
                       onChange={e =>
                         handleChange("pastRepo", e.target.checked)
                       }
+                      style={checkboxInput}
                     />
-                    <label htmlFor="pastRepo" style={{ fontSize: "13px" }}>
+                    <label htmlFor="pastRepo" style={checkboxLabel}>
                       Customer has past repo
                     </label>
                   </div>
