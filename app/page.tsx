@@ -431,7 +431,7 @@ export default function HomePage() {
     border: `1px solid ${colors.border}`,
     borderRadius: "14px",
     padding: "20px",
-    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.18)"
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)"
   };
 
   const input: CSSProperties = {
@@ -502,35 +502,37 @@ export default function HomePage() {
   const summaryRow: CSSProperties = {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    fontSize: "14px",
-    marginBottom: 6
+    alignItems: "baseline",
+    fontSize: 14,
+    padding: "2px 0"
   };
 
   const summaryLabel: CSSProperties = {
-    color: colors.textSecondary
+    color: colors.textSecondary,
+    fontWeight: 500
   };
 
   const summaryValue: CSSProperties = {
-    fontWeight: 600
+    fontWeight: 600,
+    fontVariantNumeric: "tabular-nums"
   };
 
   const summaryBar: CSSProperties = {
     marginTop: "24px",
     padding: "14px 20px",
-    borderRadius: 999,
+    borderRadius: 20,
     border: `1px solid ${colors.border}`,
-    background: "rgba(15, 23, 42, 0.92)",
+    background: "rgba(15, 23, 42, 0.96)",
     color: "#e5e7eb",
     display: "flex",
     flexWrap: "wrap",
-    gap: "18px",
+    gap: "24px",
     alignItems: "center",
     justifyContent: "space-between",
     position: "sticky",
     top: 16,
     zIndex: 10,
-    backdropFilter: "blur(16px)"
+    backdropFilter: "blur(14px)"
   };
 
   const summaryChipLabel: CSSProperties = {
@@ -547,7 +549,7 @@ export default function HomePage() {
 
   const summaryChipGroup: CSSProperties = {
     display: "flex",
-    gap: 20,
+    gap: 28,
     flexWrap: "wrap"
   };
 
@@ -555,6 +557,39 @@ export default function HomePage() {
     result && typeof result.paymentToIncome === "number"
       ? `${(result.paymentToIncome * 100).toFixed(1)} percent`
       : "N A";
+
+  const ptiValue =
+    result && typeof result.paymentToIncome === "number"
+      ? result.paymentToIncome
+      : null;
+
+  const ptiLimit = policy.maxPTI ?? defaultPolicy.maxPTI;
+
+  const ptiFillPercent =
+    ptiValue !== null && ptiLimit > 0
+      ? Math.min((ptiValue / ptiLimit) * 100, 120)
+      : 0;
+
+  const ptiBarOuter: CSSProperties = {
+    marginTop: 8,
+    height: 6,
+    borderRadius: 999,
+    background: "#e5e7eb"
+  };
+
+  const ptiBarInner: CSSProperties = {
+    height: "100%",
+    borderRadius: 999,
+    width: `${ptiFillPercent}%`,
+    maxWidth: "100%",
+    background:
+      ptiFillPercent <= 80
+        ? "#22c55e"
+        : ptiFillPercent <= 100
+        ? "#eab308"
+        : "#ef4444",
+    transition: "width 0.25s ease"
+  };
 
   const riskChipStyle = (riskScore: string): CSSProperties => {
     const base: CSSProperties = {
@@ -933,6 +968,20 @@ export default function HomePage() {
                 )}
               </div>
 
+              {/* label for results area */}
+              <h2
+                style={{
+                  marginTop: 24,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: ".12em",
+                  textTransform: "uppercase",
+                  color: colors.textSecondary
+                }}
+              >
+                Deal analysis
+              </h2>
+
               {/* two row three column results grid */}
               <div style={resultsGrid}>
                 {/* row one */}
@@ -987,6 +1036,29 @@ export default function HomePage() {
                       <span style={summaryLabel}>Payment to income</span>
                       <span style={summaryValue}>{ptiDisplay}</span>
                     </li>
+
+                    {ptiValue !== null && (
+                      <li>
+                        <div style={ptiBarOuter}>
+                          <div style={ptiBarInner} />
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 11,
+                            color: colors.textSecondary,
+                            display: "flex",
+                            justifyContent: "space-between"
+                          }}
+                        >
+                          <span>
+                            Policy max {(ptiLimit * 100).toFixed(0)} percent
+                          </span>
+                          <span>{ptiFillPercent.toFixed(0)} percent of limit</span>
+                        </div>
+                      </li>
+                    )}
+
                     <li style={summaryRow}>
                       <span style={summaryLabel}>Risk score</span>
                       <span style={summaryValue}>
