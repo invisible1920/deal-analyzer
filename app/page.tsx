@@ -593,6 +593,56 @@ export default function HomePage() {
     transition: "width 0.25s ease"
   };
 
+{result?.schedulePreview && (
+  <section style={panel}>
+    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+      Payment schedule preview
+    </h2>
+    <table
+      style={{
+        width: "100%",
+        borderCollapse: "collapse",
+        fontSize: "12px"
+      }}
+    >
+      <thead>
+        <tr>
+          <th style={{ textAlign: "left", paddingBottom: 6 }}>Period</th>
+          <th style={{ textAlign: "right", paddingBottom: 6 }}>Interest</th>
+          <th style={{ textAlign: "right", paddingBottom: 6 }}>Principal</th>
+          <th style={{ textAlign: "right", paddingBottom: 6 }}>Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        {result.schedulePreview.map((row: any) => (
+          <tr key={row.period}>
+            <td>{row.period}</td>
+            <td style={{ textAlign: "right" }}>
+              {row.interest.toFixed(2)}
+            </td>
+            <td style={{ textAlign: "right" }}>
+              {row.principal.toFixed(2)}
+            </td>
+            <td style={{ textAlign: "right" }}>
+              {row.balance.toFixed(2)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p
+      style={{
+        marginTop: 8,
+        fontSize: 11,
+        color: colors.textSecondary
+      }}
+    >
+      Showing first 12 periods only for a quick glance.
+    </p>
+  </section>
+)}
+
+  
   const riskChipStyle = (riskScore: string): CSSProperties => {
     const base: CSSProperties = {
       display: "inline-flex",
