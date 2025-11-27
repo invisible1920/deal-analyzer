@@ -551,6 +551,26 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Right before the final return
+const previewSchedule = core.schedule.slice(0, 12); // first 12 periods
+
+return NextResponse.json({
+  payment: core.payment,
+  totalInterest: core.totalInterest,
+  totalProfit: core.totalProfit,
+  breakEvenWeek: core.breakEvenWeek,
+  paymentToIncome: risk.paymentToIncome,
+  ltv,
+  riskScore: risk.riskScore,
+  underwriting: responseUnderwriting,
+  aiExplanation,
+  dealerSettings: settings,
+  dealsThisMonth,
+  freeDealsPerMonth,
+  planType,
+  schedulePreview: previewSchedule
+});
+
     // ========================================================================
     // Response
     // ========================================================================
