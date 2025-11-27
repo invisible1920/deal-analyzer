@@ -3,6 +3,7 @@
 import { useState, useEffect, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { themeColors } from "@/app/theme";
+import PageContainer from "@/components/PageContainer";
 
 // Types
 type PaymentFrequency = "monthly" | "biweekly" | "weekly";
@@ -23,7 +24,6 @@ type FormState = {
 type PlanType = "free" | "pro";
 
 export default function HomePage() {
-  // Force light mode to avoid dark to light flicker
   const colors = themeColors.light;
 
   // Form state
@@ -402,42 +402,41 @@ export default function HomePage() {
   }
 
   // Styles
-  const containerStyle: CSSProperties = {
+  const pageStyle: CSSProperties = {
     minHeight: "100vh",
-    padding: "32px",
     background: colors.bg,
     color: colors.text,
-    display: "flex",
-    justifyContent: "center",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif',
-    transition: "all 0.2s ease"
+    padding: "32px 16px"
   };
 
-  const cardStyle: CSSProperties = {
+  const shellStyle: CSSProperties = {
+    width: "100%",
     maxWidth: "1180px",
-    width: "100%"
+    margin: "0 auto"
   };
 
-  const layout: CSSProperties = {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "28px",
-    marginTop: "24px"
+  const contentGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)",
+    gap: "24px",
+    marginTop: "24px",
+    alignItems: "flex-start"
   };
 
   const panel: CSSProperties = {
     background: colors.panel,
     border: `1px solid ${colors.border}`,
     borderRadius: "14px",
-    padding: "24px",
-    boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
-    transition: "all 0.2s ease"
+    padding: "20px 18px",
+    boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
+    transition: "box-shadow 0.18s ease, transform 0.18s ease"
   };
 
   const input: CSSProperties = {
     width: "100%",
-    padding: "10px 12px",
+    padding: "9px 11px",
     borderRadius: "8px",
     border: `1px solid ${colors.inputBorder}`,
     background: colors.inputBg,
@@ -446,55 +445,74 @@ export default function HomePage() {
   };
 
   const label: CSSProperties = {
-    fontSize: "12px",
+    fontSize: "11px",
     marginBottom: "6px",
     display: "block",
     fontWeight: 600,
     color: colors.textSecondary,
-    letterSpacing: ".02em"
+    letterSpacing: ".06em",
+    textTransform: "uppercase"
   };
 
   const grid: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "20px"
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: "16px 18px"
   };
 
   const btn: CSSProperties = {
-    padding: "12px 22px",
+    padding: "11px 20px",
     borderRadius: "999px",
     border: "none",
     background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
     color: "white",
     fontWeight: 600,
-    letterSpacing: ".04em",
+    letterSpacing: ".08em",
     cursor: loading ? "default" : "pointer",
     opacity: loading ? 0.6 : 1,
-    fontSize: "14px",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-    transition: "all 0.2s ease"
+    fontSize: "13px",
+    boxShadow: "0 8px 22px rgba(15,23,42,0.28)",
+    transition: "transform 0.15s ease, box-shadow 0.15s ease"
   };
 
   const btnSecondary: CSSProperties = {
     ...btn,
     padding: "8px 16px",
-    fontSize: "13px",
-    boxShadow: "0 4px 16px rgba(0,0,0,0.2)"
+    fontSize: "12px",
+    boxShadow: "0 4px 14px rgba(15,23,42,0.2)"
   };
 
   const proBadge: CSSProperties = {
-    padding: "4px 10px",
+    padding: "3px 10px",
     borderRadius: 999,
     background: "linear-gradient(to right, #22c55e, #4ade80)",
     color: "#052e16",
-    fontSize: "11px",
+    fontSize: "10px",
     fontWeight: 700,
-    letterSpacing: ".08em",
+    letterSpacing: ".12em",
     textTransform: "uppercase"
   };
 
   const smallUpsell: CSSProperties = {
-    marginTop: 10,
+    marginTop: 8,
+    fontSize: 12,
+    color: colors.textSecondary
+  };
+
+  const headerText: CSSProperties = {
+    fontSize: "30px",
+    fontWeight: 700,
+    letterSpacing: "-0.03em"
+  };
+
+  const headerSub: CSSProperties = {
+    color: colors.textSecondary,
+    fontSize: "14px",
+    marginTop: 4
+  };
+
+  const headerMeta: CSSProperties = {
+    marginTop: 4,
     fontSize: 12,
     color: colors.textSecondary
   };
@@ -506,543 +524,619 @@ export default function HomePage() {
       : "N A";
 
   return (
-    <main style={containerStyle}>
-      <div style={cardStyle}>
-        {/* Header */}
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "20px",
-            alignItems: "center"
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 6
-              }}
-            >
-              <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
-                BHPH Deal Analyzer
-              </h1>
-              {authLoaded && isPro && <span style={proBadge}>Pro</span>}
-            </div>
-
-            <p style={{ color: colors.textSecondary, fontSize: "15px" }}>
-              Calculate payment, profit, PTI, LTV and AI underwriting instantly.
-            </p>
-            <p
-              style={{
-                marginTop: 6,
-                fontSize: 13,
-                color: colors.textSecondary
-              }}
-            >
-              Policy in use max LTV about{" "}
-              {(policy.maxLTV * 100).toFixed(0)} percent, max PTI{" "}
-              {(policy.maxPTI * 100).toFixed(0)} percent, max term{" "}
-              {policy.maxTermWeeks} weeks.
-            </p>
-          </div>
-
-          {planType !== "pro" && (
-            <a
-              href="/billing"
-              style={{
-                ...btn,
-                padding: "10px 20px",
-                fontSize: "13px",
-                whiteSpace: "nowrap"
-              }}
-            >
-              Upgrade to Pro
-            </a>
-          )}
-        </header>
-
-        {/* Layout */}
-        <div style={layout}>
-          {/* Left side */}
-          <section style={{ flex: "1 1 380px", ...panel }}>
-            {authLoaded && !userId && (
-              <div
-                style={{
-                  background: "#fde68a22",
-                  border: "1px solid #facc15aa",
-                  padding: "8px 14px",
-                  borderRadius: "10px",
-                  marginBottom: "16px",
-                  fontSize: "13px",
-                  color: "#facc15"
-                }}
-              >
-                Not logged in, deals will not be saved.
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} style={{ display: "grid", gap: 24 }}>
-              <div style={grid}>
-                <div>
-                  <label style={label}>Vehicle cost</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.vehicleCost}
-                    onChange={e =>
-                      handleChange("vehicleCost", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={label}>Recon cost</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.reconCost}
-                    onChange={e => handleChange("reconCost", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label style={label}>Sale price</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.salePrice}
-                    onChange={e => handleChange("salePrice", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label style={label}>Down payment</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.downPayment}
-                    onChange={e =>
-                      handleChange("downPayment", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={label}>APR</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.apr}
-                    onChange={e => handleChange("apr", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label style={label}>Term months</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.termMonths}
-                    onChange={e =>
-                      handleChange("termMonths", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={label}>Payment frequency</label>
-                  <select
-                    style={input}
-                    value={form.paymentFrequency}
-                    onChange={e =>
-                      handleChange("paymentFrequency", e.target.value)
-                    }
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="biweekly">Biweekly</option>
-                    <option value="weekly">Weekly</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={label}>Monthly income</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.monthlyIncome}
-                    onChange={e =>
-                      handleChange("monthlyIncome", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={label}>Months on job</label>
-                  <input
-                    type="number"
-                    style={input}
-                    value={form.monthsOnJob}
-                    onChange={e =>
-                      handleChange("monthsOnJob", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <input
-                    id="pastRepo"
-                    type="checkbox"
-                    checked={form.pastRepo}
-                    onChange={e =>
-                      handleChange("pastRepo", e.target.checked)
-                    }
-                  />
-                  <label htmlFor="pastRepo" style={{ fontSize: "13px" }}>
-                    Customer has past repo
-                  </label>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button type="submit" style={btn} disabled={loading}>
-                  {loading ? "Analyzing…" : "Analyze deal"}
-                </button>
-              </div>
-            </form>
-          </section>
-
-          {/* Right side */}
-          <section
+    <main style={pageStyle}>
+      <PageContainer>
+        <div style={shellStyle}>
+          {/* Header */}
+          <header
             style={{
-              flex: "1 1 260px",
               display: "flex",
-              flexDirection: "column",
-              gap: "20px"
+              justifyContent: "space-between",
+              gap: "20px",
+              alignItems: "center"
             }}
           >
-            {/* Usage */}
-            <div style={panel}>
-              <h2 style={{ fontSize: "17px", marginBottom: 8 }}>
-                Monthly usage
-              </h2>
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 4
+                }}
+              >
+                <h1 style={headerText}>BHPH Deal Analyzer</h1>
+                {authLoaded && isPro && <span style={proBadge}>Pro</span>}
+              </div>
 
-              {planType === "pro" ? (
-                usage ? (
-                  <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                    Pro plan unlimited deals. You have run{" "}
-                    <strong>{usage.dealsThisMonth}</strong> deals this month.
-                  </p>
-                ) : (
-                  <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                    Pro plan unlimited deals. No usage recorded yet this month.
-                  </p>
-                )
-              ) : usage ? (
-                <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                  Used <strong>{usage.dealsThisMonth}</strong> of{" "}
-                  <strong>{usage.freeDealsPerMonth}</strong> free deals.
-                </p>
-              ) : (
-                <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                  Free plan includes 25 analyzed deals each month.
-                </p>
-              )}
+              <p style={headerSub}>
+                Payment, profit, PTI, LTV and AI underwriting on one clean
+                screen.
+              </p>
+              <p style={headerMeta}>
+                Policy max LTV about {(policy.maxLTV * 100).toFixed(0)} percent,
+                max PTI {(policy.maxPTI * 100).toFixed(0)} percent, max term{" "}
+                {policy.maxTermWeeks} weeks.
+              </p>
             </div>
 
-            {/* Error */}
-            {error && (
-              <div style={panel}>
-                <h2 style={{ fontSize: "17px", marginBottom: 10 }}>Error</h2>
-                <p style={{ color: "#ef4444", fontSize: "14px" }}>{error}</p>
-              </div>
+            {planType !== "pro" && (
+              <a
+                href="/billing"
+                style={{
+                  ...btn,
+                  padding: "9px 18px",
+                  fontSize: "12px",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                Upgrade to Pro
+              </a>
             )}
+          </header>
 
-            {/* Summary and results */}
-            {result ? (
-              <>
-                <div style={panel}>
-                  <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                    Deal summary
-                  </h2>
-                  <ul
+          {/* Main grid */}
+          <div style={contentGrid}>
+            {/* Left side form */}
+            <section style={{ ...panel }}>
+              {authLoaded && !userId && (
+                <div
+                  style={{
+                    background: "#f9731620",
+                    border: "1px solid #fed7aa",
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                    marginBottom: "14px",
+                    fontSize: "12px",
+                    color: "#ea580c"
+                  }}
+                >
+                  Not logged in. Deals will not be saved to your history.
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} style={{ display: "grid", gap: 20 }}>
+                <div style={grid}>
+                  <div>
+                    <label style={label}>Vehicle cost</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.vehicleCost}
+                      onChange={e =>
+                        handleChange("vehicleCost", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={label}>Recon cost</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.reconCost}
+                      onChange={e => handleChange("reconCost", e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={label}>Sale price</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.salePrice}
+                      onChange={e => handleChange("salePrice", e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={label}>Down payment</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.downPayment}
+                      onChange={e =>
+                        handleChange("downPayment", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={label}>APR</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.apr}
+                      onChange={e => handleChange("apr", e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={label}>Term months</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.termMonths}
+                      onChange={e =>
+                        handleChange("termMonths", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={label}>Payment frequency</label>
+                    <select
+                      style={input}
+                      value={form.paymentFrequency}
+                      onChange={e =>
+                        handleChange("paymentFrequency", e.target.value)
+                      }
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="biweekly">Biweekly</option>
+                      <option value="weekly">Weekly</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={label}>Monthly income</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.monthlyIncome}
+                      onChange={e =>
+                        handleChange("monthlyIncome", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={label}>Months on job</label>
+                    <input
+                      type="number"
+                      style={input}
+                      value={form.monthsOnJob}
+                      onChange={e =>
+                        handleChange("monthsOnJob", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div
                     style={{
-                      paddingLeft: 0,
-                      listStyle: "none",
-                      lineHeight: 1.7
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginTop: 4
                     }}
                   >
-                    <li>
-                      Payment{" "}
-                      <strong>${result.payment.toFixed(2)}</strong>
-                    </li>
-                    <li>
-                      Total interest{" "}
-                      <strong>${result.totalInterest.toFixed(2)}</strong>
-                    </li>
-                    <li>
-                      Total profit{" "}
-                      <strong>${result.totalProfit.toFixed(2)}</strong>
-                    </li>
-                    <li>
-                      Break even week{" "}
-                      <strong>{result.breakEvenWeek}</strong>
-                    </li>
-                  </ul>
+                    <input
+                      id="pastRepo"
+                      type="checkbox"
+                      checked={form.pastRepo}
+                      onChange={e =>
+                        handleChange("pastRepo", e.target.checked)
+                      }
+                    />
+                    <label htmlFor="pastRepo" style={{ fontSize: "13px" }}>
+                      Customer has prior repo
+                    </label>
+                  </div>
                 </div>
 
-                <div style={panel}>
-                  <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                    Basic risk
-                  </h2>
-                  <ul
-                    style={{
-                      paddingLeft: 0,
-                      listStyle: "none",
-                      lineHeight: 1.7
-                    }}
-                  >
-                    <li>
-                      Payment to income <strong>{ptiDisplay}</strong>
-                    </li>
-                    <li>
-                      Risk score <strong>{result.riskScore}</strong>
-                    </li>
-                    {isPro && typeof result.ltv === "number" && (
-                      <li>
-                        LTV{" "}
-                        <strong>
-                          {(result.ltv * 100).toFixed(1)} percent
-                        </strong>
-                      </li>
-                    )}
-                  </ul>
-                  {!isPro && (
-                    <p style={smallUpsell}>
-                      Upgrade to Pro to see live LTV on every deal and catch
-                      over advanced cars before funding.
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: 4
+                  }}
+                >
+                  <button type="submit" style={btn} disabled={loading}>
+                    {loading ? "Analyzing…" : "Analyze deal"}
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            {/* Right side results */}
+            <section
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px"
+              }}
+            >
+              {/* Usage */}
+              <div style={panel}>
+                <h2
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    marginBottom: 6
+                  }}
+                >
+                  Monthly usage
+                </h2>
+
+                {planType === "pro" ? (
+                  usage ? (
+                    <p style={{ fontSize: "13px", color: colors.textSecondary }}>
+                      Pro plan unlimited deals. You have run{" "}
+                      <strong>{usage.dealsThisMonth}</strong> deals this month.
                     </p>
-                  )}
-                </div>
+                  ) : (
+                    <p style={{ fontSize: "13px", color: colors.textSecondary }}>
+                      Pro plan unlimited deals. No usage recorded yet this
+                      month.
+                    </p>
+                  )
+                ) : usage ? (
+                  <p style={{ fontSize: "13px", color: colors.textSecondary }}>
+                    Used <strong>{usage.dealsThisMonth}</strong> of{" "}
+                    <strong>{usage.freeDealsPerMonth}</strong> free deals.
+                  </p>
+                ) : (
+                  <p style={{ fontSize: "13px", color: colors.textSecondary }}>
+                    Free plan includes 25 analyzed deals each month.
+                  </p>
+                )}
+              </div>
 
-                {result.underwriting && (
+              {/* Error */}
+              {error && (
+                <div style={panel}>
+                  <h2
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      marginBottom: 6
+                    }}
+                  >
+                    Error
+                  </h2>
+                  <p style={{ color: "#ef4444", fontSize: "13px" }}>{error}</p>
+                </div>
+              )}
+
+              {/* Summary and results */}
+              {result ? (
+                <>
                   <div style={panel}>
-                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                      Underwriting verdict
+                    <h2
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: 600,
+                        marginBottom: 6
+                      }}
+                    >
+                      Deal summary
                     </h2>
-                    <p style={{ fontWeight: 600 }}>
-                      {result.underwriting.verdict}
-                    </p>
+                    <ul
+                      style={{
+                        paddingLeft: 0,
+                        listStyle: "none",
+                        lineHeight: 1.7,
+                        fontSize: "13px"
+                      }}
+                    >
+                      <li>
+                        Payment{" "}
+                        <strong>${result.payment.toFixed(2)}</strong>
+                      </li>
+                      <li>
+                        Total interest{" "}
+                        <strong>${result.totalInterest.toFixed(2)}</strong>
+                      </li>
+                      <li>
+                        Total profit{" "}
+                        <strong>${result.totalProfit.toFixed(2)}</strong>
+                      </li>
+                      <li>
+                        Break even week{" "}
+                        <strong>{result.breakEvenWeek}</strong>
+                      </li>
+                    </ul>
+                  </div>
 
-                    {result.underwriting.reasons?.length > 0 && (
-                      <ul
-                        style={{
-                          marginTop: 8,
-                          paddingLeft: 18,
-                          lineHeight: 1.6
-                        }}
-                      >
-                        {result.underwriting.reasons.map(
-                          (r: string, i: number) => (
-                            <li key={i}>{r}</li>
-                          )
-                        )}
-                      </ul>
-                    )}
-
+                  <div style={panel}>
+                    <h2
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: 600,
+                        marginBottom: 6
+                      }}
+                    >
+                      Basic risk
+                    </h2>
+                    <ul
+                      style={{
+                        paddingLeft: 0,
+                        listStyle: "none",
+                        lineHeight: 1.7,
+                        fontSize: "13px"
+                      }}
+                    >
+                      <li>
+                        Payment to income <strong>{ptiDisplay}</strong>
+                      </li>
+                      <li>
+                        Risk score <strong>{result.riskScore}</strong>
+                      </li>
+                      {isPro && typeof result.ltv === "number" && (
+                        <li>
+                          LTV{" "}
+                          <strong>
+                            {(result.ltv * 100).toFixed(1)} percent
+                          </strong>
+                        </li>
+                      )}
+                    </ul>
                     {!isPro && (
                       <p style={smallUpsell}>
-                        Pro users see full policy reasons for PTI, LTV, term,
-                        down payment and profit, plus suggested counter terms.
+                        Upgrade to Pro to see live LTV on every deal and catch
+                        over advanced cars before funding.
                       </p>
                     )}
                   </div>
-                )}
 
-                {/* Suggested counter structure for Pro */}
-                {isPro &&
-                  result.underwriting &&
-                  result.underwriting.adjustments &&
-                  (result.underwriting.adjustments.newDownPayment ||
-                    result.underwriting.adjustments.newTermWeeks ||
-                    result.underwriting.adjustments.newSalePrice ||
-                    result.underwriting.adjustments.newApr) && (
+                  {result.underwriting && (
                     <div style={panel}>
-                      <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                        Suggested counter structure
-                      </h2>
-                      <ul
+                      <h2
                         style={{
-                          paddingLeft: 0,
-                          listStyle: "none",
-                          lineHeight: 1.7,
-                          marginBottom: 12
+                          fontSize: "15px",
+                          fontWeight: 600,
+                          marginBottom: 6
                         }}
                       >
-                        {typeof result.underwriting.adjustments
-                          .newDownPayment === "number" && (
-                          <li>
-                            Down payment target{" "}
-                            <strong>
-                              $
-                              {result.underwriting.adjustments.newDownPayment.toFixed(
-                                2
-                              )}
-                            </strong>
-                          </li>
-                        )}
-                        {typeof result.underwriting.adjustments
-                          .newTermWeeks === "number" && (
-                          <li>
-                            Term target{" "}
-                            <strong>
-                              {result.underwriting.adjustments.newTermWeeks}{" "}
-                              weeks
-                            </strong>
-                          </li>
-                        )}
-                        {typeof result.underwriting.adjustments
-                          .newSalePrice === "number" && (
-                          <li>
-                            Suggested sale price{" "}
-                            <strong>
-                              $
-                              {result.underwriting.adjustments.newSalePrice.toFixed(
-                                2
-                              )}
-                            </strong>
-                          </li>
-                        )}
-                        {typeof result.underwriting.adjustments.newApr ===
-                          "number" && (
-                          <li>
-                            Suggested APR{" "}
-                            <strong>
-                              {result.underwriting.adjustments.newApr.toFixed(
-                                2
-                              )}{" "}
-                              percent
-                            </strong>
-                          </li>
-                        )}
-                      </ul>
+                        Underwriting verdict
+                      </h2>
+                      <p style={{ fontWeight: 600, fontSize: "13px" }}>
+                        {result.underwriting.verdict}
+                      </p>
 
+                      {result.underwriting.reasons?.length > 0 && (
+                        <ul
+                          style={{
+                            marginTop: 8,
+                            paddingLeft: 18,
+                            lineHeight: 1.6,
+                            fontSize: "13px"
+                          }}
+                        >
+                          {result.underwriting.reasons.map(
+                            (r: string, i: number) => (
+                              <li key={i}>{r}</li>
+                            )
+                          )}
+                        </ul>
+                      )}
+
+                      {!isPro && (
+                        <p style={smallUpsell}>
+                          Pro users see full policy reasons for PTI, LTV, term,
+                          down payment and profit, plus suggested counter
+                          terms.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Suggested counter structure for Pro */}
+                  {isPro &&
+                    result.underwriting &&
+                    result.underwriting.adjustments &&
+                    (result.underwriting.adjustments.newDownPayment ||
+                      result.underwriting.adjustments.newTermWeeks ||
+                      result.underwriting.adjustments.newSalePrice ||
+                      result.underwriting.adjustments.newApr) && (
+                      <div style={panel}>
+                        <h2
+                          style={{
+                            fontSize: "15px",
+                            fontWeight: 600,
+                            marginBottom: 6
+                          }}
+                        >
+                          Suggested counter structure
+                        </h2>
+                        <ul
+                          style={{
+                            paddingLeft: 0,
+                            listStyle: "none",
+                            lineHeight: 1.7,
+                            marginBottom: 10,
+                            fontSize: "13px"
+                          }}
+                        >
+                          {typeof result.underwriting.adjustments
+                            .newDownPayment === "number" && (
+                            <li>
+                              Down payment target{" "}
+                              <strong>
+                                $
+                                {result.underwriting.adjustments.newDownPayment.toFixed(
+                                  2
+                                )}
+                              </strong>
+                            </li>
+                          )}
+                          {typeof result.underwriting.adjustments
+                            .newTermWeeks === "number" && (
+                            <li>
+                              Term target{" "}
+                              <strong>
+                                {result.underwriting.adjustments.newTermWeeks}{" "}
+                                weeks
+                              </strong>
+                            </li>
+                          )}
+                          {typeof result.underwriting.adjustments
+                            .newSalePrice === "number" && (
+                            <li>
+                              Suggested sale price{" "}
+                              <strong>
+                                $
+                                {result.underwriting.adjustments.newSalePrice.toFixed(
+                                  2
+                                )}
+                              </strong>
+                            </li>
+                          )}
+                          {typeof result.underwriting.adjustments.newApr ===
+                            "number" && (
+                            <li>
+                              Suggested APR{" "}
+                              <strong>
+                                {result.underwriting.adjustments.newApr.toFixed(
+                                  2
+                                )}{" "}
+                                percent
+                              </strong>
+                            </li>
+                          )}
+                        </ul>
+
+                        <button
+                          type="button"
+                          style={btnSecondary}
+                          onClick={() => {
+                            if (!loading) {
+                              void applySuggestedStructure();
+                            }
+                          }}
+                        >
+                          Apply suggested structure to form
+                        </button>
+                      </div>
+                    )}
+
+                  {/* Customer offer sheet for Pro users */}
+                  {isPro && (
+                    <div style={panel}>
+                      <h2
+                        style={{
+                          fontSize: "15px",
+                          fontWeight: 600,
+                          marginBottom: 6
+                        }}
+                      >
+                        Customer offer sheet
+                      </h2>
+                      <p
+                        style={{
+                          fontSize: "13px",
+                          color: colors.textSecondary,
+                          marginBottom: 10
+                        }}
+                      >
+                        Generate a clean one page offer you can print or save as
+                        PDF for the customer with payment, term and structure.
+                      </p>
                       <button
                         type="button"
                         style={btnSecondary}
-                        onClick={() => {
-                          if (!loading) {
-                            void applySuggestedStructure();
-                          }
-                        }}
+                        onClick={printOfferSheet}
                       >
-                        Apply suggested structure to form
+                        Print customer offer
                       </button>
                     </div>
                   )}
 
-                {/* Customer offer sheet for Pro users */}
-                {isPro && (
-                  <div style={panel}>
-                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                      Customer offer sheet
-                    </h2>
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        color: colors.textSecondary,
-                        marginBottom: 12
-                      }}
-                    >
-                      Generate a clean one page offer you can print or save as
-                      PDF for the customer with payment, term and structure.
-                    </p>
-                    <button
-                      type="button"
-                      style={btnSecondary}
-                      onClick={printOfferSheet}
-                    >
-                      Print customer offer
-                    </button>
-                  </div>
-                )}
-
-                {!isPro && (
-                  <div style={panel}>
-                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                      Customer offer sheet
-                    </h2>
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        color: colors.textSecondary,
-                        marginBottom: 12
-                      }}
-                    >
-                      Pro users can generate a printable one page customer offer
-                      sheet with payment, term, down payment and verdict ready
-                      to sign.
-                    </p>
-                    <a href="/billing" style={btn}>
-                      Upgrade to unlock offer sheet
-                    </a>
-                  </div>
-                )}
-
-                {result.aiExplanation && (
-                  <div style={panel}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 10
-                      }}
-                    >
-                      <h2 style={{ fontSize: "17px" }}>AI deal opinion</h2>
-                      {!isPro && <span style={proBadge}>Pro</span>}
+                  {!isPro && (
+                    <div style={panel}>
+                      <h2
+                        style={{
+                          fontSize: "15px",
+                          fontWeight: 600,
+                          marginBottom: 6
+                        }}
+                      >
+                        Customer offer sheet
+                      </h2>
+                      <p
+                        style={{
+                          fontSize: "13px",
+                          color: colors.textSecondary,
+                          marginBottom: 10
+                        }}
+                      >
+                        Pro users can generate a printable one page customer
+                        offer sheet with payment, term, down payment and verdict
+                        ready to sign.
+                      </p>
+                      <a href="/billing" style={btn}>
+                        Upgrade to unlock offer sheet
+                      </a>
                     </div>
+                  )}
 
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        lineHeight: 1.6,
-                        whiteSpace: "pre-wrap"
-                      }}
-                    >
-                      {result.aiExplanation}
-                    </p>
-
-                    {!isPro && (
-                      <div style={{ marginTop: 12 }}>
-                        <a href="/billing" style={btn}>
-                          Unlock full AI underwriting with Pro
-                        </a>
+                  {result.aiExplanation && (
+                    <div style={panel}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 6
+                        }}
+                      >
+                        <h2
+                          style={{
+                            fontSize: "15px",
+                            fontWeight: 600
+                          }}
+                        >
+                          AI deal opinion
+                        </h2>
+                        {!isPro && <span style={proBadge}>Pro</span>}
                       </div>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div style={panel}>
-                <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                  Deal summary
-                </h2>
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: colors.textSecondary
-                  }}
-                >
-                  Run a deal to see payment, profit, PTI, LTV and underwriting.
-                </p>
-              </div>
-            )}
-          </section>
+
+                      <p
+                        style={{
+                          fontSize: "13px",
+                          lineHeight: 1.6,
+                          whiteSpace: "pre-wrap"
+                        }}
+                      >
+                        {result.aiExplanation}
+                      </p>
+
+                      {!isPro && (
+                        <div style={{ marginTop: 10 }}>
+                          <a href="/billing" style={btnSecondary}>
+                            Unlock full AI underwriting
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={panel}>
+                  <h2
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      marginBottom: 6
+                    }}
+                  >
+                    Deal summary
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: colors.textSecondary
+                    }}
+                  >
+                    Run a deal to see payment, profit, PTI, LTV and
+                    underwriting results.
+                  </p>
+                </div>
+              )}
+            </section>
+          </div>
         </div>
-      </div>
+      </PageContainer>
     </main>
   );
 }
