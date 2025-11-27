@@ -8,6 +8,7 @@ import PageContainer from "@/components/PageContainer";
 type SavedDeal = {
   id: string;
   createdAt: string;
+  userId: string | null;
   input: {
     vehicleCost: number;
     reconCost: number;
@@ -173,20 +174,6 @@ export default function DealDetailPage() {
     gap: "16px",
     marginBottom: "12px"
   };
-
-  <button
-  onClick={() => {
-    const uid = deal.user_id;
-    if (!uid) return;
-    window.location.href = `/api/deals/export?userId=${encodeURIComponent(
-      uid
-    )}`;
-  }}
->
-  Export deals CSV
-</button>
-
-
 
   const buttonGhost: CSSProperties = {
     padding: "6px 12px",
