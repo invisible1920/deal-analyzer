@@ -30,7 +30,7 @@ export function setSessionCookie() {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // not forced in dev
     sameSite: "lax",
-    path: "/",                                     // visible on all routes
+    path: "/",                                     // send cookie on all routes
     maxAge: 60 * 60 * 24 * 7
   });
 }
