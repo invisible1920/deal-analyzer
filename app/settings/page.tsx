@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { themeColors } from "@/app/theme";
+import PageContainer from "@/components/PageContainer";
 
 type SettingsForm = {
   dealerName: string;
@@ -136,12 +137,15 @@ export default function SettingsPage() {
 
   const pageStyle: CSSProperties = {
     minHeight: "100vh",
-    padding: "24px",
+    padding: "32px 16px",
     background: colors.bg,
-    color: colors.text
+    color: colors.text,
+    fontFamily:
+      'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif'
   };
 
-  const cardStyle: CSSProperties = {
+  const shellStyle: CSSProperties = {
+    width: "100%",
     maxWidth: "900px",
     margin: "0 auto"
   };
@@ -149,14 +153,16 @@ export default function SettingsPage() {
   const panelStyle: CSSProperties = {
     background: colors.panel,
     border: `1px solid ${colors.border}`,
-    borderRadius: "12px",
-    padding: "16px"
+    borderRadius: "16px",
+    padding: "20px",
+    boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)"
   };
 
   const gridStyle: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "12px"
+    gap: "16px",
+    marginTop: "12px"
   };
 
   const labelStyle: CSSProperties = {
@@ -168,162 +174,188 @@ export default function SettingsPage() {
 
   const inputStyle: CSSProperties = {
     width: "100%",
-    padding: "8px",
-    borderRadius: "6px",
+    padding: "9px 10px",
+    borderRadius: "8px",
     border: `1px solid ${colors.inputBorder}`,
     background: colors.inputBg,
-    color: colors.text
+    color: colors.text,
+    fontSize: "14px"
+  };
+
+  const saveButtonStyle: CSSProperties = {
+    padding: "10px 18px",
+    borderRadius: "999px",
+    border: "none",
+    background: "#4f46e5",
+    color: "white",
+    cursor: saving ? "default" : "pointer",
+    opacity: saving ? 0.6 : 1,
+    fontSize: "14px",
+    fontWeight: 600,
+    letterSpacing: ".04em"
   };
 
   return (
     <main style={pageStyle}>
-      <div style={cardStyle}>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: 700,
-            marginBottom: "4px"
-          }}
-        >
-          Dealer settings
-        </h1>
-        <p
-          style={{
-            color: colors.textSecondary,
-            marginBottom: "16px"
-          }}
-        >
-          Set your store rules for PTI, LTV, down payment, APR and max term.
-          New deals will use these values.
-        </p>
+      <PageContainer>
+        <div style={shellStyle}>
+          <h1
+            style={{
+              fontSize: "24px",
+              fontWeight: 700,
+              marginBottom: "4px",
+              letterSpacing: "-0.02em"
+            }}
+          >
+            Dealer settings
+          </h1>
+          <p
+            style={{
+              color: colors.textSecondary,
+              marginBottom: "16px",
+              fontSize: "13px"
+            }}
+          >
+            Set your store rules for PTI, LTV, down payment, APR and max term.
+            New deals will use these values.
+          </p>
 
-        <div style={panelStyle}>
-          {loadingUser || loadingSettings ? (
-            <p style={{ fontSize: "14px" }}>Loading...</p>
-          ) : null}
+          <div style={panelStyle}>
+            {loadingUser || loadingSettings ? (
+              <p style={{ fontSize: "14px" }}>Loading...</p>
+            ) : null}
 
-          {error && (
-            <p style={{ color: "#b91c1c", marginBottom: "12px" }}>{error}</p>
-          )}
-
-          {message && (
-            <p style={{ color: "#15803d", marginBottom: "12px" }}>{message}</p>
-          )}
-
-          {!loadingUser && userId && (
-            <form onSubmit={handleSave}>
-              <div style={gridStyle}>
-                <div>
-                  <label style={labelStyle}>Dealer name</label>
-                  <input
-                    type="text"
-                    style={inputStyle}
-                    value={form.dealerName}
-                    onChange={e =>
-                      handleChange("dealerName", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Default APR</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    style={inputStyle}
-                    value={form.defaultAPR}
-                    onChange={e =>
-                      handleChange("defaultAPR", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Max PTI (0.25 for 25 percent)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    style={inputStyle}
-                    value={form.maxPTI}
-                    onChange={e =>
-                      handleChange("maxPTI", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Max LTV (1.40 for 140 percent)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    style={inputStyle}
-                    value={form.maxLTV}
-                    onChange={e =>
-                      handleChange("maxLTV", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Min down payment (dollars)
-                  </label>
-                  <input
-                    type="number"
-                    step="1"
-                    style={inputStyle}
-                    value={form.minDownPayment}
-                    onChange={e =>
-                      handleChange("minDownPayment", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Max term weeks</label>
-                  <input
-                    type="number"
-                    step="1"
-                    style={inputStyle}
-                    value={form.maxTermWeeks}
-                    onChange={e =>
-                      handleChange("maxTermWeeks", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <div
+            {error && (
+              <p
                 style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  marginTop: "16px"
+                  color: "#b91c1c",
+                  marginBottom: "12px",
+                  fontSize: "13px"
                 }}
               >
-                <button
-                  type="submit"
-                  disabled={saving}
+                {error}
+              </p>
+            )}
+
+            {message && (
+              <p
+                style={{
+                  color: "#15803d",
+                  marginBottom: "12px",
+                  fontSize: "13px"
+                }}
+              >
+                {message}
+              </p>
+            )}
+
+            {!loadingUser && userId && (
+              <form onSubmit={handleSave}>
+                <div style={gridStyle}>
+                  <div>
+                    <label style={labelStyle}>Dealer name</label>
+                    <input
+                      type="text"
+                      style={inputStyle}
+                      value={form.dealerName}
+                      onChange={e =>
+                        handleChange("dealerName", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Default APR</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      style={inputStyle}
+                      value={form.defaultAPR}
+                      onChange={e =>
+                        handleChange("defaultAPR", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>
+                      Max PTI (0.25 for 25 percent)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      style={inputStyle}
+                      value={form.maxPTI}
+                      onChange={e =>
+                        handleChange("maxPTI", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>
+                      Max LTV (1.40 for 140 percent)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      style={inputStyle}
+                      value={form.maxLTV}
+                      onChange={e =>
+                        handleChange("maxLTV", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>
+                      Min down payment (dollars)
+                    </label>
+                    <input
+                      type="number"
+                      step="1"
+                      style={inputStyle}
+                      value={form.minDownPayment}
+                      onChange={e =>
+                        handleChange("minDownPayment", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Max term weeks</label>
+                    <input
+                      type="number"
+                      step="1"
+                      style={inputStyle}
+                      value={form.maxTermWeeks}
+                      onChange={e =>
+                        handleChange("maxTermWeeks", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div
                   style={{
-                    padding: "8px 16px",
-                    borderRadius: "6px",
-                    border: "none",
-                    background: "#4f46e5",
-                    color: "white",
-                    cursor: saving ? "default" : "pointer",
-                    opacity: saving ? 0.6 : 1
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: "20px"
                   }}
                 >
-                  {saving ? "Saving..." : "Save settings"}
-                </button>
-              </div>
-            </form>
-          )}
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    style={saveButtonStyle}
+                  >
+                    {saving ? "Saving..." : "Save settings"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
-      </div>
+      </PageContainer>
     </main>
   );
 }
