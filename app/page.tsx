@@ -17,7 +17,7 @@ type FormState = {
   paymentFrequency: PaymentFrequency;
   monthlyIncome: number;
   monthsOnJob: number;
-  pastRepo: boolean;
+  repoCount: number;
 };
 
 type PlanType = "free" | "pro";
@@ -35,7 +35,7 @@ export default function HomePage() {
     paymentFrequency: "monthly",
     monthlyIncome: 2400,
     monthsOnJob: 6,
-    pastRepo: false
+    repoCount: 0
   });
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -584,31 +584,6 @@ export default function HomePage() {
     gap: "16px"
   };
 
-  const checkboxRow: CSSProperties = {
-    gridColumn: "1 / span 2",
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 8
-  };
-
-  const checkboxInput: CSSProperties = {
-    width: 18,
-    height: 18,
-    borderRadius: 6,
-    border: "1px solid #e5e7eb",
-    background: "#ffffff",
-    cursor: "pointer",
-    accentColor: "#4f46e5" as any
-  };
-
-  const checkboxLabel: CSSProperties = {
-    fontSize: 13,
-    color: colors.text,
-    cursor: "pointer",
-    userSelect: "none"
-  };
-
   const btn: CSSProperties = {
     padding: "12px 22px",
     borderRadius: "999px",
@@ -800,7 +775,7 @@ export default function HomePage() {
           .infoIcon {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            justifyContent: center;
             width: 18px;
             height: 18px;
             border-radius: 999px;
@@ -1146,19 +1121,28 @@ export default function HomePage() {
                     />
                   </div>
 
-                  <div style={checkboxRow}>
+                  <div>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="repoCount">
+                        Number of past repos
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          Total number of prior repossessions on the bureau or
+                          credit app. Two or more often results in a hard
+                          decline.
+                        </div>
+                      </div>
+                    </div>
                     <input
-                      id="pastRepo"
-                      type="checkbox"
-                      checked={form.pastRepo}
-                      onChange={e =>
-                        handleChange("pastRepo", e.target.checked)
-                      }
-                      style={checkboxInput}
+                      id="repoCount"
+                      type="number"
+                      min={0}
+                      style={input}
+                      value={form.repoCount}
+                      onChange={e => handleChange("repoCount", e.target.value)}
                     />
-                    <label htmlFor="pastRepo" style={checkboxLabel}>
-                      Customer has past repo
-                    </label>
                   </div>
                 </div>
 
