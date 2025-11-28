@@ -1,6 +1,5 @@
-// app/api/dealer/session/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createSignedDealerSession } from "@/lib/auth"; // this should return the signed "dealer" value
+import { createSignedDealerSession } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const signed = createSignedDealerSession();
@@ -16,8 +15,8 @@ export async function POST(req: NextRequest) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: weekInSeconds,                               // lifetime in seconds
-    expires: new Date(Date.now() + weekInSeconds * 1000) // explicit expiry date
+    maxAge: weekInSeconds,
+    expires: new Date(Date.now() + weekInSeconds * 1000)
   });
 
   return res;
