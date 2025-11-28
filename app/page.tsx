@@ -547,7 +547,6 @@ export default function HomePage() {
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)"
   };
 
-  // updated input styling so all boxes match and feel like the screenshot
   const input: CSSProperties = {
     width: "100%",
     padding: "10px 14px",
@@ -571,13 +570,20 @@ export default function HomePage() {
     textTransform: "uppercase"
   };
 
+  const fieldHeader: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+    gap: 8
+  };
+
   const formGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: "16px"
   };
 
-  // new checkbox styles (fixes alignment and appearance)
   const checkboxRow: CSSProperties = {
     gridColumn: "1 / span 2",
     display: "flex",
@@ -784,6 +790,65 @@ export default function HomePage() {
   return (
     <main style={pageStyle}>
       <PageContainer>
+        <style jsx>{`
+          .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+          }
+
+          .infoIcon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            color: #4f46e5;
+            cursor: default;
+          }
+
+          .tooltipBubble {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            width: 240px;
+            background: #0f172a;
+            color: #f9fafb;
+            padding: 8px 10px;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
+            font-size: 11px;
+            line-height: 1.45;
+            z-index: 30;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(4px);
+            transition: opacity 0.15s ease, transform 0.15s ease,
+              visibility 0.15s ease;
+          }
+
+          .tooltipBubble::before {
+            content: "";
+            position: absolute;
+            top: -5px;
+            right: 10px;
+            border-width: 0 5px 5px 5px;
+            border-style: solid;
+            border-color: transparent transparent #0f172a transparent;
+          }
+
+          .tooltip:hover .tooltipBubble {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+          }
+        `}</style>
+
         <div style={shellStyle}>
           <header
             style={{
@@ -863,8 +928,21 @@ export default function HomePage() {
               <form onSubmit={handleSubmit} style={{ display: "grid", gap: 20 }}>
                 <div style={formGrid}>
                   <div>
-                    <label style={label}>Vehicle cost</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="vehicleCost">
+                        Vehicle cost
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          What you paid to acquire the vehicle, including auction
+                          price and buyer fee. Used to calculate your true cost
+                          and profit.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="vehicleCost"
                       type="number"
                       style={input}
                       value={form.vehicleCost}
@@ -875,8 +953,20 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>Recon cost</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="reconCost">
+                        Recon cost
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          Total reconditioning cost for this unit. Parts, labor
+                          and detail that you invest before the sale.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="reconCost"
                       type="number"
                       style={input}
                       value={form.reconCost}
@@ -887,8 +977,20 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>Sale price</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="salePrice">
+                        Sale price
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          Retail selling price of the vehicle before taxes and
+                          separate fees. Drives gross profit and LTV.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="salePrice"
                       type="number"
                       style={input}
                       value={form.salePrice}
@@ -899,8 +1001,20 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>Down payment</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="downPayment">
+                        Down payment
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          Cash collected from the customer at delivery. This
+                          reduces the amount financed and risk.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="downPayment"
                       type="number"
                       style={input}
                       value={form.downPayment}
@@ -911,8 +1025,21 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>APR</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="apr">
+                        APR
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          Annual percentage rate on the note. Many BHPH stores
+                          use between nineteen and twenty nine point nine nine
+                          percent.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="apr"
                       type="number"
                       style={input}
                       value={form.apr}
@@ -921,8 +1048,20 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>Term months</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="termMonths">
+                        Term months
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          Length of the contract in months. The policy also
+                          enforces a maximum term in weeks.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="termMonths"
                       type="number"
                       style={input}
                       value={form.termMonths}
@@ -933,8 +1072,20 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>Payment frequency</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="paymentFrequency">
+                        Payment frequency
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          How often the customer makes payments. Matching their
+                          pay cycle usually gives a cleaner PTI.
+                        </div>
+                      </div>
+                    </div>
                     <select
+                      id="paymentFrequency"
                       style={input}
                       value={form.paymentFrequency}
                       onChange={e =>
@@ -948,8 +1099,20 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>Monthly income</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="monthlyIncome">
+                        Monthly income
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          Customer gross monthly income before taxes. Used to
+                          compute payment to income percentage.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="monthlyIncome"
                       type="number"
                       style={input}
                       value={form.monthlyIncome}
@@ -960,8 +1123,20 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <label style={label}>Months on job</label>
+                    <div style={fieldHeader}>
+                      <label style={label} htmlFor="monthsOnJob">
+                        Months on job
+                      </label>
+                      <div className="tooltip">
+                        <span className="infoIcon">?</span>
+                        <div className="tooltipBubble">
+                          How long the customer has been at their current job in
+                          months. Helps with stability and risk scoring.
+                        </div>
+                      </div>
+                    </div>
                     <input
+                      id="monthsOnJob"
                       type="number"
                       style={input}
                       value={form.monthsOnJob}
