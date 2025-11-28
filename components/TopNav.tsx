@@ -95,19 +95,14 @@ export default function TopNav() {
         <Link href="/" style={linkStyle}>
           Analyzer
         </Link>
+
         <Link href="/history" style={secondaryLinkStyle}>
           History
         </Link>
+
         <Link href="/settings" style={secondaryLinkStyle}>
           Settings
         </Link>
-
-        {/* Only show Dealer when logged in */}
-        {!loading && user && (
-          <Link href="/settings" style={secondaryLinkStyle}>
-            Dealer
-          </Link>
-        )}
 
         {loading ? (
           <span style={{ color: "#4b5563", fontSize: "12px" }}>Checking...</span>
