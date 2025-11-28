@@ -3,9 +3,10 @@
 import { CSSProperties } from "react";
 import { themeColors } from "@/app/theme";
 import { useDealAnalyzer } from "@/hooks/useDealAnalyzer";
-import { DealForm } from "./DealForm";
-import { UsagePanel } from "./UsagePanel";
-import { ResultsDashboard } from "./ResultsDashboard";
+
+import { DealForm } from "@/components/deal-analyzer/DealForm";
+import { UsagePanel } from "@/components/deal-analyzer/UsagePanel";
+import { ResultsDashboard } from "@/components/deal-analyzer/ResultsDashboard";
 
 export function DealAnalyzerPage() {
   const colors = themeColors.light;
@@ -32,19 +33,84 @@ export function DealAnalyzerPage() {
     margin: "0 auto"
   };
 
-  const grid: CSSProperties = {
+  const contentGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)",
     gap: "20px",
-    marginTop: "24px"
+    marginTop: "24px",
+    alignItems: "start"
+  };
+
+  const proBadge: CSSProperties = {
+    padding: "4px 10px",
+    borderRadius: 999,
+    background: "linear-gradient(to right, #22c55e, #4ade80)",
+    color: "#052e16",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: ".08em",
+    textTransform: "uppercase"
+  };
+
+  const upgradeBtn: CSSProperties = {
+    padding: "10px 20px",
+    borderRadius: 999,
+    background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
+    color: "white",
+    fontWeight: 600,
+    letterSpacing: ".04em",
+    cursor: "pointer",
+    fontSize: 13,
+    whiteSpace: "nowrap",
+    textDecoration: "none",
+    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.3)"
   };
 
   return (
     <div style={{ width: "100%" }}>
       <div style={shell}>
-        <h1 style={{ fontSize: 30, fontWeight: 700 }}>BHPH Deal Analyzer</h1>
+        {/* HEADER */}
+        <header
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "20px",
+            alignItems: "center",
+            marginBottom: 10
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
+              BHPH Deal Analyzer
+            </h1>
 
-        <div style={grid}>
+            {authLoaded && isPro && <span style={proBadge}>Pro</span>}
+          </div>
+
+          {planType !== "pro" && (
+            <a href="/billing" style={upgradeBtn}>
+              Upgrade to Pro
+            </a>
+          )}
+        </header>
+
+        <p style={{ color: colors.textSecondary, fontSize: 15 }}>
+          Calculate payment, profit, PTI, LTV and AI underwriting instantly.
+        </p>
+        <p
+          style={{
+            marginTop: 6,
+            fontSize: 13,
+            color: colors.textSecondary
+          }}
+        >
+          Policy in use max LTV {(policy.maxLTV * 100).toFixed(0)} percent, max PTI{" "}
+          {(policy.maxPTI * 100).toFixed(0)} percent, max term{" "}
+          {policy.maxTermWeeks} weeks.
+        </p>
+
+        {/* FORM + USAGE */}
+        <div style={contentGrid}>
           <DealForm
             form={form}
             handleChange={handleChange}
@@ -58,6 +124,7 @@ export function DealAnalyzerPage() {
           <UsagePanel planType={planType} usage={usage} colors={colors} />
         </div>
 
+        {/* RESULTS */}
         <ResultsDashboard
           result={result}
           error={error}
