@@ -21,27 +21,39 @@ function verify(signedValue: string, secret: string) {
 }
 
 /**
- * Helper used by the API route to get the signed cookie value.
+ * Helper used by the API route (and callback page) to get the signed cookie value.
+ * This is defensive: if SESSION_SECRET is missing, we just return null instead of throwing.
  */
 export function createSignedDealerSession() {
-  const secret = process.env.SESSION_SECRET!;
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    // Fail soft: do not crash the request if env is misconfigured.
+    // You can log if you want:
+    // console.error("SESSION_SECRET is not set; skipping dealer_session cookie");
+    return null;
+  }
   return sign("dealer", secret);
 }
 
 /**
- * Original helper you already had – still safe to use elsewhere.
+ * Sets the dealer_session cookie for the current response.
+ * If there is no secret or signing fails, this becomes a no-op instead of throwing.
  */
 export function setSessionCookie() {
   const signed = createSignedDealerSession();
+  if (!signed) {
+    // No secret / could not sign – skip setting the cookie.
+    return;
+  }
 
   cookies().set({
     name: SESSION_COOKIE,
     value: signed,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // not forced in dev
+    secure: process.env.NODE_ENV === "production", // secure in prod, relaxed in dev
     sameSite: "lax",
-    path: "/",                                     // send cookie on all routes
-    maxAge: 60 * 60 * 24 * 7
+    path: "/", // send cookie on all routes
+    maxAge: 60 * 60 * 24 * 7, // 7 days
   });
 }
 
@@ -54,6 +66,9 @@ export function clearSessionCookie() {
   });
 }
 
+/**
+ * Safe auth check: never throws. If anything is off, returns false.
+ */
 export function isAuthenticated() {
   const secret = process.env.SESSION_SECRET;
   if (!secret) return false;
