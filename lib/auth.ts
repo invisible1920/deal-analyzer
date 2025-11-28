@@ -20,9 +20,19 @@ function verify(signedValue: string, secret: string) {
   return expected === signature ? value : null;
 }
 
-export function setSessionCookie() {
+/**
+ * Helper used by the API route to get the signed cookie value.
+ */
+export function createSignedDealerSession() {
   const secret = process.env.SESSION_SECRET!;
-  const signed = sign("dealer", secret);
+  return sign("dealer", secret);
+}
+
+/**
+ * Original helper you already had – still safe to use elsewhere.
+ */
+export function setSessionCookie() {
+  const signed = createSignedDealerSession();
 
   cookies().set({
     name: SESSION_COOKIE,
