@@ -92,26 +92,26 @@ export default function DealerSettingsPage() {
   } as const;
 
   const cardStyle = {
-    maxWidth: 640,
+    maxWidth: 720,
     margin: "0 auto",
     padding: 24,
     borderRadius: 16,
     border: `1px solid ${colors.border}`,
-    background: colors.panel,
-    boxShadow: "0 18px 45px rgba(15, 23, 42, 0.16)",
+    background: "#ffffff", // light card, like main analyzer form
+    boxShadow: "0 18px 40px rgba(15, 23, 42, 0.10)",
   } as const;
 
   const titleStyle = {
     fontSize: 22,
     fontWeight: 600,
-    marginBottom: 8,
+    marginBottom: 6,
     letterSpacing: "-0.02em",
   } as const;
 
   const subtitleStyle = {
     fontSize: 13,
     color: colors.textSecondary,
-    marginBottom: 20,
+    marginBottom: 18,
   } as const;
 
   const labelStyle = {
@@ -122,21 +122,27 @@ export default function DealerSettingsPage() {
     color: colors.textSecondary,
   } as const;
 
+  // LIGHT input style to match analyzer page
   const inputStyle = {
     width: "100%",
-    padding: "8px 10px",
+    padding: "9px 11px",
     marginBottom: 14,
     borderRadius: 10,
     border: `1px solid ${colors.border}`,
-    background: "#020617",
+    background: "#f9fafb", // light gray, same family as app background
     color: colors.text,
     fontSize: 13,
     outline: "none",
   } as const;
 
-  const buttonStyle = {
+  const buttonRowStyle = {
     marginTop: 10,
-    padding: "10px 16px",
+    display: "flex",
+    justifyContent: "flex-start",
+  } as const;
+
+  const buttonStyle = {
+    padding: "10px 18px",
     borderRadius: 999,
     border: "none",
     fontSize: 13,
@@ -145,7 +151,7 @@ export default function DealerSettingsPage() {
     background:
       "linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #8b5cf6 100%)",
     color: "white",
-    boxShadow: "0 18px 40px rgba(79, 70, 229, 0.35)",
+    boxShadow: "0 14px 32px rgba(79, 70, 229, 0.35)",
   } as const;
 
   return (
@@ -241,14 +247,16 @@ export default function DealerSettingsPage() {
             </p>
           )}
           {saved && (
-            <p style={{ color: "#4ade80", fontSize: 13, marginTop: 4 }}>
+            <p style={{ color: "#16a34a", fontSize: 13, marginTop: 4 }}>
               Settings saved successfully.
             </p>
           )}
 
-          <button onClick={save} style={buttonStyle}>
-            Save settings
-          </button>
+          <div style={buttonRowStyle}>
+            <button onClick={save} style={buttonStyle}>
+              Save settings
+            </button>
+          </div>
         </div>
       </PageContainer>
     </main>
