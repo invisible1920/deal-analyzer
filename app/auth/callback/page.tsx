@@ -1,11 +1,70 @@
-import { redirect } from "next/navigation";
-import { setSessionCookie } from "@/lib/auth";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { themeColors } from "@/app/theme";
+import PageContainer from "@/components/PageContainer";
 
 export default function AuthCallbackPage() {
-  // Supabase has just redirected the browser here after Google SSO.
-  // This runs on the server. We set the dealer_session cookie here.
-  setSessionCookie();
+  const router = useRouter();
+  const colors = themeColors.light;
 
-  // Then immediately send the user into the dealer area (or "/" if you prefer).
-  redirect("/dealer/settings");
+  useEffect(() => {
+    // Supabase has already stored the session in localStorage when it
+    // redirected here. We just move the user into the app.
+    const t = setTimeout(() => {
+      router.replace("/");
+    }, 600);
+
+    return () => clearTimeout(t);
+  }, [router]);
+
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        background: colors.bg,
+        color: colors.text,
+        display: "flex",
+        alignItems: "center",
+        fontFamily:
+          'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+      }}
+    >
+      <PageContainer>
+        <div
+          style={{
+            maxWidth: 420,
+            margin: "0 auto",
+            padding: 24,
+            borderRadius: 16,
+            border: `1px solid ${colors.border}`,
+            background: colors.panel,
+            textAlign: "center",
+            boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 20,
+              fontWeight: 600,
+              marginBottom: 8,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Finishing sign in
+          </h1>
+          <p
+            style={{
+              fontSize: 14,
+              color: colors.textSecondary,
+              marginBottom: 4,
+            }}
+          >
+            One moment while we connect your dealer account.
+          </p>
+        </div>
+      </PageContainer>
+    </main>
+  );
 }
