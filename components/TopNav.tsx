@@ -21,12 +21,18 @@ export default function TopNav({
   useEffect(() => {
     // Load Supabase user ONLY for email display / Google login
     async function loadUser() {
-      const { data } = await supabaseClient.auth.getUser();
-      if (data.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email ?? "",
-        });
+      try {
+        const { data } = await supabaseClient.auth.getUser();
+        if (data.user) {
+          setUser({
+            id: data.user.id,
+            email: data.user.email ?? "",
+          });
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
       }
     }
     loadUser();
@@ -39,8 +45,8 @@ export default function TopNav({
     // clear UI
     setUser(null);
 
-    // redirect to dealer login
-    router.push("/dealer/login");
+    // redirect to your original login screen
+    router.push("/login");
   }
 
   const navStyle: CSSProperties = {
@@ -88,7 +94,9 @@ export default function TopNav({
 
   return (
     <nav style={navStyle}>
-      <div style={{ fontWeight: 700, fontSize: "16px" }}>BHPH Deal Analyzer</div>
+      <div style={{ fontWeight: 700, fontSize: "16px" }}>
+        BHPH Deal Analyzer
+      </div>
 
       <div style={linksStyle}>
         <Link href="/" style={linkStyle}>
@@ -103,6 +111,7 @@ export default function TopNav({
 
         {dealerLoggedIn ? (
           <div style={userBoxStyle}>
+            {/* Supabase user email if available, otherwise generic label */}
             <span>{user?.email ?? "Dealer"}</span>
             <button
               type="button"
@@ -113,7 +122,8 @@ export default function TopNav({
             </button>
           </div>
         ) : (
-          <Link href="/dealer/login" style={secondaryLinkStyle}>
+          // Back to your original login route for Supabase SSO
+          <Link href="/login" style={secondaryLinkStyle}>
             Login
           </Link>
         )}
