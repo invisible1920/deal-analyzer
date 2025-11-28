@@ -10,36 +10,37 @@ type UserInfo = {
   email: string;
 } | null;
 
-export default function TopNav() {
+export default function TopNav({
+  dealerLoggedIn,
+}: {
+  dealerLoggedIn: boolean;
+}) {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Load Supabase user ONLY for email display / Google login
     async function loadUser() {
-      try {
-        const { data } = await supabaseClient.auth.getUser();
-        if (data.user) {
-          setUser({
-            id: data.user.id,
-            email: data.user.email ?? ""
-          });
-        } else {
-          setUser(null);
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
+      const { data } = await supabaseClient.auth.getUser();
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email ?? "",
+        });
       }
     }
     loadUser();
   }, []);
 
   async function handleLogout() {
+    // sign out supabase
     await supabaseClient.auth.signOut();
+
+    // clear UI
     setUser(null);
-    router.push("/login");
+
+    // redirect to dealer login
+    router.push("/dealer/login");
   }
 
   const navStyle: CSSProperties = {
@@ -48,24 +49,24 @@ export default function TopNav() {
     padding: "12px 24px",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   };
 
   const linksStyle: CSSProperties = {
     display: "flex",
     gap: "16px",
     fontSize: "14px",
-    alignItems: "center"
+    alignItems: "center",
   };
 
   const linkStyle: CSSProperties = {
     color: "#e5e7eb",
-    textDecoration: "none"
+    textDecoration: "none",
   };
 
   const secondaryLinkStyle: CSSProperties = {
     color: "#9ca3af",
-    textDecoration: "none"
+    textDecoration: "none",
   };
 
   const userBoxStyle: CSSProperties = {
@@ -73,7 +74,7 @@ export default function TopNav() {
     alignItems: "center",
     gap: "8px",
     fontSize: "13px",
-    color: "#9ca3af"
+    color: "#9ca3af",
   };
 
   const logoutButtonStyle: CSSProperties = {
@@ -82,14 +83,13 @@ export default function TopNav() {
     color: "#f97316",
     cursor: "pointer",
     fontSize: "13px",
-    padding: 0
+    padding: 0,
   };
 
   return (
     <nav style={navStyle}>
-      <div style={{ fontWeight: 700, fontSize: "16px" }}>
-        BHPH Deal Analyzer
-      </div>
+      <div style={{ fontWeight: 700, fontSize: "16px" }}>BHPH Deal Analyzer</div>
+
       <div style={linksStyle}>
         <Link href="/" style={linkStyle}>
           Analyzer
@@ -101,11 +101,9 @@ export default function TopNav() {
           Settings
         </Link>
 
-        {loading ? (
-          <span style={{ color: "#4b5563", fontSize: "12px" }}>Checking...</span>
-        ) : user ? (
+        {dealerLoggedIn ? (
           <div style={userBoxStyle}>
-            <span>{user.email}</span>
+            <span>{user?.email ?? "Dealer"}</span>
             <button
               type="button"
               onClick={handleLogout}
@@ -115,7 +113,7 @@ export default function TopNav() {
             </button>
           </div>
         ) : (
-          <Link href="/login" style={secondaryLinkStyle}>
+          <Link href="/dealer/login" style={secondaryLinkStyle}>
             Login
           </Link>
         )}
