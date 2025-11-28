@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import TopNav from "@/components/TopNav";
+import TopNavServer from "@/components/TopNavServer";
 import DealerSessionBootstrap from "@/components/DealerSessionBootstrap";
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export default function RootLayout({
             '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif',
         }}
       >
-        {/* 🚀 Always runs when the app loads — sets dealer_session automatically */}
+        {/* runs on app load and sets dealer_session based on Supabase session */}
         <DealerSessionBootstrap />
 
         <header
@@ -33,7 +33,7 @@ export default function RootLayout({
             color: "#e5e7eb",
           }}
         >
-          <TopNav />
+          <TopNavServer />
         </header>
 
         <main style={{ minHeight: "100vh" }}>{children}</main>
