@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabaseClient } from "@/lib/supabaseClient";
 
 type DealerSettings = {
   dealerName: string;
@@ -12,11 +14,39 @@ type DealerSettings = {
 };
 
 export default function DealerSettingsPage() {
+  const router = useRouter();
+
   const [settings, setSettings] = useState<DealerSettings | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [authChecking, setAuthChecking] = useState(true);
 
+  // 1) Check Supabase auth first
   useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { data } = await supabaseClient.auth.getUser();
+        if (!data.user) {
+          // Not logged in – send to login and do NOT load settings
+          router.replace("/login");
+          return;
+        }
+      } catch {
+        // If we cannot read user, treat as not logged in
+        router.replace("/login");
+        return;
+      } finally {
+        setAuthChecking(false);
+      }
+    }
+
+    checkAuth();
+  }, [router]);
+
+  // 2) Once auth is confirmed, load dealer settings
+  useEffect(() => {
+    if (authChecking) return;
+
     async function load() {
       try {
         const res = await fetch("/api/settings", { method: "GET" });
@@ -30,10 +60,12 @@ export default function DealerSettingsPage() {
         setError(err?.message || "Failed to load settings");
       }
     }
-    load();
-  }, []);
 
-  if (!settings) {
+    load();
+  }, [authChecking]);
+
+  // While checking auth or loading settings, show a simple loading screen
+  if (authChecking || !settings) {
     return (
       <main
         style={{
@@ -42,7 +74,7 @@ export default function DealerSettingsPage() {
           color: "white",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
         }}
       >
         <p>Loading dealer settings...</p>
@@ -58,7 +90,7 @@ export default function DealerSettingsPage() {
       const res = await fetch("/api/settings/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settings),
       });
 
       const data = await res.json();
@@ -78,18 +110,22 @@ export default function DealerSettingsPage() {
     color: "white",
     minHeight: "100vh",
     padding: "24px",
-    background: "#020617"
-  };
+    background: "#020617",
+  } as const;
 
   const panel = {
     background: "#111827",
     padding: "16px",
     borderRadius: "8px",
     maxWidth: "600px",
-    border: "1px solid #1f2937"
-  };
+    border: "1px solid #1f2937",
+  } as const;
 
-  const label = { fontSize: "12px", marginBottom: "4px", display: "block" };
+  const label = {
+    fontSize: "12px",
+    marginBottom: "4px",
+    display: "block",
+  } as const;
 
   const input = {
     width: "100%",
@@ -98,8 +134,8 @@ export default function DealerSettingsPage() {
     borderRadius: "6px",
     background: "#1f2937",
     border: "1px solid #374151",
-    color: "white"
-  };
+    color: "white",
+  } as const;
 
   return (
     <main style={container}>
@@ -125,7 +161,7 @@ export default function DealerSettingsPage() {
           onChange={(e) =>
             setSettings({
               ...settings,
-              defaultAPR: parseFloat(e.target.value || "0")
+              defaultAPR: parseFloat(e.target.value || "0"),
             })
           }
         />
@@ -139,7 +175,7 @@ export default function DealerSettingsPage() {
           onChange={(e) =>
             setSettings({
               ...settings,
-              maxPTI: parseFloat(e.target.value || "0")
+              maxPTI: parseFloat(e.target.value || "0"),
             })
           }
         />
@@ -153,7 +189,7 @@ export default function DealerSettingsPage() {
           onChange={(e) =>
             setSettings({
               ...settings,
-              maxLTV: parseFloat(e.target.value || "0")
+              maxLTV: parseFloat(e.target.value || "0"),
             })
           }
         />
@@ -166,7 +202,7 @@ export default function DealerSettingsPage() {
           onChange={(e) =>
             setSettings({
               ...settings,
-              minDownPayment: parseFloat(e.target.value || "0")
+              minDownPayment: parseFloat(e.target.value || "0"),
             })
           }
         />
@@ -179,7 +215,7 @@ export default function DealerSettingsPage() {
           onChange={(e) =>
             setSettings({
               ...settings,
-              maxTermWeeks: parseInt(e.target.value || "0")
+              maxTermWeeks: parseInt(e.target.value || "0", 10),
             })
           }
         />
@@ -198,7 +234,7 @@ export default function DealerSettingsPage() {
             color: "white",
             borderRadius: "6px",
             border: "none",
-            cursor: "pointer"
+            cursor: "pointer",
           }}
         >
           Save Settings
