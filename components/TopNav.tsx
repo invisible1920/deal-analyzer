@@ -10,16 +10,12 @@ type UserInfo = {
   email: string;
 } | null;
 
-export default function TopNav({
-  dealerLoggedIn,
-}: {
-  dealerLoggedIn: boolean;
-}) {
+export default function TopNav() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load Supabase user ONLY for email display / Google login
     async function loadUser() {
       try {
         const { data } = await supabaseClient.auth.getUser();
@@ -33,19 +29,21 @@ export default function TopNav({
         }
       } catch {
         setUser(null);
+      } finally {
+        setLoading(false);
       }
     }
+
     loadUser();
   }, []);
 
   async function handleLogout() {
-    // sign out supabase
-    await supabaseClient.auth.signOut();
-
-    // clear UI
+    try {
+      await supabaseClient.auth.signOut();
+    } catch {
+      // ignore any Supabase error here, we still clear local state
+    }
     setUser(null);
-
-    // redirect to your original login screen
     router.push("/login");
   }
 
@@ -108,11 +106,17 @@ export default function TopNav({
         <Link href="/settings" style={secondaryLinkStyle}>
           Settings
         </Link>
+        {/* Dealer area link – adjust path if you want /dealer/login instead */}
+        <Link href="/dealer/settings" style={secondaryLinkStyle}>
+          Dealer
+        </Link>
 
-        {dealerLoggedIn ? (
+        {/* Auth section on the right */}
+        {loading ? (
+          <span style={{ color: "#4b5563", fontSize: "12px" }}>Checking...</span>
+        ) : user ? (
           <div style={userBoxStyle}>
-            {/* Supabase user email if available, otherwise generic label */}
-            <span>{user?.email ?? "Dealer"}</span>
+            <span>{user.email}</span>
             <button
               type="button"
               onClick={handleLogout}
@@ -122,7 +126,6 @@ export default function TopNav({
             </button>
           </div>
         ) : (
-          // Back to your original login route for Supabase SSO
           <Link href="/login" style={secondaryLinkStyle}>
             Login
           </Link>
