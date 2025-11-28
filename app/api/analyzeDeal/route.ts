@@ -28,7 +28,7 @@ type DealInput = {
   paymentFrequency: PaymentFrequency;
   monthlyIncome?: number;
   monthsOnJob?: number;
-  pastRepo?: boolean;
+  repoCount?: number;
   userId?: string | null;
 };
 
@@ -267,7 +267,16 @@ function basicRiskScore(
     score = score === "Low" ? "Medium" : "High";
   }
 
-  if (input.pastRepo) score = "High";
+  // Repo history now uses numeric repoCount
+  const repoCount = input.repoCount ?? 0;
+
+  if (repoCount === 1) {
+    // one prior repo bumps risk up one level
+    score = score === "Low" ? "Medium" : "High";
+  } else if (repoCount >= 2) {
+    // two or more repos are always high risk
+    score = "High";
+  }
 
   return { paymentToIncome, riskScore: score };
 }
@@ -319,6 +328,7 @@ Deal:
 - APR used: ${apr}
 - Term weeks: ${input.termWeeks}
 - Payment frequency: ${input.paymentFrequency}
+- Reported repo count: ${input.repoCount ?? 0}
 
 Calculated:
 - Payment: ${core.payment.toFixed(2)}
@@ -464,7 +474,10 @@ export async function POST(req: NextRequest) {
       ltv,
       profit: core.totalProfit,
       jobTimeMonths: body.monthsOnJob || 0,
-      repoCount: body.pastRepo ? 1 : 0,
+      repoCount:
+        typeof body.repoCount === "number" && body.repoCount > 0
+          ? body.repoCount
+          : 0,
     };
 
     const rules = {
@@ -525,7 +538,10 @@ export async function POST(req: NextRequest) {
         paymentFrequency: body.paymentFrequency,
         monthlyIncome: body.monthlyIncome ?? null,
         monthsOnJob: body.monthsOnJob ?? null,
-        pastRepo: Boolean(body.pastRepo),
+        repoCount:
+          typeof body.repoCount === "number" && body.repoCount > 0
+            ? body.repoCount
+            : 0,
       },
       result: {
         payment: core.payment,
