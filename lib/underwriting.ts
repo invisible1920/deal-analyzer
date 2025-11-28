@@ -41,144 +41,251 @@ export function runUnderwritingEngine(
   rules: DealerRules
 ): UnderwritingResult {
   const reasons: string[] = [];
-  let verdict: UnderwritingVerdict = "APPROVE";
+  const adjustments: UnderwritingResult["adjustments"] = {};
+
+  // These flags decide the final verdict after all checks
+  let needsCounter = false;
+  let hardDecline = false;
+
+  const ptiPercent = deal.pti * 100;
+  const ltvPercent = deal.ltv * 100;
 
   // Current financed amount
   const currentAdvance = deal.salePrice - deal.downPayment;
 
-  // We will fill this as we go
-  const adjustments: UnderwritingResult["adjustments"] = {};
+  // Effective policy thresholds that get stricter with repos
+  let effectiveMaxPTI = rules.maxPTI;
+  let effectiveMaxLTV = rules.maxLTV;
+  let effectiveMinDown = rules.minDownPayment;
+  let effectiveMaxTermWeeks = rules.maxTermWeeks;
+  let profitFloor = 1500;
 
-  // PTI check
-  if (deal.pti > rules.maxPTI) {
-    verdict = "COUNTER";
+  // Repo based tightening
+  if (deal.repoCount === 1) {
+    effectiveMaxPTI = Math.max(0, rules.maxPTI - 0.03); // about three points tighter PTI
+    effectiveMaxLTV = Math.max(0, rules.maxLTV - 0.10); // about ten points tighter LTV
+    effectiveMinDown = Math.max(
+      rules.minDownPayment + 300,
+      deal.salePrice * 0.10
+    ); // at least 10 percent or 300 above min
+    effectiveMaxTermWeeks = Math.min(rules.maxTermWeeks, rules.maxTermWeeks - 12); // shorten term by about three months
+    profitFloor = 2000;
     reasons.push(
-      `Payment to income is ${(deal.pti * 100).toFixed(
+      "One prior repo on file. Using tighter PTI, LTV, down payment, term, and profit targets."
+    );
+  } else if (deal.repoCount >= 2) {
+    // Multiple repos is an auto decline
+    hardDecline = true;
+    reasons.push(
+      `Customer has ${deal.repoCount} prior repos which exceeds risk tolerance.`
+    );
+  }
+
+  // If income is not provided, PTI based logic is limited
+  if (deal.income <= 0) {
+    reasons.push("Income not provided. PTI cannot be calculated.");
+  } else {
+    // PTI rules
+    if (deal.pti > effectiveMaxPTI + 0.05) {
+      hardDecline = true;
+      reasons.push(
+        `Payment to income is ${ptiPercent.toFixed(
+          1
+        )} percent which is more than five points above effective max ${(
+          effectiveMaxPTI * 100
+        ).toFixed(1)} percent.`
+      );
+    } else if (deal.pti > effectiveMaxPTI) {
+      needsCounter = true;
+      reasons.push(
+        `Payment to income is ${ptiPercent.toFixed(
+          1
+        )} percent which is above effective max ${(
+          effectiveMaxPTI * 100
+        ).toFixed(1)} percent.`
+      );
+    } else {
+      reasons.push(
+        `Payment to income is ${ptiPercent.toFixed(
+          1
+        )} percent which is within effective PTI policy.`
+      );
+    }
+  }
+
+  // LTV rules
+  if (deal.ltv > effectiveMaxLTV + 0.15) {
+    hardDecline = true;
+    reasons.push(
+      `LTV is ${ltvPercent.toFixed(
         1
-      )} percent, dealer max is ${(rules.maxPTI * 100).toFixed(1)} percent.`
+      )} percent which is more than fifteen points over effective max ${(
+        effectiveMaxLTV * 100
+      ).toFixed(1)} percent.`
+    );
+  } else if (deal.ltv > effectiveMaxLTV) {
+    needsCounter = true;
+    reasons.push(
+      `LTV is ${ltvPercent.toFixed(
+        1
+      )} percent which is above effective max ${(
+        effectiveMaxLTV * 100
+      ).toFixed(1)} percent. More down or lower sale price is needed.`
+    );
+  } else {
+    reasons.push(
+      `LTV is ${ltvPercent.toFixed(
+        1
+      )} percent which is within effective policy limit.`
+    );
+  }
+
+  // Down payment vs effective minimum
+  if (deal.downPayment < effectiveMinDown) {
+    needsCounter = true;
+    reasons.push(
+      `Down payment is ${deal.downPayment.toFixed(
+        2
+      )}, effective minimum required is ${effectiveMinDown.toFixed(2)}.`
     );
 
-    // Suggest a higher down payment that would bring PTI down near the max
-    // Assumption: payment is roughly proportional to amount financed
-    if (currentAdvance > 0 && deal.pti > 0) {
-      const factor = rules.maxPTI / deal.pti; // for example 0.25 / 0.265
-      if (factor > 0 && factor < 1) {
-        const targetAdvance = currentAdvance * factor;
-        const rawNewDown = deal.salePrice - targetAdvance;
+    if (
+      adjustments.newDownPayment === undefined ||
+      adjustments.newDownPayment < effectiveMinDown
+    ) {
+      adjustments.newDownPayment = effectiveMinDown;
+    }
+  }
 
-        // Respect policy minimum and ensure it is at least a bit higher
-        let suggestedDown = Math.max(rawNewDown, rules.minDownPayment);
+  // Profitability
+  if (deal.profit < profitFloor) {
+    needsCounter = true;
+    reasons.push(
+      `Total profit is ${deal.profit.toFixed(
+        2
+      )}, below the preferred floor of ${profitFloor.toFixed(0)}.`
+    );
+  } else {
+    reasons.push(
+      `Total profit of ${deal.profit.toFixed(
+        2
+      )} meets the preferred profit floor.`
+    );
+  }
 
-        if (suggestedDown < deal.downPayment + 50) {
-          suggestedDown = deal.downPayment + 50;
-        }
+  // Term rules
+  if (deal.termWeeks > effectiveMaxTermWeeks) {
+    needsCounter = true;
+    reasons.push(
+      `Term is ${deal.termWeeks} weeks, effective max term is ${effectiveMaxTermWeeks} weeks.`
+    );
+    adjustments.newTermWeeks = effectiveMaxTermWeeks;
+  }
 
-        // Do not exceed sale price
-        if (suggestedDown > deal.salePrice) {
-          suggestedDown = deal.salePrice;
-        }
+  // Job time rules
+  if (deal.jobTimeMonths < 3) {
+    // Very short job time
+    if (deal.repoCount >= 1 || deal.pti > effectiveMaxPTI) {
+      hardDecline = true;
+      reasons.push(
+        `Job time is ${deal.jobTimeMonths} months with prior repo or high PTI. Too unstable for this structure.`
+      );
+    } else {
+      needsCounter = true;
+      reasons.push(
+        `Job time is ${deal.jobTimeMonths} months which is under the usual comfort window. Stronger structure is recommended.`
+      );
+    }
+  } else if (deal.jobTimeMonths < 6) {
+    needsCounter = needsCounter || deal.pti > effectiveMaxPTI * 0.9;
+    reasons.push(
+      `Job time is ${deal.jobTimeMonths} months which is modest. Avoid stretching PTI or term.`
+    );
+  } else {
+    reasons.push(
+      `Job time of ${deal.jobTimeMonths} months is acceptable under current policy.`
+    );
+  }
 
-        // Round to nearest 50 for a cleaner number
-        const roundedDown = Math.round(suggestedDown / 50) * 50;
+  // PTI based down payment suggestion
+  if (
+    currentAdvance > 0 &&
+    deal.pti > 0 &&
+    deal.income > 0 &&
+    deal.pti > effectiveMaxPTI &&
+    !hardDecline
+  ) {
+    const factor = effectiveMaxPTI / deal.pti;
+    if (factor > 0 && factor < 1) {
+      const targetAdvance = currentAdvance * factor;
+      const rawNewDown = deal.salePrice - targetAdvance;
 
-        if (roundedDown > deal.downPayment) {
-          adjustments.newDownPayment = roundedDown;
-        }
+      let suggestedDown = Math.max(rawNewDown, effectiveMinDown);
+
+      if (suggestedDown < deal.downPayment + 50) {
+        suggestedDown = deal.downPayment + 50;
+      }
+
+      if (suggestedDown > deal.salePrice) {
+        suggestedDown = deal.salePrice;
+      }
+
+      const roundedDown = Math.round(suggestedDown / 50) * 50;
+
+      if (
+        roundedDown > deal.downPayment &&
+        (adjustments.newDownPayment === undefined ||
+          roundedDown > adjustments.newDownPayment)
+      ) {
+        adjustments.newDownPayment = roundedDown;
       }
     }
   }
 
-  // LTV check
-  if (deal.ltv > rules.maxLTV) {
-    verdict = "COUNTER";
+  // One prior repo that did not trigger a hard decline
+  if (deal.repoCount === 1 && !hardDecline) {
+    needsCounter = true;
     reasons.push(
-      `LTV is ${(deal.ltv * 100).toFixed(
-        1
-      )} percent, dealer max is ${(rules.maxLTV * 100).toFixed(1)} percent.`
-    );
-  }
-
-  // Down payment adequacy vs minimum
-  if (deal.downPayment < rules.minDownPayment) {
-    verdict = "COUNTER";
-    reasons.push(
-      `Down payment is ${deal.downPayment.toFixed(
-        2
-      )}, minimum required is ${rules.minDownPayment.toFixed(2)}.`
+      "Prior repo on file. Require at least policy level profit and stronger down payment or shorter term."
     );
 
-    // Only set if we do not already have a PTI based suggestion,
-    // or if the PTI suggestion is still below the policy minimum
-    if (
-      adjustments.newDownPayment === undefined ||
-      adjustments.newDownPayment < rules.minDownPayment
-    ) {
-      adjustments.newDownPayment = rules.minDownPayment;
+    if (adjustments.newDownPayment !== undefined) {
+      adjustments.newDownPayment = Math.max(
+        adjustments.newDownPayment,
+        effectiveMinDown + 200
+      );
+    } else {
+      adjustments.newDownPayment = effectiveMinDown + 200;
+    }
+
+    if (adjustments.newTermWeeks !== undefined) {
+      adjustments.newTermWeeks = Math.min(
+        adjustments.newTermWeeks,
+        effectiveMaxTermWeeks
+      );
     }
   }
 
-  // Profitability check
-  if (deal.profit < 1500) {
-    verdict = "COUNTER";
-    reasons.push(
-      `Total profit is ${deal.profit.toFixed(
-        2
-      )}, below the preferred floor of 1500.`
-    );
-  }
+  // Hard decline overrides counters
+  let verdict: UnderwritingVerdict = "APPROVE";
 
-  // Term check
-  if (deal.termWeeks > rules.maxTermWeeks) {
-    verdict = "COUNTER";
-    reasons.push(
-      `Term is ${deal.termWeeks} weeks, dealer max is ${rules.maxTermWeeks} weeks.`
-    );
-
-    adjustments.newTermWeeks = rules.maxTermWeeks;
-  }
-
-  // Job time
-  if (deal.jobTimeMonths < 3) {
-    verdict = "COUNTER";
-    reasons.push(
-      `Job time is ${deal.jobTimeMonths} months which is under the usual comfort window.`
-    );
-  }
-
-  // Repo history
-  if (deal.repoCount >= 2) {
+  if (hardDecline) {
     verdict = "DECLINE";
-    reasons.push(`Customer has ${deal.repoCount} prior repos.`);
+  } else if (needsCounter) {
+    verdict = "COUNTER";
+  } else {
+    verdict = "APPROVE";
   }
 
-  // Hard decline for very high PTI
-  if (deal.pti > rules.maxPTI + 0.05) {
-    verdict = "DECLINE";
-    reasons.push(
-      `Payment to income is far above policy, even for a counter structure.`
-    );
-  }
-
-  // Hard decline for very high LTV
-  if (deal.ltv > rules.maxLTV + 0.15) {
-    verdict = "DECLINE";
-    reasons.push(
-      `LTV is far above acceptable limits, even with additional down payment.`
-    );
-  }
-
-  // If still approve
   if (verdict === "APPROVE") {
     return {
       verdict,
       reasons: [
-        "Deal meets dealer criteria for PTI, LTV, down payment, term, and profit.",
+        "Deal meets effective criteria for PTI, LTV, down payment, term, profit, job time, and repo history.",
       ],
     };
   }
 
-  // If verdict is DECLINE, we still return any adjustments that were computed,
-  // but they are suggestions rather than an approved counter.
   return {
     verdict,
     reasons,
