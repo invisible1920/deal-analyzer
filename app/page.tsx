@@ -579,7 +579,7 @@ export default function HomePage() {
     width: "100%",
     padding: "10px 14px",
     borderRadius: "10px",
-    border: "1px solid #e5e7eb",
+    border: "1px solid "#e5e7eb"",
     background: "#ffffff",
     color: colors.text,
     fontSize: "14px",
@@ -833,6 +833,11 @@ export default function HomePage() {
           "Verify that doc fees and add ons follow local disclosure rules."
         ]
       : []);
+
+  const hasProfitVariants =
+    profitOptimizer &&
+    Array.isArray(profitOptimizer.variants) &&
+    profitOptimizer.variants.length > 0;
 
   return (
     <main style={pageStyle}>
@@ -1634,25 +1639,39 @@ export default function HomePage() {
                     <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                       Profit optimizer
                     </h2>
-                    {profitOptimizer && isPro ? (
-                      <ul
-                        style={{
-                          paddingLeft: 18,
-                          margin: 0,
-                          lineHeight: 1.6,
-                          fontSize: 14
-                        }}
-                      >
-                        {profitOptimizer.variants?.map(
-                          (v: any, idx: number) => (
-                            <li key={idx}>
-                              {v.label} adds approximately $
-                              {v.extraProfit.toFixed(0)} profit while staying
-                              inside policy.
-                            </li>
-                          )
-                        )}
-                      </ul>
+                    {isPro ? (
+                      hasProfitVariants ? (
+                        <ul
+                          style={{
+                            paddingLeft: 18,
+                            margin: 0,
+                            lineHeight: 1.6,
+                            fontSize: 14
+                          }}
+                        >
+                          {profitOptimizer.variants.map(
+                            (v: any, idx: number) => (
+                              <li key={idx}>
+                                {v.label} adds approximately $
+                                {v.extraProfit.toFixed(0)} profit while staying
+                                inside policy.
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                            marginBottom: 8
+                          }}
+                        >
+                          This deal does not have a higher profit structure that
+                          stays inside your policy snapshot. Try adjusting
+                          price, term or down payment, then run analysis again.
+                        </p>
+                      )
                     ) : (
                       <p
                         style={{
