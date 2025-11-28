@@ -547,6 +547,34 @@ export default function HomePage() {
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)"
   };
 
+  const lockedPanelInner: CSSProperties = {
+    position: "relative",
+    overflow: "hidden",
+    paddingBottom: 12
+  };
+
+  const blurOverlay: CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    background: "rgba(15,23,42,0.82)",
+    color: "#f9fafb",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    fontSize: 13,
+    padding: "16px",
+    backdropFilter: "blur(6px)",
+    pointerEvents: "auto"
+  };
+
+  const blurOverlayTitle: CSSProperties = {
+    fontWeight: 600,
+    marginBottom: 6,
+    fontSize: 14
+  };
+
   const input: CSSProperties = {
     width: "100%",
     padding: "10px 14px",
@@ -761,6 +789,50 @@ export default function HomePage() {
 
   const verdictText =
     result?.underwriting?.verdict || result?.underwriting?.status || "Pending";
+
+  const approvalScore =
+    typeof result?.approvalScore === "number"
+      ? Math.round(result.approvalScore)
+      : null;
+
+  const advancedRiskFlags: string[] =
+    result?.riskFlags ||
+    result?.advancedRiskFlags ||
+    (result
+      ? [
+          ptiValue !== null && ptiValue > ptiLimit
+            ? "Payment to income is above policy comfort range."
+            : "Payment to income is close to policy limit.",
+          typeof result?.ltv === "number" && result.ltv > policy.maxLTV
+            ? "LTV is advanced compared to your policy snapshot."
+            : "LTV is within normal range.",
+          form.repoCount >= 2
+            ? "Multiple past repos reported. High early default risk."
+            : "Limited repo history on file."
+        ]
+      : []);
+
+  const delinquencyRisk =
+    result?.delinquencyRisk ||
+    (ptiValue !== null && ptiValue > ptiLimit
+      ? "Higher early payment risk due to tight PTI."
+      : "Standard delinquency risk for this PTI and stability pattern.");
+
+  const profitOptimizer =
+    result?.profitOptimizer ||
+    result?.underwriting?.profitOptimizer ||
+    null;
+
+  const portfolioComparison = result?.portfolioComparison || null;
+
+  const complianceFlags: string[] =
+    result?.complianceFlags ||
+    (result
+      ? [
+          "Check your state maximum rate and term against this structure.",
+          "Verify that doc fees and add ons follow local disclosure rules."
+        ]
+      : []);
 
   return (
     <main style={pageStyle}>
@@ -1173,11 +1245,14 @@ export default function HomePage() {
               ) : usage ? (
                 <p style={{ fontSize: "14px", color: colors.textSecondary }}>
                   Used <strong>{usage.dealsThisMonth}</strong> of{" "}
-                  <strong>{usage.freeDealsPerMonth}</strong> free deals.
+                  <strong>{usage.freeDealsPerMonth}</strong> free deals. Pro
+                  removes all monthly limits.
                 </p>
               ) : (
                 <p style={{ fontSize: "14px", color: colors.textSecondary }}>
-                  Free plan includes 25 analyzed deals each month.
+                  Free plan includes 25 analyzed deals each month. Pro unlocks
+                  unlimited deals plus AI underwriting, hidden risk flags and
+                  export tools.
                 </p>
               )}
             </section>
@@ -1213,7 +1288,8 @@ export default function HomePage() {
                   color: colors.textSecondary
                 }}
               >
-                Run a deal to see payment, profit, PTI, LTV and underwriting.
+                Run a deal to see payment, profit, PTI, LTV and underwriting. Pro
+                also unlocks risk flags, profit optimizer and AI explanations.
               </p>
             </section>
           )}
@@ -1248,6 +1324,14 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
+                  {approvalScore !== null && (
+                    <div>
+                      <div style={summaryChipLabel}>Approval score</div>
+                      <div style={summaryChipValue}>
+                        {approvalScore} percent
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {planType !== "pro" && (
                   <a
@@ -1371,11 +1455,19 @@ export default function HomePage() {
                         </span>
                       </li>
                     )}
+                    {approvalScore !== null && (
+                      <li style={summaryRow}>
+                        <span style={summaryLabel}>Approval likelihood</span>
+                        <span style={summaryValue}>
+                          {approvalScore} percent
+                        </span>
+                      </li>
+                    )}
                   </ul>
                   {!isPro && (
                     <p style={smallUpsell}>
-                      Upgrade to Pro to save risk history and catch over
-                      advanced cars before funding.
+                      Upgrade to Pro to save risk history, see approval
+                      likelihood and catch over advanced cars before funding.
                     </p>
                   )}
                 </section>
@@ -1411,14 +1503,52 @@ export default function HomePage() {
                     {!isPro && (
                       <p style={smallUpsell}>
                         Pro users see full policy reasoning for PTI, LTV, term,
-                        down payment and profit with every deal.
+                        down payment and profit with every deal, plus AI
+                        commentary and delinquency prediction.
                       </p>
                     )}
                   </section>
                 )}
 
-                {/* row two panels */}
+                {/* hidden risk flags */}
+                {result && (
+                  <section style={panel}>
+                    <div style={lockedPanelInner}>
+                      <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                        Hidden risk flags
+                      </h2>
+                      <ul
+                        style={{
+                          paddingLeft: 18,
+                          margin: 0,
+                          lineHeight: 1.6,
+                          fontSize: 14
+                        }}
+                      >
+                        {advancedRiskFlags.map((f, idx) => (
+                          <li key={idx}>{f}</li>
+                        ))}
+                      </ul>
 
+                      {!isPro && (
+                        <div style={blurOverlay}>
+                          <div style={blurOverlayTitle}>
+                            Risk flags detected for this deal
+                          </div>
+                          <p style={{ marginBottom: 10 }}>
+                            Pro shows which risk flags triggered and how to fix
+                            them before you fund the deal.
+                          </p>
+                          <a href="/billing" style={btnSecondary}>
+                            Unlock hidden risk flags
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
+
+                {/* payment schedule */}
                 {result?.schedulePreview && (
                   <section style={panel}>
                     <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
@@ -1491,27 +1621,59 @@ export default function HomePage() {
                         color: colors.textSecondary
                       }}
                     >
-                      Showing first 12 periods only for a quick glance.
+                      Showing first 12 periods only for a quick glance. Pro
+                      users can print full schedules inside offer sheets and
+                      underwriting packets.
                     </p>
                   </section>
                 )}
 
-                {isPro &&
-                  result.underwriting &&
-                  result.underwriting.adjustments &&
-                  (result.underwriting.adjustments.newDownPayment ||
-                    result.underwriting.adjustments.newTermWeeks ||
-                    result.underwriting.adjustments.newSalePrice ||
-                    result.underwriting.adjustments.newApr) && (
-                    <section style={panel}>
-                      <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                        Suggested counter structure
-                      </h2>
+                {/* profit optimizer / counter structure */}
+                <section style={panel}>
+                  <div style={lockedPanelInner}>
+                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                      Profit optimizer
+                    </h2>
+                    {profitOptimizer && isPro ? (
+                      <ul
+                        style={{
+                          paddingLeft: 18,
+                          margin: 0,
+                          lineHeight: 1.6,
+                          fontSize: 14
+                        }}
+                      >
+                        {profitOptimizer.variants?.map(
+                          (v: any, idx: number) => (
+                            <li key={idx}>
+                              {v.label} adds approximately $
+                              {v.extraProfit.toFixed(0)} profit while staying
+                              inside policy.
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    ) : (
+                      <p
+                        style={{
+                          fontSize: 14,
+                          color: colors.textSecondary,
+                          marginBottom: 8
+                        }}
+                      >
+                        Pro finds alternate structures that increase profit
+                        without breaking PTI or LTV, such as slightly higher
+                        price, longer term or stronger down payment.
+                      </p>
+                    )}
+
+                    {isPro && result?.underwriting?.adjustments && (
                       <ul
                         style={{
                           paddingLeft: 0,
                           listStyle: "none",
                           margin: 0,
+                          marginTop: 10,
                           marginBottom: 12
                         }}
                       >
@@ -1564,7 +1726,9 @@ export default function HomePage() {
                           </li>
                         )}
                       </ul>
+                    )}
 
+                    {isPro && result?.underwriting?.adjustments && (
                       <button
                         type="button"
                         style={btnSecondary}
@@ -1576,9 +1740,26 @@ export default function HomePage() {
                       >
                         Apply suggested structure to form
                       </button>
-                    </section>
-                  )}
+                    )}
 
+                    {!isPro && (
+                      <div style={blurOverlay}>
+                        <div style={blurOverlayTitle}>
+                          Unlock profit optimizer
+                        </div>
+                        <p style={{ marginBottom: 10 }}>
+                          Pro suggests alternate structures that often add
+                          hundreds in profit while staying inside your policy.
+                        </p>
+                        <a href="/billing" style={btnSecondary}>
+                          See profit optimized options
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* customer offer sheet */}
                 <section style={panel}>
                   <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                     Customer offer sheet
@@ -1609,6 +1790,7 @@ export default function HomePage() {
                   )}
                 </section>
 
+                {/* underwriting packet */}
                 <section style={panel}>
                   <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                     Underwriting packet
@@ -1621,7 +1803,7 @@ export default function HomePage() {
                     }}
                   >
                     Print a full underwriting summary with verdict, reasons,
-                    PTI, LTV and AI commentary.
+                    PTI, LTV and AI commentary plus risk and compliance flags.
                   </p>
                   {isPro ? (
                     <button
@@ -1638,6 +1820,7 @@ export default function HomePage() {
                   )}
                 </section>
 
+                {/* policy snapshot */}
                 <section style={panel}>
                   <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
                     Policy snapshot
@@ -1668,6 +1851,174 @@ export default function HomePage() {
                       </span>
                     </li>
                   </ul>
+                </section>
+
+                {/* compliance and delinquency */}
+                <section style={panel}>
+                  <div style={lockedPanelInner}>
+                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                      Compliance and delinquency view
+                    </h2>
+                    <h3
+                      style={{
+                        fontSize: 13,
+                        marginBottom: 6,
+                        color: colors.textSecondary,
+                        textTransform: "uppercase",
+                        letterSpacing: ".08em"
+                      }}
+                    >
+                      Compliance flags
+                    </h3>
+                    <ul
+                      style={{
+                        paddingLeft: 18,
+                        marginTop: 0,
+                        marginBottom: 10,
+                        lineHeight: 1.5,
+                        fontSize: 14
+                      }}
+                    >
+                      {complianceFlags.map((c, idx) => (
+                        <li key={idx}>{c}</li>
+                      ))}
+                    </ul>
+
+                    <h3
+                      style={{
+                        fontSize: 13,
+                        marginBottom: 6,
+                        marginTop: 10,
+                        color: colors.textSecondary,
+                        textTransform: "uppercase",
+                        letterSpacing: ".08em"
+                      }}
+                    >
+                      Delinquency predictor
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        lineHeight: 1.5
+                      }}
+                    >
+                      {delinquencyRisk}
+                    </p>
+
+                    {!isPro && (
+                      <div style={blurOverlay}>
+                        <div style={blurOverlayTitle}>
+                          State level risk and delinquency prediction
+                        </div>
+                        <p style={{ marginBottom: 10 }}>
+                          Pro highlights state specific limits and gives an AI
+                          view of early payment risk so you know which deals
+                          need tighter structure.
+                        </p>
+                        <a href="/billing" style={btnSecondary}>
+                          Unlock compliance and delinquency tools
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* portfolio benchmarking */}
+                <section style={panel}>
+                  <div style={lockedPanelInner}>
+                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                      Portfolio benchmarking
+                    </h2>
+                    {portfolioComparison && isPro ? (
+                      <ul
+                        style={{
+                          paddingLeft: 18,
+                          margin: 0,
+                          lineHeight: 1.6,
+                          fontSize: 14
+                        }}
+                      >
+                        <li>
+                          PTI on this deal is{" "}
+                          {portfolioComparison.ptiDelta.toFixed(1)} percent{" "}
+                          {portfolioComparison.ptiDelta > 0 ? "above" : "below"}{" "}
+                          your store average.
+                        </li>
+                        <li>
+                          LTV is {portfolioComparison.ltvDelta.toFixed(1)}{" "}
+                          points compared to your recent portfolio.
+                        </li>
+                        <li>
+                          Profit per deal is tracking{" "}
+                          {portfolioComparison.profitDelta.toFixed(0)} dollars{" "}
+                          from your target goal.
+                        </li>
+                      </ul>
+                    ) : (
+                      <p
+                        style={{
+                          fontSize: 14,
+                          color: colors.textSecondary,
+                          marginBottom: 8
+                        }}
+                      >
+                        Pro compares this structure against your last month of
+                        funded deals so you can see if PTI, LTV and profit are
+                        trending high, low or right on target.
+                      </p>
+                    )}
+
+                    {!isPro && (
+                      <div style={blurOverlay}>
+                        <div style={blurOverlayTitle}>
+                          See how this deal compares
+                        </div>
+                        <p style={{ marginBottom: 10 }}>
+                          Upgrade to Pro to benchmark every new deal against
+                          your store history and monthly portfolio report.
+                        </p>
+                        <a href="/billing" style={btnSecondary}>
+                          Unlock portfolio reporting
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* sales scripts and save the deal help */}
+                <section style={panel}>
+                  <div style={lockedPanelInner}>
+                    <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+                      Save the deal scripts
+                    </h2>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        lineHeight: 1.6,
+                        color: colors.textSecondary
+                      }}
+                    >
+                      Pro can generate quick talking points and scripts based on
+                      this structure, such as how to present a higher down
+                      payment or longer term without losing the customer.
+                    </p>
+
+                    {!isPro && (
+                      <div style={blurOverlay}>
+                        <div style={blurOverlayTitle}>
+                          Turn structure into a close
+                        </div>
+                        <p style={{ marginBottom: 10 }}>
+                          Unlock Pro to get simple scripts you can use on the
+                          lot when a customer pushes back on payment or down
+                          payment.
+                        </p>
+                        <a href="/billing" style={btnSecondary}>
+                          Upgrade to Pro
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </section>
               </div>
 
@@ -1707,6 +2058,33 @@ export default function HomePage() {
                       </a>
                     </div>
                   )}
+                </section>
+              )}
+
+              {!isPro && (
+                <section
+                  style={{
+                    ...panel,
+                    marginTop: 24
+                  }}
+                >
+                  <h2 style={{ fontSize: "17px", marginBottom: 8 }}>
+                    Monthly portfolio report (Pro)
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: colors.textSecondary,
+                      marginBottom: 10
+                    }}
+                  >
+                    Pro users receive a monthly portfolio snapshot with PTI and
+                    LTV trends, average profit per deal and a list of risky
+                    structures that should be tightened before the next month.
+                  </p>
+                  <a href="/billing" style={btnSecondary}>
+                    Upgrade to get your portfolio report
+                  </a>
                 </section>
               )}
             </>
