@@ -50,13 +50,20 @@ export function clearSessionCookie() {
     name: SESSION_COOKIE,
     value: "",
     maxAge: 0,
-    path: "/"
+    path: "/",
   });
 }
 
 export function isAuthenticated() {
-  const secret = process.env.SESSION_SECRET!;
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) return false;
+
   const cookie = cookies().get(SESSION_COOKIE)?.value;
   if (!cookie) return false;
-  return verify(cookie, secret) === "dealer";
+
+  try {
+    return verify(cookie, secret) === "dealer";
+  } catch {
+    return false;
+  }
 }
