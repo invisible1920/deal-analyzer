@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/lib/supabaseClient";
+import PageContainer from "@/components/PageContainer";
+import { themeColors } from "@/app/theme";
 
 type DealerSettings = {
   dealerName: string;
@@ -14,39 +14,13 @@ type DealerSettings = {
 };
 
 export default function DealerSettingsPage() {
-  const router = useRouter();
-
   const [settings, setSettings] = useState<DealerSettings | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [authChecking, setAuthChecking] = useState(true);
 
-  // 1) Check Supabase auth first
+  const colors = themeColors.light;
+
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const { data } = await supabaseClient.auth.getUser();
-        if (!data.user) {
-          // Not logged in – send to login and do NOT load settings
-          router.replace("/login");
-          return;
-        }
-      } catch {
-        // If we cannot read user, treat as not logged in
-        router.replace("/login");
-        return;
-      } finally {
-        setAuthChecking(false);
-      }
-    }
-
-    checkAuth();
-  }, [router]);
-
-  // 2) Once auth is confirmed, load dealer settings
-  useEffect(() => {
-    if (authChecking) return;
-
     async function load() {
       try {
         const res = await fetch("/api/settings", { method: "GET" });
@@ -60,24 +34,26 @@ export default function DealerSettingsPage() {
         setError(err?.message || "Failed to load settings");
       }
     }
-
     load();
-  }, [authChecking]);
+  }, []);
 
-  // While checking auth or loading settings, show a simple loading screen
-  if (authChecking || !settings) {
+  if (!settings) {
     return (
       <main
         style={{
           minHeight: "100vh",
-          background: "#020617",
-          color: "white",
+          background: colors.bg,
+          color: colors.text,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
         }}
       >
-        <p>Loading dealer settings...</p>
+        <p style={{ fontSize: 14, color: colors.textSecondary }}>
+          Loading dealer settings…
+        </p>
       </main>
     );
   }
@@ -106,140 +82,175 @@ export default function DealerSettingsPage() {
     }
   }
 
-  const container = {
-    color: "white",
+  const pageStyle = {
     minHeight: "100vh",
-    padding: "24px",
-    background: "#020617",
+    background: colors.bg,
+    color: colors.text,
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
+    padding: "32px 16px",
   } as const;
 
-  const panel = {
-    background: "#111827",
-    padding: "16px",
-    borderRadius: "8px",
-    maxWidth: "600px",
-    border: "1px solid #1f2937",
+  const cardStyle = {
+    maxWidth: 640,
+    margin: "0 auto",
+    padding: 24,
+    borderRadius: 16,
+    border: `1px solid ${colors.border}`,
+    background: colors.panel,
+    boxShadow: "0 18px 45px rgba(15, 23, 42, 0.16)",
   } as const;
 
-  const label = {
-    fontSize: "12px",
-    marginBottom: "4px",
+  const titleStyle = {
+    fontSize: 22,
+    fontWeight: 600,
+    marginBottom: 8,
+    letterSpacing: "-0.02em",
+  } as const;
+
+  const subtitleStyle = {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 20,
+  } as const;
+
+  const labelStyle = {
+    fontSize: 12,
+    fontWeight: 500,
+    marginBottom: 4,
     display: "block",
+    color: colors.textSecondary,
   } as const;
 
-  const input = {
+  const inputStyle = {
     width: "100%",
-    padding: "8px",
-    marginBottom: "12px",
-    borderRadius: "6px",
-    background: "#1f2937",
-    border: "1px solid #374151",
+    padding: "8px 10px",
+    marginBottom: 14,
+    borderRadius: 10,
+    border: `1px solid ${colors.border}`,
+    background: "#020617",
+    color: colors.text,
+    fontSize: 13,
+    outline: "none",
+  } as const;
+
+  const buttonStyle = {
+    marginTop: 10,
+    padding: "10px 16px",
+    borderRadius: 999,
+    border: "none",
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
+    background:
+      "linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #8b5cf6 100%)",
     color: "white",
+    boxShadow: "0 18px 40px rgba(79, 70, 229, 0.35)",
   } as const;
 
   return (
-    <main style={container}>
-      <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "12px" }}>
-        Dealer Settings
-      </h1>
+    <main style={pageStyle}>
+      <PageContainer>
+        <div style={cardStyle}>
+          <h1 style={titleStyle}>Dealer settings</h1>
+          <p style={subtitleStyle}>
+            Configure default underwriting limits and guardrails for your lot.
+          </p>
 
-      <div style={panel}>
-        <label style={label}>Dealer Name</label>
-        <input
-          style={input}
-          value={settings.dealerName}
-          onChange={(e) =>
-            setSettings({ ...settings, dealerName: e.target.value })
-          }
-        />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <label style={labelStyle}>Dealer name</label>
+            <input
+              style={inputStyle}
+              value={settings.dealerName}
+              onChange={(e) =>
+                setSettings({ ...settings, dealerName: e.target.value })
+              }
+            />
 
-        <label style={label}>Default APR (%)</label>
-        <input
-          type="number"
-          style={input}
-          value={settings.defaultAPR}
-          onChange={(e) =>
-            setSettings({
-              ...settings,
-              defaultAPR: parseFloat(e.target.value || "0"),
-            })
-          }
-        />
+            <label style={labelStyle}>Default APR (%)</label>
+            <input
+              type="number"
+              style={inputStyle}
+              value={settings.defaultAPR}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  defaultAPR: parseFloat(e.target.value || "0"),
+                })
+              }
+            />
 
-        <label style={label}>Max PTI (0.25 = 25%)</label>
-        <input
-          type="number"
-          step="0.01"
-          style={input}
-          value={settings.maxPTI}
-          onChange={(e) =>
-            setSettings({
-              ...settings,
-              maxPTI: parseFloat(e.target.value || "0"),
-            })
-          }
-        />
+            <label style={labelStyle}>Max PTI (0.25 = 25%)</label>
+            <input
+              type="number"
+              step="0.01"
+              style={inputStyle}
+              value={settings.maxPTI}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  maxPTI: parseFloat(e.target.value || "0"),
+                })
+              }
+            />
 
-        <label style={label}>Max LTV (1.4 = 140%)</label>
-        <input
-          type="number"
-          step="0.01"
-          style={input}
-          value={settings.maxLTV}
-          onChange={(e) =>
-            setSettings({
-              ...settings,
-              maxLTV: parseFloat(e.target.value || "0"),
-            })
-          }
-        />
+            <label style={labelStyle}>Max LTV (1.4 = 140%)</label>
+            <input
+              type="number"
+              step="0.01"
+              style={inputStyle}
+              value={settings.maxLTV}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  maxLTV: parseFloat(e.target.value || "0"),
+                })
+              }
+            />
 
-        <label style={label}>Minimum Down Payment ($)</label>
-        <input
-          type="number"
-          style={input}
-          value={settings.minDownPayment}
-          onChange={(e) =>
-            setSettings({
-              ...settings,
-              minDownPayment: parseFloat(e.target.value || "0"),
-            })
-          }
-        />
+            <label style={labelStyle}>Minimum down payment ($)</label>
+            <input
+              type="number"
+              style={inputStyle}
+              value={settings.minDownPayment}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  minDownPayment: parseFloat(e.target.value || "0"),
+                })
+              }
+            />
 
-        <label style={label}>Max Term (weeks)</label>
-        <input
-          type="number"
-          style={input}
-          value={settings.maxTermWeeks}
-          onChange={(e) =>
-            setSettings({
-              ...settings,
-              maxTermWeeks: parseInt(e.target.value || "0", 10),
-            })
-          }
-        />
+            <label style={labelStyle}>Max term (weeks)</label>
+            <input
+              type="number"
+              style={inputStyle}
+              value={settings.maxTermWeeks}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  maxTermWeeks: parseInt(e.target.value || "0", 10),
+                })
+              }
+            />
+          </div>
 
-        {error && <p style={{ color: "#f87171" }}>{error}</p>}
-        {saved && (
-          <p style={{ color: "#4ade80" }}>Settings saved successfully!</p>
-        )}
+          {error && (
+            <p style={{ color: "#f97373", fontSize: 13, marginTop: 4 }}>
+              {error}
+            </p>
+          )}
+          {saved && (
+            <p style={{ color: "#4ade80", fontSize: 13, marginTop: 4 }}>
+              Settings saved successfully.
+            </p>
+          )}
 
-        <button
-          onClick={save}
-          style={{
-            padding: "10px 16px",
-            marginTop: "12px",
-            background: "#4f46e5",
-            color: "white",
-            borderRadius: "6px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Save Settings
-        </button>
-      </div>
+          <button onClick={save} style={buttonStyle}>
+            Save settings
+          </button>
+        </div>
+      </PageContainer>
     </main>
   );
 }
