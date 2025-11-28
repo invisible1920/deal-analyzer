@@ -28,7 +28,13 @@ type DealInput = {
   paymentFrequency: PaymentFrequency;
   monthlyIncome?: number;
   monthsOnJob?: number;
+
+  // New numeric field for repos
   repoCount?: number;
+
+  // Legacy boolean for backward compatibility
+  pastRepo?: boolean;
+
   userId?: string | null;
 };
 
@@ -233,9 +239,9 @@ function calculateSchedule(
     totalInterest,
     totalProfit,
     breakEvenWeek,
-    schedule,
-    totalCost,
-    amountFinanced,
+      schedule,
+      totalCost,
+      amountFinanced,
   };
 }
 
@@ -267,14 +273,17 @@ function basicRiskScore(
     score = score === "Low" ? "Medium" : "High";
   }
 
-  // Repo history now uses numeric repoCount
-  const repoCount = input.repoCount ?? 0;
+  // Collapse repoCount and legacy pastRepo into a single numeric count
+  const repoCount =
+    typeof input.repoCount === "number"
+      ? input.repoCount
+      : input.pastRepo
+      ? 1
+      : 0;
 
   if (repoCount === 1) {
-    // one prior repo bumps risk up one level
     score = score === "Low" ? "Medium" : "High";
   } else if (repoCount >= 2) {
-    // two or more repos are always high risk
     score = "High";
   }
 
@@ -328,7 +337,7 @@ Deal:
 - APR used: ${apr}
 - Term weeks: ${input.termWeeks}
 - Payment frequency: ${input.paymentFrequency}
-- Reported repo count: ${input.repoCount ?? 0}
+- Reported repo count: ${input.repoCount ?? (input.pastRepo ? 1 : 0)}
 
 Calculated:
 - Payment: ${core.payment.toFixed(2)}
@@ -393,6 +402,14 @@ export async function POST(req: NextRequest) {
     const userId = body.userId ?? null;
 
     const settings = await resolveDealerSettings(userId);
+
+    // Resolve repo count from new or legacy field
+    const repoCount =
+      typeof body.repoCount === "number"
+        ? body.repoCount
+        : body.pastRepo
+        ? 1
+        : 0;
 
     // Plan type
     let planType: "free" | "pro" = "free";
@@ -474,10 +491,7 @@ export async function POST(req: NextRequest) {
       ltv,
       profit: core.totalProfit,
       jobTimeMonths: body.monthsOnJob || 0,
-      repoCount:
-        typeof body.repoCount === "number" && body.repoCount > 0
-          ? body.repoCount
-          : 0,
+      repoCount: repoCount,
     };
 
     const rules = {
@@ -538,10 +552,8 @@ export async function POST(req: NextRequest) {
         paymentFrequency: body.paymentFrequency,
         monthlyIncome: body.monthlyIncome ?? null,
         monthsOnJob: body.monthsOnJob ?? null,
-        repoCount:
-          typeof body.repoCount === "number" && body.repoCount > 0
-            ? body.repoCount
-            : 0,
+        // saveDeal still expects a boolean pastRepo field
+        pastRepo: repoCount > 0,
       },
       result: {
         payment: core.payment,
