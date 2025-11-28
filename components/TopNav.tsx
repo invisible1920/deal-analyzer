@@ -1,44 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabaseClient";
-
-type UserInfo = {
-  id: string;
-  email: string;
-} | null;
+import { useAuth } from "@/providers/AuthProvider";
+import { useState, type CSSProperties } from "react";
 
 export default function TopNav() {
   const router = useRouter();
-  const [user, setUser] = useState<UserInfo>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const { data } = await supabaseClient.auth.getUser();
-        if (data.user) {
-          setUser({
-            id: data.user.id,
-            email: data.user.email ?? "",
-          });
-        } else {
-          setUser(null);
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadUser();
-  }, []);
+  const { user, setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   async function handleLogout() {
+    setLoading(true);
     await supabaseClient.auth.signOut();
-    setUser(null);
+    setUser(null);                   // update auth state instantly
     router.push("/login");
   }
 
@@ -92,35 +68,25 @@ export default function TopNav() {
       </div>
 
       <div style={linksStyle}>
-        <Link href="/" style={linkStyle}>
-          Analyzer
-        </Link>
-
-        <Link href="/history" style={secondaryLinkStyle}>
-          History
-        </Link>
-
-        <Link href="/settings" style={secondaryLinkStyle}>
-          Settings
-        </Link>
+        <Link href="/" style={linkStyle}>Analyzer</Link>
+        <Link href="/history" style={secondaryLinkStyle}>History</Link>
+        <Link href="/settings" style={secondaryLinkStyle}>Settings</Link>
 
         {loading ? (
-          <span style={{ color: "#4b5563", fontSize: "12px" }}>Checking...</span>
+          <span style={{ color: "#4b5563", fontSize: "12px" }}>Logging out...</span>
         ) : user ? (
           <div style={userBoxStyle}>
             <span>{user.email}</span>
-            <button
-              type="button"
-              onClick={handleLogout}
+            <button 
+              type="button" 
+              onClick={handleLogout} 
               style={logoutButtonStyle}
             >
               Logout
             </button>
           </div>
         ) : (
-          <Link href="/login" style={secondaryLinkStyle}>
-            Login
-          </Link>
+          <Link href="/login" style={secondaryLinkStyle}>Login</Link>
         )}
       </div>
     </nav>
