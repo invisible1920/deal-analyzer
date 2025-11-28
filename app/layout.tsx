@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import TopNav from "@/components/TopNav";
+import DealerSessionBootstrap from "@/components/DealerSessionBootstrap";
 
 export const metadata: Metadata = {
   title: "BHPH Deal Analyzer",
@@ -16,16 +17,19 @@ export default function RootLayout({
       <body
         style={{
           margin: 0,
-          backgroundColor: "#f8fafc", // light background everywhere
-          color: "#0f172a",           // dark text by default
+          backgroundColor: "#f8fafc",
+          color: "#0f172a",
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, sans-serif',
         }}
       >
+        {/* 🚀 Always runs when the app loads — sets dealer_session automatically */}
+        <DealerSessionBootstrap />
+
         <header
           style={{
             borderBottom: "1px solid #e2e8f0",
-            background: "#020617",   // dark nav bar is fine
+            background: "#020617",
             color: "#e5e7eb",
           }}
         >
