@@ -104,7 +104,7 @@ export default function TopNav() {
 
         {/* Only show Dealer when logged in */}
         {!loading && user && (
-          <Link href="/dealer/settings" style={secondaryLinkStyle}>
+          <Link href="/settings" style={secondaryLinkStyle}>
             Dealer
           </Link>
         )}
@@ -123,7 +123,6 @@ export default function TopNav() {
             </button>
           </div>
         ) : (
-          // Logged out → only a single Login link
           <Link href="/login" style={secondaryLinkStyle}>
             Login
           </Link>
