@@ -33,16 +33,11 @@ export default function TopNav() {
         setLoading(false);
       }
     }
-
     loadUser();
   }, []);
 
   async function handleLogout() {
-    try {
-      await supabaseClient.auth.signOut();
-    } catch {
-      // ignore any Supabase error here, we still clear local state
-    }
+    await supabaseClient.auth.signOut();
     setUser(null);
     router.push("/login");
   }
@@ -106,12 +101,14 @@ export default function TopNav() {
         <Link href="/settings" style={secondaryLinkStyle}>
           Settings
         </Link>
-        {/* Dealer area link – adjust path if you want /dealer/login instead */}
-        <Link href="/dealer/settings" style={secondaryLinkStyle}>
-          Dealer
-        </Link>
 
-        {/* Auth section on the right */}
+        {/* Only show Dealer when logged in */}
+        {!loading && user && (
+          <Link href="/dealer/settings" style={secondaryLinkStyle}>
+            Dealer
+          </Link>
+        )}
+
         {loading ? (
           <span style={{ color: "#4b5563", fontSize: "12px" }}>Checking...</span>
         ) : user ? (
@@ -126,6 +123,7 @@ export default function TopNav() {
             </button>
           </div>
         ) : (
+          // Logged out → only a single Login link
           <Link href="/login" style={secondaryLinkStyle}>
             Login
           </Link>
