@@ -11,6 +11,7 @@ import {
   FREE_DEALS_PER_MONTH,
 } from "@/lib/usage";
 import { supabaseAdmin } from "@/lib/supabase";
+import { buildAiExplanation } from "@/lib/aiExplanation";
 
 // ============================================================================
 // Types
@@ -309,108 +310,6 @@ function basicRiskScore(
 }
 
 // ============================================================================
-// AI Underwriting Commentary
-// ============================================================================
-
-async function getAiOpinion(
-  input: DealInput,
-  core: CoreResult,
-  risk: { paymentToIncome: number | null; riskScore: string },
-  settings: DealerSettings,
-  ltv: number,
-  underwriting: UnderwritingResult
-) {
-  const apiKey =
-    process.env.OPENAI_API_KEY || process.env.PENAI_API_KEY || "";
-
-  if (!apiKey) {
-    console.warn("AI disabled: no API key");
-    return "AI unavailable: missing API key.";
-  }
-
-  const apr = input.apr && input.apr > 0 ? input.apr : settings.defaultAPR;
-
-  const ltvPercent = (ltv * 100).toFixed(1);
-  const ptiPercent = risk.paymentToIncome
-    ? (risk.paymentToIncome * 100).toFixed(1) + "%"
-    : "N/A";
-
-  const prompt = `
-You are a senior buy here pay here finance manager.
-
-Dealer policy:
-- Default APR: ${settings.defaultAPR}
-- Max PTI: ${(settings.maxPTI * 100).toFixed(1)}%
-- Max LTV: ${(settings.maxLTV * 100).toFixed(1)}%
-- Min down: $${settings.minDownPayment}
-- Max term: ${settings.maxTermWeeks} weeks
-
-Deal:
-- Vehicle cost: ${input.vehicleCost}
-- Recon: ${input.reconCost}
-- Total cost: ${core.totalCost}
-- Sale price: ${input.salePrice}
-- Down: ${input.downPayment}
-- Amount financed: ${core.amountFinanced}
-- APR used: ${apr}
-- Term weeks: ${input.termWeeks}
-- Payment frequency: ${input.paymentFrequency}
-- Reported repo count: ${input.repoCount ?? (input.pastRepo ? 1 : 0)}
-
-Calculated:
-- Payment: ${core.payment.toFixed(2)}
-- Total interest: ${core.totalInterest.toFixed(2)}
-- Total profit: ${core.totalProfit.toFixed(2)}
-- BE week: ${core.breakEvenWeek}
-- PTI: ${ptiPercent}
-- LTV: ${ltvPercent}%
-- Risk: ${risk.riskScore}
-
-Underwriting:
-- Verdict: ${underwriting.verdict}
-- Reasons: ${underwriting.reasons.join(" | ")}
-
-Instructions:
-1. Your verdict must match underwriting.
-2. Start with a one line verdict.
-3. Include 2 to 3 sentences explaining using real numbers.
-4. End with one suggestion to improve structure.
-No AI disclaimers.
-  `.trim();
-
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        temperature: 0.3,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a highly experienced BHPH finance manager. Be sharp, concise, and practical.",
-          },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      return `AI error: ${await response.text()}`;
-    }
-
-    const json = await response.json();
-    return json.choices?.[0]?.message?.content?.trim() || "No AI response.";
-  } catch (err: any) {
-    return `AI request failed: ${err.message}`;
-  }
-}
-
-// ============================================================================
 // Derived helpers: risk flags, delinquency, approval score, profit optimizer
 // ============================================================================
 
@@ -452,7 +351,10 @@ function buildAdvancedRiskFlags(
     flags.push("Short time on job, verify stability before funding.");
   }
 
-  if (core.breakEvenWeek > Math.min(settings.maxTermWeeks, input.termWeeks) / 2) {
+  if (
+    core.breakEvenWeek >
+    Math.min(settings.maxTermWeeks, input.termWeeks) / 2
+  ) {
     flags.push("Break even point is late in the term, recover cost slowly.");
   }
 
@@ -701,14 +603,31 @@ export async function POST(req: NextRequest) {
     let aiExplanation: string;
 
     if (isPro) {
-      aiExplanation = await getAiOpinion(
-        body,
-        core,
-        risk,
+      aiExplanation = await buildAiExplanation({
         settings,
+        deal: {
+          vehicleCost: body.vehicleCost,
+          reconCost: body.reconCost,
+          salePrice: body.salePrice,
+          downPayment: body.downPayment,
+          termWeeks: body.termWeeks,
+          paymentFrequency: body.paymentFrequency,
+          apr: effectiveApr,
+          monthlyIncome: body.monthlyIncome || 0,
+          repoCount,
+        },
+        core: {
+          totalCost: core.totalCost,
+          amountFinanced: core.amountFinanced,
+          payment: core.payment,
+          totalInterest: core.totalInterest,
+          totalProfit: core.totalProfit,
+          breakEvenWeek: core.breakEvenWeek,
+        },
+        risk,
         ltv,
-        underwriting
-      );
+        underwriting,
+      });
     } else {
       aiExplanation =
         "Upgrade to Pro to unlock full AI deal opinion with numbers, risk explanation, and structure suggestions.";
