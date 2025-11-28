@@ -55,6 +55,21 @@ type CoreResult = {
   amountFinanced: number;
 };
 
+type ProfitOptimizerVariant = {
+  label: string;
+  extraProfit: number;
+};
+
+type ProfitOptimizerResult = {
+  variants: ProfitOptimizerVariant[];
+};
+
+type PortfolioComparison = {
+  ptiDelta: number;
+  ltvDelta: number;
+  profitDelta: number;
+};
+
 // ============================================================================
 // Payment Schedule With Monthly/Biweekly/Weekly Amortization
 // ============================================================================
@@ -231,7 +246,10 @@ function calculateSchedule(
 
   for (const row of schedule) {
     cumPrincipal += row.principal;
-    if (cumPrincipal >= totalCost) break;
+    if (cumPrincipal >= totalCost) {
+      breakEvenWeek = row.period;
+      break;
+    }
   }
 
   return {
@@ -239,9 +257,9 @@ function calculateSchedule(
     totalInterest,
     totalProfit,
     breakEvenWeek,
-      schedule,
-      totalCost,
-      amountFinanced,
+    schedule,
+    totalCost,
+    amountFinanced,
   };
 }
 
@@ -393,6 +411,179 @@ No AI disclaimers.
 }
 
 // ============================================================================
+// Derived helpers: risk flags, delinquency, approval score, profit optimizer
+// ============================================================================
+
+function buildAdvancedRiskFlags(
+  input: DealInput,
+  risk: { paymentToIncome: number | null; riskScore: string },
+  ltv: number,
+  settings: DealerSettings,
+  core: CoreResult,
+  repoCount: number
+): string[] {
+  const flags: string[] = [];
+
+  if (risk.paymentToIncome !== null) {
+    if (risk.paymentToIncome > settings.maxPTI) {
+      flags.push("Payment to income is above your policy comfort range.");
+    } else if (risk.paymentToIncome > settings.maxPTI * 0.9) {
+      flags.push("Payment to income is close to your max PTI limit.");
+    } else {
+      flags.push("Payment to income is within normal range.");
+    }
+  }
+
+  if (ltv > settings.maxLTV) {
+    flags.push("LTV is above the policy snapshot for this unit.");
+  } else if (ltv > settings.maxLTV * 0.9) {
+    flags.push("LTV is near the upper edge of your policy range.");
+  } else {
+    flags.push("LTV is within normal range for this policy.");
+  }
+
+  if (repoCount >= 2) {
+    flags.push("Multiple past repos reported, high early default risk.");
+  } else if (repoCount === 1) {
+    flags.push("Single past repo on file, monitor early payments closely.");
+  }
+
+  if (input.monthsOnJob && input.monthsOnJob < 6) {
+    flags.push("Short time on job, verify stability before funding.");
+  }
+
+  if (core.breakEvenWeek > Math.min(settings.maxTermWeeks, input.termWeeks) / 2) {
+    flags.push("Break even point is late in the term, recover cost slowly.");
+  }
+
+  return flags;
+}
+
+function buildDelinquencyRiskText(
+  input: DealInput,
+  risk: { paymentToIncome: number | null; riskScore: string },
+  ltv: number,
+  repoCount: number
+): string {
+  const pti = risk.paymentToIncome ?? 0;
+  const ptiPercent = (pti * 100).toFixed(1);
+
+  if (repoCount >= 2 || pti > 0.3 || ltv > 1.9) {
+    return `This structure carries elevated early payment risk due to PTI around ${ptiPercent} percent, higher LTV and prior repos. Consider stronger down or tighter term.`;
+  }
+
+  if (repoCount === 1 || pti > 0.25 || ltv > 1.75) {
+    return `This deal sits in a moderate risk band, with PTI near ${ptiPercent} percent or higher advance. Make sure income and stability are well documented before funding.`;
+  }
+
+  return `Based on PTI, LTV and limited prior repos, delinquency risk looks typical for a working BHPH customer profile. Still monitor the first six payments closely.`;
+}
+
+function buildApprovalScore(
+  risk: { paymentToIncome: number | null; riskScore: string },
+  ltv: number,
+  repoCount: number
+): number {
+  let score = 80;
+
+  const pti = risk.paymentToIncome ?? 0;
+
+  if (pti > 0.3) score -= 20;
+  else if (pti > 0.25) score -= 10;
+  else if (pti < 0.18) score += 5;
+
+  if (ltv > 1.9) score -= 15;
+  else if (ltv > 1.75) score -= 8;
+
+  if (repoCount >= 2) score -= 25;
+  else if (repoCount === 1) score -= 10;
+
+  if (risk.riskScore === "High") score -= 10;
+  if (risk.riskScore === "Low") score += 5;
+
+  if (score < 5) score = 5;
+  if (score > 98) score = 98;
+
+  return Math.round(score);
+}
+
+function buildProfitOptimizer(
+  input: DealInput,
+  settings: DealerSettings,
+  core: CoreResult,
+  ltv: number,
+  risk: { paymentToIncome: number | null; riskScore: string },
+  repoCount: number
+): ProfitOptimizerResult {
+  const variants: ProfitOptimizerVariant[] = [];
+
+  const baseProfit = core.totalProfit;
+
+  // Helper to test a structure
+  function testVariant(
+    label: string,
+    override: Partial<DealInput>
+  ): void {
+    const nextInput: DealInput = {
+      ...input,
+      ...override,
+    };
+
+    const nextCore = calculateSchedule(nextInput, settings);
+
+    const nextLtv =
+      nextCore.totalCost > 0 ? nextCore.amountFinanced / nextCore.totalCost : 0;
+
+    const weeklyPaymentForRisk =
+      nextInput.paymentFrequency === "monthly"
+        ? nextCore.payment / 4.345
+        : nextInput.paymentFrequency === "biweekly"
+        ? nextCore.payment / 2
+        : nextCore.payment;
+
+    const nextRisk = basicRiskScore(
+      nextInput,
+      weeklyPaymentForRisk,
+      settings
+    );
+
+    const nextPti = nextRisk.paymentToIncome ?? 0;
+
+    const withinPolicy =
+      nextPti <= settings.maxPTI &&
+      nextLtv <= settings.maxLTV &&
+      nextInput.termWeeks <= settings.maxTermWeeks;
+
+    if (!withinPolicy) return;
+
+    const extraProfit = nextCore.totalProfit - baseProfit;
+    if (extraProfit > 50) {
+      variants.push({
+        label,
+        extraProfit: Math.round(extraProfit),
+      });
+    }
+  }
+
+  // Variant 1: slightly stronger down
+  testVariant("Ask for about five hundred more down", {
+    downPayment: input.downPayment + 500,
+  });
+
+  // Variant 2: slightly longer term
+  testVariant("Stretch term by about three months", {
+    termWeeks: input.termWeeks + Math.round(4.345 * 3),
+  });
+
+  // Variant 3: small price bump
+  testVariant("Hold one to two hundred more on price", {
+    salePrice: input.salePrice + 200,
+  });
+
+  return { variants };
+}
+
+// ============================================================================
 // Main POST Handler
 // ============================================================================
 
@@ -523,6 +714,37 @@ export async function POST(req: NextRequest) {
         "Upgrade to Pro to unlock full AI deal opinion with numbers, risk explanation, and structure suggestions.";
     }
 
+    // Derived extras used in the UI
+    const advancedRiskFlags = buildAdvancedRiskFlags(
+      body,
+      risk,
+      ltv,
+      settings,
+      core,
+      repoCount
+    );
+
+    const delinquencyRisk = buildDelinquencyRiskText(
+      body,
+      risk,
+      ltv,
+      repoCount
+    );
+
+    const approvalScore = buildApprovalScore(risk, ltv, repoCount);
+
+    const profitOptimizer: ProfitOptimizerResult | null = isPro
+      ? buildProfitOptimizer(body, settings, core, ltv, risk, repoCount)
+      : null;
+
+    // Simple placeholder portfolio comparison for now
+    const portfolioComparison: PortfolioComparison | null = null;
+
+    const complianceFlags: string[] = [
+      "Check your state maximum rate and term against this structure.",
+      "Verify that doc fees and add ons follow local disclosure rules.",
+    ];
+
     // Underwriting returned to client is richer for Pro
     const responseUnderwriting:
       | UnderwritingResult
@@ -591,6 +813,13 @@ export async function POST(req: NextRequest) {
       freeDealsPerMonth,
       planType,
       schedulePreview,
+      // New fields used by the upgraded UI
+      advancedRiskFlags,
+      delinquencyRisk,
+      approvalScore,
+      profitOptimizer,
+      portfolioComparison,
+      complianceFlags,
     });
   } catch (err: any) {
     return NextResponse.json(
