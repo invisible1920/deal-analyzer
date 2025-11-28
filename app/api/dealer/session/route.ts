@@ -1,11 +1,24 @@
-export const runtime = "nodejs";
-
+// app/api/dealer/session/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { setSessionCookie } from "@/lib/auth";
+import { createSignedDealerSession } from "@/lib/auth"; // this should return the signed "dealer" value
 
 export async function POST(req: NextRequest) {
-  // Set the dealer_session cookie for the current user
-  setSessionCookie();
+  const signed = createSignedDealerSession();
 
-  return NextResponse.json({ success: true });
+  const res = NextResponse.json({ success: true });
+
+  const weekInSeconds = 60 * 60 * 24 * 7;
+
+  res.cookies.set({
+    name: "dealer_session",
+    value: signed,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: weekInSeconds,                               // lifetime in seconds
+    expires: new Date(Date.now() + weekInSeconds * 1000) // explicit expiry date
+  });
+
+  return res;
 }
