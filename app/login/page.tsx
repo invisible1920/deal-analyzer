@@ -19,101 +19,126 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  setLoading(true);
-  setError(null);
-  setMessage(null);
-
-  try {
-    if (mode === "signup") {
-      const { error } = await supabaseClient.auth.signUp({
-        email,
-        password
-      });
-      if (error) {
-        setError(error.message);
-        return;
-      }
-      setMessage(
-        "Sign up successful. If email confirmation is required, check your inbox."
-      );
-    } else {
-      // First, Supabase email + password auth
-      const { error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      // Then, hit your API route to set the dealer_session cookie
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ password })
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error || "Failed to create session cookie");
-        return;
-      }
-
-      router.push("/");
-    }
-  } catch (err: any) {
-    setError(err?.message || "Auth error");
-  } finally {
-    setLoading(false);
-  }
-}
-
-
-  async function handleGoogleSignIn() {
-  try {
+    e.preventDefault();
+    setLoading(true);
     setError(null);
     setMessage(null);
-    setGoogleLoading(true);
 
-    const redirectTo =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/auth/callback`
-        : undefined;
-
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo
-      }
-    });
-
-    if (error) {
-      if (
-        error.message?.includes("provider is not enabled") ||
-        error.message?.includes("Unsupported provider")
-      ) {
-        setError(
-          "Google sign in is not configured yet. Please contact the admin or use email login."
+    try {
+      if (mode === "signup") {
+        const { error } = await supabaseClient.auth.signUp({
+          email,
+          password
+        });
+        if (error) {
+          setError(error.message);
+          return;
+        }
+        setMessage(
+          "Sign up successful. If email confirmation is required, check your inbox."
         );
       } else {
-        setError(error.message);
+        const { error } = await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+        if (error) {
+          setError(error.message);
+          return;
+        }
+
+        // include email as well so your api route can find the user
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          setError(data?.error || "Failed to create session cookie");
+          return;
+        }
+
+        router.push("/");
       }
+    } catch (err: any) {
+      setError(err?.message || "Auth error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    try {
+      setError(null);
+      setMessage(null);
+      setGoogleLoading(true);
+
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : undefined;
+
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo
+        }
+      });
+
+      if (error) {
+        if (
+          error.message?.includes("provider is not enabled") ||
+          error.message?.includes("Unsupported provider")
+        ) {
+          setError(
+            "Google sign in is not configured yet. Please contact the admin or use email login."
+          );
+        } else {
+          setError(error.message);
+        }
+        setGoogleLoading(false);
+      }
+    } catch (err: any) {
+      setError(err?.message || "Google sign in failed");
       setGoogleLoading(false);
     }
-
-    // On success, Supabase will redirect to redirectTo
-  } catch (err: any) {
-    setError(err?.message || "Google sign in failed");
-    setGoogleLoading(false);
   }
-}
 
+  async function handlePasswordReset() {
+    if (!email) {
+      setError("Enter your email above first so we know where to send the link.");
+      return;
+    }
 
-  // Styles using the shared theme
+    try {
+      setError(null);
+      setMessage(null);
+
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/update-password`
+          : undefined;
+
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      setMessage("Password reset link sent. Check your inbox.");
+    } catch (err: any) {
+      setError(err?.message || "Could not send reset link");
+    }
+  }
+
+  // layout styles
   const pageStyle: CSSProperties = {
     minHeight: "100vh",
     background: colors.bg,
@@ -121,7 +146,8 @@ export default function LoginPage() {
     fontFamily:
       'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
     display: "flex",
-    alignItems: "center"
+    alignItems: "center",
+    justifyContent: "center", // centers the card inside the viewport
   };
 
   const shellStyle: CSSProperties = {
@@ -142,21 +168,31 @@ export default function LoginPage() {
     fontSize: "24px",
     fontWeight: 700,
     marginBottom: "4px",
-    textAlign: "center" as const,
+    textAlign: "center",
     letterSpacing: "-0.03em"
   };
 
   const subtitleStyle: CSSProperties = {
     color: colors.textSecondary,
     fontSize: "13px",
-    textAlign: "center" as const,
+    textAlign: "center",
     marginBottom: "20px"
+  };
+
+  const formGroupStyle: CSSProperties = {
+    marginBottom: "14px"
+  };
+
+  const labelRowStyle: CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "4px"
   };
 
   const labelStyle: CSSProperties = {
     fontSize: "12px",
-    color: colors.textSecondary,
-    marginBottom: "4px"
+    color: colors.textSecondary
   };
 
   const inputStyle: CSSProperties = {
@@ -167,8 +203,7 @@ export default function LoginPage() {
     background: colors.bg,
     color: colors.text,
     fontSize: "14px",
-    outline: "none",
-    marginBottom: "12px"
+    outline: "none"
   };
 
   const primaryButtonStyle: CSSProperties = {
@@ -182,7 +217,7 @@ export default function LoginPage() {
     fontWeight: 600,
     cursor: loading ? "default" : "pointer",
     opacity: loading ? 0.7 : 1,
-    marginTop: "4px"
+    marginTop: "8px"
   };
 
   const googleButtonStyle: CSSProperties = {
@@ -200,7 +235,7 @@ export default function LoginPage() {
     alignItems: "center",
     justifyContent: "center",
     gap: "8px",
-    marginBottom: "8px"
+    marginBottom: "12px"
   };
 
   const dividerRowStyle: CSSProperties = {
@@ -218,7 +253,7 @@ export default function LoginPage() {
 
   const dividerTextStyle: CSSProperties = {
     fontSize: "11px",
-    textTransform: "uppercase" as const,
+    textTransform: "uppercase",
     letterSpacing: "0.12em",
     color: colors.textSecondary
   };
@@ -227,7 +262,7 @@ export default function LoginPage() {
     fontSize: "13px",
     marginTop: "16px",
     color: colors.textSecondary,
-    textAlign: "center" as const
+    textAlign: "center"
   };
 
   const toggleButtonStyle: CSSProperties = {
@@ -239,6 +274,15 @@ export default function LoginPage() {
     cursor: "pointer",
     fontSize: "13px",
     fontWeight: 500
+  };
+
+  const forgotPasswordButtonStyle: CSSProperties = {
+    border: "none",
+    background: "transparent",
+    padding: 0,
+    fontSize: "12px",
+    color: "#2563eb",
+    cursor: "pointer"
   };
 
   const alertErrorStyle: CSSProperties = {
@@ -273,14 +317,12 @@ export default function LoginPage() {
               Sign in to run deals, save history and keep your BHPH numbers tight.
             </p>
 
-            {/* Google SSO */}
             <button
               type="button"
               style={googleButtonStyle}
               onClick={handleGoogleSignIn}
               disabled={googleLoading || loading}
             >
-              {/* Simple G icon substitute so you do not need an asset set up */}
               <span
                 style={{
                   width: 18,
@@ -307,12 +349,13 @@ export default function LoginPage() {
               <div style={dividerLineStyle} />
             </div>
 
-            {/* Email login form */}
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: "6px" }}>
-                <label style={labelStyle} htmlFor="email">
-                  Email
-                </label>
+              <div style={formGroupStyle}>
+                <div style={labelRowStyle}>
+                  <label style={labelStyle} htmlFor="email">
+                    Email
+                  </label>
+                </div>
                 <input
                   id="email"
                   type="email"
@@ -324,10 +367,21 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div style={{ marginBottom: "4px" }}>
-                <label style={labelStyle} htmlFor="password">
-                  Password
-                </label>
+              <div style={formGroupStyle}>
+                <div style={labelRowStyle}>
+                  <label style={labelStyle} htmlFor="password">
+                    Password
+                  </label>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      style={forgotPasswordButtonStyle}
+                      onClick={handlePasswordReset}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
                 <input
                   id="password"
                   type="password"
@@ -361,9 +415,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            {message && (
-              <div style={alertSuccessStyle}>{message}</div>
-            )}
+            {message && <div style={alertSuccessStyle}>{message}</div>}
 
             <div style={toggleStyle}>
               {mode === "login" ? "New here?" : "Already have an account?"}
