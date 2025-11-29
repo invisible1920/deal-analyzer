@@ -263,12 +263,12 @@ export function ResultsDashboard(props: Props) {
   const verdictText =
     result?.underwriting?.verdict || result?.underwriting?.status || "Pending";
 
-   const approvalScore =
+     const approvalScore =
     typeof result?.approvalScore === "number"
       ? Math.round(result.approvalScore)
       : null;
 
-    const termWeeks =
+  const termWeeks =
     typeof result?.termWeeks === "number"
       ? result.termWeeks
       : typeof result?.termInWeeks === "number"
@@ -302,19 +302,6 @@ export function ResultsDashboard(props: Props) {
         ).toFixed(1)} percent.`
       );
     }
-
-      const hiddenRiskSeverity =
-    typeof result?.riskScore === "string" ? result.riskScore : "Medium";
-
-  const primaryRiskFocus =
-    ptiValue !== null && ptiValue > ptiLimit
-      ? "Tighten PTI by lowering payment with more down, a shorter term or a lower price."
-      : typeof result?.ltv === "number" && result.ltv > policy.maxLTV
-      ? "Lower LTV with more down, a cheaper vehicle or stronger collateral."
-      : typeof form.repoCount === "number" && form.repoCount >= 1
-      ? "Customer history shows repos. Consider stronger down, GPS or a shorter term before funding."
-      : "Structure is inside policy. Focus on profit and compliance checks rather than raw risk.";
-
 
     // LTV flag
     if (typeof result?.ltv === "number") {
@@ -376,6 +363,20 @@ export function ResultsDashboard(props: Props) {
 
     return flags;
   })();
+
+
+    const hiddenRiskSeverity =
+    typeof result?.riskScore === "string" ? result.riskScore : "Medium";
+
+  const primaryRiskFocus =
+    ptiValue !== null && ptiValue > ptiLimit
+      ? "Tighten PTI by lowering payment with more down, a shorter term or a lower price."
+      : typeof result?.ltv === "number" && result.ltv > policy.maxLTV
+      ? "Lower LTV with more down, a cheaper vehicle or stronger collateral."
+      : typeof form.repoCount === "number" && form.repoCount >= 1
+      ? "Customer history shows repos. Consider stronger down, GPS or a shorter term before funding."
+      : "Structure is inside policy. Focus on profit and compliance checks rather than raw risk.";
+
 
 
 
