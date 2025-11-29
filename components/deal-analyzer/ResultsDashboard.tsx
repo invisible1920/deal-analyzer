@@ -303,6 +303,19 @@ export function ResultsDashboard(props: Props) {
       );
     }
 
+      const hiddenRiskSeverity =
+    typeof result?.riskScore === "string" ? result.riskScore : "Medium";
+
+  const primaryRiskFocus =
+    ptiValue !== null && ptiValue > ptiLimit
+      ? "Tighten PTI by lowering payment with more down, a shorter term or a lower price."
+      : typeof result?.ltv === "number" && result.ltv > policy.maxLTV
+      ? "Lower LTV with more down, a cheaper vehicle or stronger collateral."
+      : typeof form.repoCount === "number" && form.repoCount >= 1
+      ? "Customer history shows repos. Consider stronger down, GPS or a shorter term before funding."
+      : "Structure is inside policy. Focus on profit and compliance checks rather than raw risk.";
+
+
     // LTV flag
     if (typeof result?.ltv === "number") {
       const ltvPct = (result.ltv * 100).toFixed(1);
@@ -688,10 +701,45 @@ export function ResultsDashboard(props: Props) {
           </section>
         )}
 
-        {/* hidden risk flags */}
+               {/* hidden risk flags */}
         <section style={panel}>
           <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: 17, marginBottom: 10 }}>Hidden risk flags</h2>
+            <h2 style={{ fontSize: 17, marginBottom: 6 }}>Hidden risk flags</h2>
+
+            {/* overall risk and quick takeaway */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 6,
+                gap: 8
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  color: colors.textSecondary
+                }}
+              >
+                Overall risk on this structure
+              </span>
+              <span style={riskChipStyle(hiddenRiskSeverity)}>
+                {hiddenRiskSeverity}
+              </span>
+            </div>
+
+            <p
+              style={{
+                fontSize: 13,
+                marginBottom: 10,
+                color: colors.textSecondary
+              }}
+            >
+              Next step: {primaryRiskFocus}
+            </p>
+
+            {/* detailed drivers */}
             <ul
               style={{
                 paddingLeft: 18,
@@ -711,8 +759,8 @@ export function ResultsDashboard(props: Props) {
                   Risk flags detected for this deal
                 </div>
                 <p style={{ marginBottom: 10 }}>
-                  Pro shows which risk flags triggered and how to fix them
-                  before you fund the deal.
+                  Pro shows which risk flags triggered and gives a clear next
+                  step before you fund the deal.
                 </p>
                 <a href="/billing" style={btnSecondary}>
                   Unlock hidden risk flags
@@ -721,6 +769,7 @@ export function ResultsDashboard(props: Props) {
             )}
           </div>
         </section>
+
 
         {/* payment schedule */}
         {result?.schedulePreview && (
