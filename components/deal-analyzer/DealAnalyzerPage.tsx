@@ -29,11 +29,19 @@ export function DealAnalyzerPage() {
     userId
   } = useDealAnalyzer();
 
+  // Outer shell for this page
+  const outer: CSSProperties = {
+    width: "100%",
+    maxWidth: "100vw",
+    overflowX: "hidden"
+  };
+
   const shell: CSSProperties = {
     width: "100%",
     maxWidth: "1180px",
     margin: "0 auto",
-    overflowX: "hidden"
+    overflowX: "hidden",
+    boxSizing: "border-box"
   };
 
   const header: CSSProperties = {
@@ -68,7 +76,10 @@ export function DealAnalyzerPage() {
       : "minmax(0, 2fr) minmax(0, 1fr)",
     gap: "20px",
     marginTop: "24px",
-    alignItems: "start"
+    alignItems: "start",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box"
   };
 
   const proBadge: CSSProperties = {
@@ -103,7 +114,7 @@ export function DealAnalyzerPage() {
   };
 
   return (
-    <div style={{ width: "100%" }}>
+    <div style={outer}>
       <div style={shell}>
         {/* HEADER */}
         <header style={header}>
