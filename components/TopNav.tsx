@@ -12,6 +12,10 @@ export default function TopNav() {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
+  // detect mobile
+  const isMobile =
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false;
+
   async function handleLogout() {
     try {
       setLoading(true);
@@ -20,51 +24,63 @@ export default function TopNav() {
       setUser(null);
       router.push("/login");
     } finally {
-      // 🔥 ALWAYS reset after navigation
       setLoading(false);
     }
   }
 
-  // 🔥 Extra safeguard: if user is null OR we are on the login page,
-  // force loading=false
   useEffect(() => {
     if (!user || pathname === "/login") {
       setLoading(false);
     }
   }, [user, pathname]);
 
+  // ----------- FIXED RESPONSIVE NAV -----------
   const navStyle: CSSProperties = {
-    maxWidth: "960px",
+    maxWidth: "100%",
+    width: "100%",
     margin: "0 auto",
-    padding: "12px 24px",
+    padding: isMobile ? "10px 16px" : "12px 24px",
     display: "flex",
-    alignItems: "center",
+    alignItems: isMobile ? "flex-start" : "center",
     justifyContent: "space-between",
+    flexDirection: isMobile ? "column" : "row",
+    gap: isMobile ? "10px" : "0px",
+    boxSizing: "border-box",
+    overflowX: "hidden",
   };
 
   const linksStyle: CSSProperties = {
     display: "flex",
-    gap: "16px",
-    fontSize: "14px",
+    flexWrap: isMobile ? "wrap" : "nowrap",
+    gap: isMobile ? "12px" : "16px",
+    fontSize: isMobile ? "13px" : "14px",
     alignItems: "center",
+    width: isMobile ? "100%" : "auto",
   };
 
   const linkStyle: CSSProperties = {
     color: "#e5e7eb",
     textDecoration: "none",
+    lineHeight: 1.4,
+    whiteSpace: isMobile ? "normal" : "nowrap",
   };
 
   const secondaryLinkStyle: CSSProperties = {
     color: "#9ca3af",
     textDecoration: "none",
+    lineHeight: 1.4,
+    whiteSpace: isMobile ? "normal" : "nowrap",
   };
 
   const userBoxStyle: CSSProperties = {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    fontSize: "13px",
+    fontSize: isMobile ? "12px" : "13px",
     color: "#9ca3af",
+    flexWrap: isMobile ? "wrap" : "nowrap",
+    lineHeight: 1.3,
+    maxWidth: isMobile ? "100%" : "none",
   };
 
   const logoutButtonStyle: CSSProperties = {
@@ -72,15 +88,19 @@ export default function TopNav() {
     background: "transparent",
     color: "#f97316",
     cursor: "pointer",
-    fontSize: "13px",
+    fontSize: isMobile ? "12px" : "13px",
     padding: 0,
+  };
+
+  const titleStyle: CSSProperties = {
+    fontWeight: 700,
+    fontSize: isMobile ? "15px" : "16px",
+    whiteSpace: "nowrap",
   };
 
   return (
     <nav style={navStyle}>
-      <div style={{ fontWeight: 700, fontSize: "16px" }}>
-        BHPH Deal Analyzer
-      </div>
+      <div style={titleStyle}>BHPH Deal Analyzer</div>
 
       <div style={linksStyle}>
         <Link href="/" style={linkStyle}>Analyzer</Link>
@@ -88,17 +108,13 @@ export default function TopNav() {
         <Link href="/settings" style={secondaryLinkStyle}>Settings</Link>
 
         {loading ? (
-          <span style={{ color: "#4b5563", fontSize: "12px" }}>
+          <span style={{ color: "#4b5563", fontSize: isMobile ? "11px" : "12px" }}>
             Logging out...
           </span>
         ) : user ? (
           <div style={userBoxStyle}>
             <span>{user.email}</span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              style={logoutButtonStyle}
-            >
+            <button type="button" onClick={handleLogout} style={logoutButtonStyle}>
               Logout
             </button>
           </div>
