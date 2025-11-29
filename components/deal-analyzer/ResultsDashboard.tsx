@@ -268,22 +268,109 @@ export function ResultsDashboard(props: Props) {
       ? Math.round(result.approvalScore)
       : null;
 
-  const advancedRiskFlags: string[] =
+    const termWeeks =
+    typeof result?.termWeeks === "number"
+      ? result.termWeeks
+      : typeof form.termWeeks === "number"
+      ? form.termWeeks
+      : null;
+
+
+    const advancedRiskFlags: string[] =
     result?.riskFlags ||
     result?.advancedRiskFlags ||
     (result
-      ? [
-          ptiValue !== null && ptiValue > ptiLimit
-            ? "Payment to income is above policy comfort range."
-            : "Payment to income is close to policy limit.",
-          typeof result?.ltv === "number" && result.ltv > policy.maxLTV
-            ? "LTV is advanced compared to your policy snapshot."
-            : "LTV is within normal range.",
-          form.repoCount >= 2
-            ? "Multiple past repos reported. High early default risk."
-            : "Limited repo history on file."
-        ]
+      ? (() => {
+          const flags: string[] = [];
+
+          // PTI flag
+          if (ptiValue === null) {
+            flags.push(
+              "No income on file so PTI risk cannot be calculated."
+            );
+          } else if (ptiValue > ptiLimit) {
+            flags.push(
+              `Payment to income is above your max PTI of ${(ptiLimit * 100).toFixed(
+                0
+              )} percent.`
+            );
+          } else if (ptiValue > ptiLimit * 0.9) {
+            flags.push(
+              `Payment to income is close to your max PTI of ${(ptiLimit * 100).toFixed(
+                0
+              )} percent.`
+            );
+          } else {
+            flags.push(
+              `Payment to income is comfortably inside your PTI limit at ${(
+                ptiValue * 100
+              ).toFixed(1)} percent.`
+            );
+          }
+
+          // LTV flag
+          if (typeof result?.ltv === "number") {
+            if (result.ltv > policy.maxLTV) {
+              flags.push(
+                `LTV is above your policy max of ${(policy.maxLTV * 100).toFixed(
+                  0
+                )} percent.`
+              );
+            } else if (result.ltv > policy.maxLTV * 0.95) {
+              flags.push(
+                `LTV is high for this policy at ${(result.ltv * 100).toFixed(
+                  1
+                )} percent.`
+              );
+            } else {
+              flags.push(
+                `LTV is within normal range at ${(result.ltv * 100).toFixed(
+                  1
+                )} percent.`
+              );
+            }
+          }
+
+          // Break even timing flag
+          if (
+            typeof result?.breakEvenWeek === "number" &&
+            termWeeks &&
+            termWeeks > 0
+          ) {
+            const pct = result.breakEvenWeek / termWeeks;
+
+            if (pct >= 0.6) {
+              flags.push(
+                `Break even hits late at week ${result.breakEvenWeek} of ${termWeeks}, so you recover cost slowly.`
+              );
+            } else if (pct <= 0.35) {
+              flags.push(
+                `Break even hits early at week ${result.breakEvenWeek} of ${termWeeks}, giving more room for loss.`
+              );
+            } else {
+              flags.push(
+                `Break even is in the middle of the term at week ${result.breakEvenWeek} of ${termWeeks}.`
+              );
+            }
+          }
+
+          // Repo history flag
+          if (typeof form.repoCount === "number") {
+            if (form.repoCount >= 2) {
+              flags.push(
+                "Multiple prior repos on file. Expect higher early default risk."
+              );
+            } else if (form.repoCount === 1) {
+              flags.push(
+                "One prior repo on file. Consider stronger down payment or shorter term."
+              );
+            }
+          }
+
+          return flags;
+        })()
       : []);
+
 
   const delinquencyRisk =
     result?.delinquencyRisk ||
