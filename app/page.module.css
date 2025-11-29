@@ -1,11 +1,13 @@
 .main {
-  /* Desktop and tablet default */
   padding: 32px 16px;
+  box-sizing: border-box;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
-/* Mobile overrides only */
+/* Slightly tighter padding on small screens, desktop stays the same */
 @media (max-width: 768px) {
   .main {
-    padding: 16px 8px;
+    padding: 24px 12px;
   }
 }
