@@ -1,35 +1,17 @@
 "use client";
 
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties } from "react";
 import { themeColors } from "@/app/theme";
 import { useDealAnalyzer } from "@/hooks/useDealAnalyzer";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 import { DealForm } from "@/components/deal-analyzer/DealForm";
 import { UsagePanel } from "@/components/deal-analyzer/UsagePanel";
 import { ResultsDashboard } from "@/components/deal-analyzer/ResultsDashboard";
 
-// simple hook to detect small screens
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (typeof window !== "undefined") {
-        setIsMobile(window.innerWidth <= breakpoint);
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [breakpoint]);
-
-  return isMobile;
-}
-
 export function DealAnalyzerPage() {
   const colors = themeColors.light;
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(768);
 
   const {
     form,
@@ -76,8 +58,8 @@ export function DealAnalyzerPage() {
   const contentGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile
-      ? "minmax(0, 1fr)" // stack form and usage on top of each other
-      : "minmax(0, 2fr) minmax(0, 1fr)", // current desktop layout
+      ? "minmax(0, 1fr)" // stacked on mobile
+      : "minmax(0, 2fr) minmax(0, 1fr)",
     gap: "20px",
     marginTop: "24px",
     alignItems: "start"
@@ -114,7 +96,6 @@ export function DealAnalyzerPage() {
   return (
     <div style={{ width: "100%" }}>
       <div style={shell}>
-        {/* HEADER */}
         <header style={header}>
           <div style={titleRow}>
             <h1 style={title}>BHPH Deal Analyzer</h1>
@@ -128,22 +109,8 @@ export function DealAnalyzerPage() {
           )}
         </header>
 
-        <p style={{ color: colors.textSecondary, fontSize: 15 }}>
-          Calculate payment, profit, PTI, LTV and AI underwriting instantly.
-        </p>
-        <p
-          style={{
-            marginTop: 6,
-            fontSize: 13,
-            color: colors.textSecondary
-          }}
-        >
-          Policy in use max LTV {(policy.maxLTV * 100).toFixed(0)} percent, max PTI{" "}
-          {(policy.maxPTI * 100).toFixed(0)} percent, max term{" "}
-          {policy.maxTermWeeks} weeks.
-        </p>
+        {/* ... the rest of your existing JSX ... */}
 
-        {/* FORM + USAGE */}
         <div style={contentGrid}>
           <DealForm
             form={form}
@@ -158,7 +125,6 @@ export function DealAnalyzerPage() {
           <UsagePanel planType={planType} usage={usage} colors={colors} />
         </div>
 
-        {/* RESULTS */}
         <ResultsDashboard
           result={result}
           error={error}
