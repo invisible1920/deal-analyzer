@@ -2,10 +2,11 @@
 
 import PageContainer from "@/components/PageContainer";
 import { DealAnalyzerPage } from "@/components/deal-analyzer/DealAnalyzerPage";
+import styles from "./page.module.css";
 
 export default function Page() {
   return (
-    <main style={{ padding: "32px 16px" }}>
+    <main className={styles.main}>
       <PageContainer>
         <DealAnalyzerPage />
       </PageContainer>
