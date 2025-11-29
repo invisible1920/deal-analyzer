@@ -6,6 +6,7 @@ import {
   printOfferSheet,
   printUnderwritingPacket
 } from "@/lib/dealPrinting";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 type PlanType = "free" | "pro" | null;
 
@@ -34,6 +35,8 @@ export function ResultsDashboard(props: Props) {
     planType
   } = props;
 
+  const isMobile = useIsMobile(768);
+
   // shared styles
 
   const panel: CSSProperties = {
@@ -41,7 +44,9 @@ export function ResultsDashboard(props: Props) {
     border: `1px solid ${colors.border}`,
     borderRadius: 14,
     padding: 20,
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)"
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)",
+    minWidth: 0,
+    wordBreak: "break-word"
   };
 
   const lockedPanelInner: CSSProperties = {
@@ -104,11 +109,12 @@ export function ResultsDashboard(props: Props) {
     background: "rgba(15, 23, 42, 0.96)",
     color: "#e5e7eb",
     display: "flex",
-    flexWrap: "wrap",
-    gap: 24,
-    alignItems: "center",
-    justifyContent: "space-between",
-    position: "sticky",
+    flexDirection: isMobile ? "column" : "row",
+    alignItems: isMobile ? "flex-start" : "center",
+    flexWrap: isMobile ? "nowrap" : "wrap",
+    gap: isMobile ? 16 : 24,
+    justifyContent: isMobile ? "flex-start" : "space-between",
+    position: isMobile ? "static" : "sticky",
     top: 16,
     zIndex: 10,
     backdropFilter: "blur(14px)"
@@ -129,7 +135,8 @@ export function ResultsDashboard(props: Props) {
   const summaryChipGroup: CSSProperties = {
     display: "flex",
     gap: 28,
-    flexWrap: "wrap"
+    flexWrap: "wrap",
+    width: "100%"
   };
 
   const btnSecondary: CSSProperties = {
@@ -152,7 +159,9 @@ export function ResultsDashboard(props: Props) {
 
   const resultsGrid: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateColumns: isMobile
+      ? "minmax(0, 1fr)"                 // stack cards on mobile
+      : "repeat(3, minmax(0, 1fr))",     // three columns on desktop
     gap: 20,
     marginTop: 24,
     alignItems: "stretch"
@@ -368,7 +377,9 @@ export function ResultsDashboard(props: Props) {
               ...btnSecondary,
               background:
                 "linear-gradient(to right, #22c55e, #4ade80, #22c55e)",
-              color: "#052e16"
+              color: "#052e16",
+              width: isMobile ? "100%" : "auto",
+              textAlign: "center"
             }}
           >
             Upgrade to save and export
@@ -621,7 +632,7 @@ export function ResultsDashboard(props: Props) {
           </section>
         )}
 
-               {/* profit optimizer */}
+        {/* profit optimizer */}
         <section style={panel}>
           <div style={lockedPanelInner}>
             <h2 style={{ fontSize: 17, marginBottom: 10 }}>Profit optimizer</h2>
@@ -770,7 +781,6 @@ export function ResultsDashboard(props: Props) {
             )}
           </div>
         </section>
-
 
         {/* customer offer sheet */}
         <section style={panel}>
