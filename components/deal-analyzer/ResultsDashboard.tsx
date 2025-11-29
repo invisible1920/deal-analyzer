@@ -46,7 +46,9 @@ export function ResultsDashboard(props: Props) {
     padding: 20,
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)",
     minWidth: 0,
-    wordBreak: "break-word"
+    wordBreak: "break-word",
+    boxSizing: "border-box",
+    maxWidth: "100%"
   };
 
   const lockedPanelInner: CSSProperties = {
@@ -117,7 +119,10 @@ export function ResultsDashboard(props: Props) {
     position: isMobile ? "static" : "sticky",
     top: 16,
     zIndex: 10,
-    backdropFilter: "blur(14px)"
+    backdropFilter: "blur(14px)",
+    boxSizing: "border-box",
+    maxWidth: "100%",
+    overflowX: "hidden"
   };
 
   const summaryChipLabel: CSSProperties = {
@@ -136,7 +141,8 @@ export function ResultsDashboard(props: Props) {
     display: "flex",
     gap: 28,
     flexWrap: "wrap",
-    width: "100%"
+    width: "100%",
+    rowGap: 12
   };
 
   const btnSecondary: CSSProperties = {
@@ -154,17 +160,20 @@ export function ResultsDashboard(props: Props) {
     textDecoration: "none",
     display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    maxWidth: "100%",
+    boxSizing: "border-box"
   };
 
   const resultsGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile
-      ? "minmax(0, 1fr)"                 // stack cards on mobile
-      : "repeat(3, minmax(0, 1fr))",     // three columns on desktop
+      ? "minmax(0, 1fr)" // stack cards on mobile
+      : "repeat(3, minmax(0, 1fr))", // three columns on desktop
     gap: 20,
     marginTop: 24,
-    alignItems: "stretch"
+    alignItems: "stretch",
+    maxWidth: "100%"
   };
 
   // derived metrics
@@ -379,7 +388,9 @@ export function ResultsDashboard(props: Props) {
                 "linear-gradient(to right, #22c55e, #4ade80, #22c55e)",
               color: "#052e16",
               width: isMobile ? "100%" : "auto",
-              textAlign: "center"
+              textAlign: "center",
+              alignSelf: isMobile ? "stretch" : "center",
+              marginTop: isMobile ? 4 : 0
             }}
           >
             Upgrade to save and export
