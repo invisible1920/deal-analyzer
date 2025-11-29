@@ -1,9 +1,13 @@
-// components/deal-analyzer/ResultsDashboard.tsx
 "use client";
 
-import React, { CSSProperties } from "react";
-import type { FormState, PlanType } from "@/hooks/useDealAnalyzer";
-import { printOfferSheet, printUnderwritingPacket } from "@/lib/dealPrinting";
+import { CSSProperties } from "react";
+import type { FormState } from "@/hooks/useDealAnalyzer";
+import {
+  printOfferSheet,
+  printUnderwritingPacket
+} from "@/lib/dealPrinting";
+
+type PlanType = "free" | "pro" | null;
 
 type Props = {
   result: any;
@@ -14,43 +18,64 @@ type Props = {
   loading: boolean;
   form: FormState;
   applySuggestedStructure: () => Promise<void>;
-  planType: PlanType | null;
+  planType: PlanType;
 };
 
-export function ResultsDashboard({
-  result,
-  error,
-  isPro,
-  policy,
-  colors,
-  loading,
-  form,
-  applySuggestedStructure,
-  planType
-}: Props) {
-  const defaultPolicy = {
-    maxPTI: 0.25,
-    maxLTV: 1.75,
-    maxTermWeeks: 160
-  };
-
-  const resolvedPolicy = policy ?? defaultPolicy;
+export function ResultsDashboard(props: Props) {
+  const {
+    result,
+    error,
+    isPro,
+    policy,
+    colors,
+    loading,
+    form,
+    applySuggestedStructure,
+    planType
+  } = props;
 
   // shared styles
+
   const panel: CSSProperties = {
     background: colors.panel,
     border: `1px solid ${colors.border}`,
-    borderRadius: "14px",
-    padding: "20px",
+    borderRadius: 14,
+    padding: 20,
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)"
   };
 
-  const resultsGrid: CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: "20px",
-    marginTop: "24px",
-    alignItems: "stretch"
+  const lockedPanelInner: CSSProperties = {
+    position: "relative",
+    overflow: "hidden",
+    paddingBottom: 12
+  };
+
+  const blurOverlay: CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    background: "rgba(15,23,42,0.82)",
+    color: "#f9fafb",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    fontSize: 13,
+    padding: 16,
+    backdropFilter: "blur(6px)",
+    pointerEvents: "auto"
+  };
+
+  const blurOverlayTitle: CSSProperties = {
+    fontWeight: 600,
+    marginBottom: 6,
+    fontSize: 14
+  };
+
+  const smallUpsell: CSSProperties = {
+    marginTop: 10,
+    fontSize: 12,
+    color: colors.textSecondary
   };
 
   const summaryRow: CSSProperties = {
@@ -72,7 +97,7 @@ export function ResultsDashboard({
   };
 
   const summaryBar: CSSProperties = {
-    marginTop: "24px",
+    marginTop: 24,
     padding: "14px 20px",
     borderRadius: 20,
     border: `1px solid ${colors.border}`,
@@ -80,7 +105,7 @@ export function ResultsDashboard({
     color: "#e5e7eb",
     display: "flex",
     flexWrap: "wrap",
-    gap: "24px",
+    gap: 24,
     alignItems: "center",
     justifyContent: "space-between",
     position: "sticky",
@@ -109,60 +134,32 @@ export function ResultsDashboard({
 
   const btnSecondary: CSSProperties = {
     padding: "8px 16px",
-    borderRadius: "999px",
+    borderRadius: 999,
     border: "none",
-    background:
-      "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
+    background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
     color: "white",
     fontWeight: 600,
     letterSpacing: ".04em",
     cursor: loading ? "default" : "pointer",
     opacity: loading ? 0.6 : 1,
-    fontSize: "13px",
+    fontSize: 13,
     boxShadow: "0 4px 16px rgba(15, 23, 42, 0.22)",
     textDecoration: "none",
     display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center",
-    whiteSpace: "nowrap",
-    transition: "transform 0.1s ease, box-shadow 0.1s ease"
+    justifyContent: "center"
   };
 
-  const smallUpsell: CSSProperties = {
-    marginTop: 10,
-    fontSize: 12,
-    color: colors.textSecondary
-  };
-
-  const lockedPanelInner: CSSProperties = {
-    position: "relative",
-    overflow: "hidden",
-    paddingBottom: 12
-  };
-
-  const blurOverlay: CSSProperties = {
-    position: "absolute",
-    inset: 0,
-    background: "rgba(15,23,42,0.82)",
-    color: "#f9fafb",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    fontSize: 13,
-    padding: "16px",
-    backdropFilter: "blur(6px)",
-    pointerEvents: "auto"
-  };
-
-  const blurOverlayTitle: CSSProperties = {
-    fontWeight: 600,
-    marginBottom: 6,
-    fontSize: 14
+  const resultsGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: 20,
+    marginTop: 24,
+    alignItems: "stretch"
   };
 
   // derived metrics
+
   const ptiDisplay =
     result && typeof result.paymentToIncome === "number"
       ? `${(result.paymentToIncome * 100).toFixed(1)} percent`
@@ -173,7 +170,7 @@ export function ResultsDashboard({
       ? result.paymentToIncome
       : null;
 
-  const ptiLimit = resolvedPolicy.maxPTI ?? defaultPolicy.maxPTI;
+  const ptiLimit = policy.maxPTI;
 
   const ptiFillPercent =
     ptiValue !== null && ptiLimit > 0
@@ -246,9 +243,7 @@ export function ResultsDashboard({
   };
 
   const verdictText =
-    result?.underwriting?.verdict ||
-    result?.underwriting?.status ||
-    "Pending";
+    result?.underwriting?.verdict || result?.underwriting?.status || "Pending";
 
   const approvalScore =
     typeof result?.approvalScore === "number"
@@ -263,8 +258,7 @@ export function ResultsDashboard({
           ptiValue !== null && ptiValue > ptiLimit
             ? "Payment to income is above policy comfort range."
             : "Payment to income is close to policy limit.",
-          typeof result?.ltv === "number" &&
-          result.ltv > resolvedPolicy.maxLTV
+          typeof result?.ltv === "number" && result.ltv > policy.maxLTV
             ? "LTV is advanced compared to your policy snapshot."
             : "LTV is within normal range.",
           form.repoCount >= 2
@@ -295,8 +289,9 @@ export function ResultsDashboard({
         ]
       : []);
 
-  // early panels: error or initial summary
-  if (!result && !error) {
+  // early return views
+
+  if (error) {
     return (
       <section
         style={{
@@ -304,10 +299,24 @@ export function ResultsDashboard({
           marginTop: 24
         }}
       >
-        <h2 style={{ fontSize: "17px", marginBottom: 10 }}>Deal summary</h2>
+        <h2 style={{ fontSize: 17, marginBottom: 10 }}>Error</h2>
+        <p style={{ color: "#ef4444", fontSize: 14 }}>{error}</p>
+      </section>
+    );
+  }
+
+  if (!result) {
+    return (
+      <section
+        style={{
+          ...panel,
+          marginTop: 24
+        }}
+      >
+        <h2 style={{ fontSize: 17, marginBottom: 10 }}>Deal summary</h2>
         <p
           style={{
-            fontSize: "14px",
+            fontSize: 14,
             color: colors.textSecondary
           }}
         >
@@ -318,21 +327,8 @@ export function ResultsDashboard({
     );
   }
 
-  if (error) {
-    return (
-      <section
-        style={{
-          ...panel,
-          marginTop: 24
-        }}
-      >
-        <h2 style={{ fontSize: "17px", marginBottom: 10 }}>Error</h2>
-        <p style={{ color: "#ef4444", fontSize: "14px" }}>{error}</p>
-      </section>
-    );
-  }
+  // main results
 
-  // if we are here, result exists
   return (
     <>
       {/* sticky summary bar */}
@@ -340,9 +336,7 @@ export function ResultsDashboard({
         <div style={summaryChipGroup}>
           <div>
             <div style={summaryChipLabel}>Payment</div>
-            <div style={summaryChipValue}>
-              ${result.payment.toFixed(2)}
-            </div>
+            <div style={summaryChipValue}>${result.payment.toFixed(2)}</div>
           </div>
           <div>
             <div style={summaryChipLabel}>Total profit</div>
@@ -357,17 +351,13 @@ export function ResultsDashboard({
           <div>
             <div style={summaryChipLabel}>Verdict</div>
             <div style={summaryChipValue}>
-              <span style={verdictChipStyle(verdictText)}>
-                {verdictText}
-              </span>
+              <span style={verdictChipStyle(verdictText)}>{verdictText}</span>
             </div>
           </div>
           {approvalScore !== null && (
             <div>
               <div style={summaryChipLabel}>Approval score</div>
-              <div style={summaryChipValue}>
-                {approvalScore} percent
-              </div>
+              <div style={summaryChipValue}>{approvalScore} percent</div>
             </div>
           )}
         </div>
@@ -402,11 +392,9 @@ export function ResultsDashboard({
 
       {/* results grid */}
       <div style={resultsGrid}>
-        {/* Deal summary */}
+        {/* deal summary card */}
         <section style={panel}>
-          <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-            Deal summary
-          </h2>
+          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Deal summary</h2>
           <ul
             style={{
               paddingLeft: 0,
@@ -416,9 +404,7 @@ export function ResultsDashboard({
           >
             <li style={summaryRow}>
               <span style={summaryLabel}>Payment</span>
-              <span style={summaryValue}>
-                ${result.payment.toFixed(2)}
-              </span>
+              <span style={summaryValue}>${result.payment.toFixed(2)}</span>
             </li>
             <li style={summaryRow}>
               <span style={summaryLabel}>Total interest</span>
@@ -439,11 +425,9 @@ export function ResultsDashboard({
           </ul>
         </section>
 
-        {/* Basic risk */}
+        {/* basic risk */}
         <section style={panel}>
-          <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-            Basic risk
-          </h2>
+          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Basic risk</h2>
           <ul
             style={{
               paddingLeft: 0,
@@ -473,9 +457,7 @@ export function ResultsDashboard({
                   <span>
                     Policy max {(ptiLimit * 100).toFixed(0)} percent
                   </span>
-                  <span>
-                    {ptiFillPercent.toFixed(0)} percent of limit
-                  </span>
+                  <span>{ptiFillPercent.toFixed(0)} percent of limit</span>
                 </div>
               </li>
             )}
@@ -499,30 +481,26 @@ export function ResultsDashboard({
             {approvalScore !== null && (
               <li style={summaryRow}>
                 <span style={summaryLabel}>Approval likelihood</span>
-                <span style={summaryValue}>
-                  {approvalScore} percent
-                </span>
+                <span style={summaryValue}>{approvalScore} percent</span>
               </li>
             )}
           </ul>
           {!isPro && (
             <p style={smallUpsell}>
-              Upgrade to Pro to save risk history, see approval likelihood
-              and catch over advanced cars before funding.
+              Upgrade to Pro to save risk history, see approval likelihood and
+              catch over advanced cars before funding.
             </p>
           )}
         </section>
 
-        {/* Underwriting verdict */}
+        {/* underwriting verdict */}
         {result.underwriting && (
           <section style={panel}>
-            <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
               Underwriting verdict
             </h2>
             <p style={{ marginBottom: 10 }}>
-              <span style={verdictChipStyle(verdictText)}>
-                {verdictText}
-              </span>
+              <span style={verdictChipStyle(verdictText)}>{verdictText}</span>
             </p>
 
             {result.underwriting.reasons?.length > 0 && (
@@ -534,11 +512,9 @@ export function ResultsDashboard({
                   fontSize: 14
                 }}
               >
-                {result.underwriting.reasons.map(
-                  (r: string, i: number) => (
-                    <li key={i}>{r}</li>
-                  )
-                )}
+                {result.underwriting.reasons.map((r: string, i: number) => (
+                  <li key={i}>{r}</li>
+                ))}
               </ul>
             )}
 
@@ -552,89 +528,65 @@ export function ResultsDashboard({
           </section>
         )}
 
-        {/* Hidden risk flags */}
-        {result && (
-          <section style={panel}>
-            <div style={lockedPanelInner}>
-              <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-                Hidden risk flags
-              </h2>
-              <ul
-                style={{
-                  paddingLeft: 18,
-                  margin: 0,
-                  lineHeight: 1.6,
-                  fontSize: 14
-                }}
-              >
-                {advancedRiskFlags.map((f, idx) => (
-                  <li key={idx}>{f}</li>
-                ))}
-              </ul>
+        {/* hidden risk flags */}
+        <section style={panel}>
+          <div style={lockedPanelInner}>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>Hidden risk flags</h2>
+            <ul
+              style={{
+                paddingLeft: 18,
+                margin: 0,
+                lineHeight: 1.6,
+                fontSize: 14
+              }}
+            >
+              {advancedRiskFlags.map((f, idx) => (
+                <li key={idx}>{f}</li>
+              ))}
+            </ul>
 
-              {!isPro && (
-                <div style={blurOverlay}>
-                  <div style={blurOverlayTitle}>
-                    Risk flags detected for this deal
-                  </div>
-                  <p style={{ marginBottom: 10 }}>
-                    Pro shows which risk flags triggered and how to fix them
-                    before you fund the deal.
-                  </p>
-                  <a href="/billing" style={btnSecondary}>
-                    Unlock hidden risk flags
-                  </a>
+            {!isPro && (
+              <div style={blurOverlay}>
+                <div style={blurOverlayTitle}>
+                  Risk flags detected for this deal
                 </div>
-              )}
-            </div>
-          </section>
-        )}
+                <p style={{ marginBottom: 10 }}>
+                  Pro shows which risk flags triggered and how to fix them
+                  before you fund the deal.
+                </p>
+                <a href="/billing" style={btnSecondary}>
+                  Unlock hidden risk flags
+                </a>
+              </div>
+            )}
+          </div>
+        </section>
 
-        {/* Payment schedule */}
+        {/* payment schedule */}
         {result?.schedulePreview && (
           <section style={panel}>
-            <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
               Payment schedule preview
             </h2>
             <table
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
-                fontSize: "12px"
+                fontSize: 12
               }}
             >
               <thead>
                 <tr>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      paddingBottom: 6
-                    }}
-                  >
+                  <th style={{ textAlign: "left", paddingBottom: 6 }}>
                     Period
                   </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      paddingBottom: 6
-                    }}
-                  >
+                  <th style={{ textAlign: "right", paddingBottom: 6 }}>
                     Interest
                   </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      paddingBottom: 6
-                    }}
-                  >
+                  <th style={{ textAlign: "right", paddingBottom: 6 }}>
                     Principal
                   </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      paddingBottom: 6
-                    }}
-                  >
+                  <th style={{ textAlign: "right", paddingBottom: 6 }}>
                     Balance
                   </th>
                 </tr>
@@ -669,12 +621,11 @@ export function ResultsDashboard({
           </section>
         )}
 
-        {/* Profit optimizer */}
+        {/* profit optimizer */}
         <section style={panel}>
           <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-              Profit optimizer
-            </h2>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>Profit optimizer</h2>
+
             {profitOptimizer && isPro ? (
               <ul
                 style={{
@@ -684,15 +635,13 @@ export function ResultsDashboard({
                   fontSize: 14
                 }}
               >
-                {profitOptimizer.variants?.map(
-                  (v: any, idx: number) => (
-                    <li key={idx}>
-                      {v.label} adds approximately $
-                      {v.extraProfit.toFixed(0)} profit while staying
-                      inside policy.
-                    </li>
-                  )
-                )}
+                {profitOptimizer.variants?.map((v: any, idx: number) => (
+                  <li key={idx}>
+                    {v.label} adds approximately $
+                    {v.extraProfit.toFixed(0)} profit while staying inside
+                    policy.
+                  </li>
+                ))}
               </ul>
             ) : (
               <p
@@ -718,20 +667,19 @@ export function ResultsDashboard({
                   marginBottom: 12
                 }}
               >
-                {typeof result.underwriting.adjustments
-                  .newDownPayment === "number" && (
+                {typeof result.underwriting.adjustments.newDownPayment ===
+                  "number" && (
                   <li style={summaryRow}>
                     <span style={summaryLabel}>Down payment target</span>
                     <span style={summaryValue}>
-                      $
-                      {result.underwriting.adjustments.newDownPayment.toFixed(
+                      ${result.underwriting.adjustments.newDownPayment.toFixed(
                         2
                       )}
                     </span>
                   </li>
                 )}
-                {typeof result.underwriting.adjustments
-                  .newTermWeeks === "number" && (
+                {typeof result.underwriting.adjustments.newTermWeeks ===
+                  "number" && (
                   <li style={summaryRow}>
                     <span style={summaryLabel}>Term target</span>
                     <span style={summaryValue}>
@@ -739,15 +687,13 @@ export function ResultsDashboard({
                     </span>
                   </li>
                 )}
-                {typeof result.underwriting.adjustments
-                  .newSalePrice === "number" && (
+                {typeof result.underwriting.adjustments.newSalePrice ===
+                  "number" && (
                   <li style={summaryRow}>
                     <span style={summaryLabel}>Sale price target</span>
                     <span style={summaryValue}>
                       $
-                      {result.underwriting.adjustments.newSalePrice.toFixed(
-                        2
-                      )}
+                      {result.underwriting.adjustments.newSalePrice.toFixed(2)}
                     </span>
                   </li>
                 )}
@@ -755,10 +701,7 @@ export function ResultsDashboard({
                   <li style={summaryRow}>
                     <span style={summaryLabel}>APR target</span>
                     <span style={summaryValue}>
-                      {result.underwriting.adjustments.newApr.toFixed(
-                        2
-                      )}{" "}
-                      percent
+                      {result.underwriting.adjustments.newApr.toFixed(2)} percent
                     </span>
                   </li>
                 )}
@@ -781,9 +724,7 @@ export function ResultsDashboard({
 
             {!isPro && (
               <div style={blurOverlay}>
-                <div style={blurOverlayTitle}>
-                  Unlock profit optimizer
-                </div>
+                <div style={blurOverlayTitle}>Unlock profit optimizer</div>
                 <p style={{ marginBottom: 10 }}>
                   Pro suggests alternate structures that often add hundreds in
                   profit while staying inside your policy.
@@ -796,14 +737,12 @@ export function ResultsDashboard({
           </div>
         </section>
 
-        {/* Customer offer sheet */}
+        {/* customer offer sheet */}
         <section style={panel}>
-          <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-            Customer offer sheet
-          </h2>
+          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Customer offer sheet</h2>
           <p
             style={{
-              fontSize: "14px",
+              fontSize: 14,
               color: colors.textSecondary,
               marginBottom: 12
             }}
@@ -827,14 +766,12 @@ export function ResultsDashboard({
           )}
         </section>
 
-        {/* Underwriting packet */}
+        {/* underwriting packet */}
         <section style={panel}>
-          <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-            Underwriting packet
-          </h2>
+          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Underwriting packet</h2>
           <p
             style={{
-              fontSize: "14px",
+              fontSize: 14,
               color: colors.textSecondary,
               marginBottom: 12
             }}
@@ -857,11 +794,9 @@ export function ResultsDashboard({
           )}
         </section>
 
-        {/* Policy snapshot */}
+        {/* policy snapshot */}
         <section style={panel}>
-          <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
-            Policy snapshot
-          </h2>
+          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Policy snapshot</h2>
           <ul
             style={{
               paddingLeft: 0,
@@ -872,28 +807,26 @@ export function ResultsDashboard({
             <li style={summaryRow}>
               <span style={summaryLabel}>Max PTI</span>
               <span style={summaryValue}>
-                {(resolvedPolicy.maxPTI * 100).toFixed(0)} percent
+                {(policy.maxPTI * 100).toFixed(0)} percent
               </span>
             </li>
             <li style={summaryRow}>
               <span style={summaryLabel}>Max LTV</span>
               <span style={summaryValue}>
-                {(resolvedPolicy.maxLTV * 100).toFixed(0)} percent
+                {(policy.maxLTV * 100).toFixed(0)} percent
               </span>
             </li>
             <li style={summaryRow}>
               <span style={summaryLabel}>Max term</span>
-              <span style={summaryValue}>
-                {resolvedPolicy.maxTermWeeks} weeks
-              </span>
+              <span style={summaryValue}>{policy.maxTermWeeks} weeks</span>
             </li>
           </ul>
         </section>
 
-        {/* Compliance and delinquency */}
+        {/* compliance and delinquency */}
         <section style={panel}>
           <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
               Compliance and delinquency view
             </h2>
             <h3
@@ -960,10 +893,10 @@ export function ResultsDashboard({
           </div>
         </section>
 
-        {/* Portfolio benchmarking */}
+        {/* portfolio benchmarking */}
         <section style={panel}>
           <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
               Portfolio benchmarking
             </h2>
             {portfolioComparison && isPro ? (
@@ -1022,43 +955,43 @@ export function ResultsDashboard({
           </div>
         </section>
 
-        {/* Save the deal scripts */}
+        {/* sales scripts / save the deal help */}
         <section style={panel}>
           <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: "17px", marginBottom: 10 }}>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
               Save the deal scripts
             </h2>
-          <p
-            style={{
-              fontSize: 14,
-              lineHeight: 1.6,
-              color: colors.textSecondary
-            }}
-          >
-            Pro can generate quick talking points and scripts based on this
-            structure, such as how to present a higher down payment or longer
-            term without losing the customer.
-          </p>
+            <p
+              style={{
+                fontSize: 14,
+                lineHeight: 1.6,
+                color: colors.textSecondary
+              }}
+            >
+              Pro can generate quick talking points and scripts based on this
+              structure, such as how to present a higher down payment or longer
+              term without losing the customer.
+            </p>
 
-          {!isPro && (
-            <div style={blurOverlay}>
-              <div style={blurOverlayTitle}>
-                Turn structure into a close
+            {!isPro && (
+              <div style={blurOverlay}>
+                <div style={blurOverlayTitle}>
+                  Turn structure into a close
+                </div>
+                <p style={{ marginBottom: 10 }}>
+                  Unlock Pro to get simple scripts you can use on the lot when a
+                  customer pushes back on payment or down payment.
+                </p>
+                <a href="/billing" style={btnSecondary}>
+                  Upgrade to Pro
+                </a>
               </div>
-              <p style={{ marginBottom: 10 }}>
-                Unlock Pro to get simple scripts you can use on the lot when a
-                customer pushes back on payment or down payment.
-              </p>
-              <a href="/billing" style={btnSecondary}>
-                Upgrade to Pro
-              </a>
-            </div>
-          )}
+            )}
           </div>
         </section>
       </div>
 
-      {/* AI opinion panel */}
+      {/* AI deal opinion */}
       {result.aiExplanation && (
         <section
           style={{
@@ -1074,7 +1007,7 @@ export function ResultsDashboard({
               marginBottom: 10
             }}
           >
-            <h2 style={{ fontSize: "17px" }}>AI deal opinion</h2>
+            <h2 style={{ fontSize: 17 }}>AI deal opinion</h2>
             {!isPro && (
               <span
                 style={{
@@ -1083,7 +1016,7 @@ export function ResultsDashboard({
                   background:
                     "linear-gradient(to right, #22c55e, #4ade80)",
                   color: "#052e16",
-                  fontSize: "11px",
+                  fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: ".08em",
                   textTransform: "uppercase"
@@ -1096,7 +1029,7 @@ export function ResultsDashboard({
 
           <p
             style={{
-              fontSize: "14px",
+              fontSize: 14,
               lineHeight: 1.6,
               whiteSpace: "pre-wrap"
             }}
@@ -1114,7 +1047,7 @@ export function ResultsDashboard({
         </section>
       )}
 
-      {/* Pro only portfolio report upsell at bottom if not Pro */}
+      {/* monthly portfolio report upsell */}
       {!isPro && (
         <section
           style={{
@@ -1122,7 +1055,7 @@ export function ResultsDashboard({
             marginTop: 24
           }}
         >
-          <h2 style={{ fontSize: "17px", marginBottom: 8 }}>
+          <h2 style={{ fontSize: 17, marginBottom: 8 }}>
             Monthly portfolio report (Pro)
           </h2>
           <p
