@@ -621,121 +621,156 @@ export function ResultsDashboard(props: Props) {
           </section>
         )}
 
-        {/* profit optimizer */}
+               {/* profit optimizer */}
         <section style={panel}>
           <div style={lockedPanelInner}>
             <h2 style={{ fontSize: 17, marginBottom: 10 }}>Profit optimizer</h2>
 
-            {profitOptimizer && isPro ? (
-              <ul
-                style={{
-                  paddingLeft: 18,
-                  margin: 0,
-                  lineHeight: 1.6,
-                  fontSize: 14
-                }}
-              >
-                {profitOptimizer.variants?.map((v: any, idx: number) => (
-                  <li key={idx}>
-                    {v.label} adds approximately $
-                    {v.extraProfit.toFixed(0)} profit while staying inside
-                    policy.
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p
-                style={{
-                  fontSize: 14,
-                  color: colors.textSecondary,
-                  marginBottom: 8
-                }}
-              >
-                Pro finds alternate structures that increase profit without
-                breaking PTI or LTV, such as slightly higher price, longer term
-                or stronger down payment.
-              </p>
-            )}
+            {isPro ? (
+              <>
+                {profitOptimizer ? (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginBottom: 8
+                      }}
+                    >
+                      We found alternate structures that increase profit while
+                      staying inside your policy.
+                    </p>
 
-            {isPro && result?.underwriting?.adjustments && (
-              <ul
-                style={{
-                  paddingLeft: 0,
-                  listStyle: "none",
-                  margin: 0,
-                  marginTop: 10,
-                  marginBottom: 12
-                }}
-              >
-                {typeof result.underwriting.adjustments.newDownPayment ===
-                  "number" && (
-                  <li style={summaryRow}>
-                    <span style={summaryLabel}>Down payment target</span>
-                    <span style={summaryValue}>
-                      ${result.underwriting.adjustments.newDownPayment.toFixed(
-                        2
+                    <ul
+                      style={{
+                        paddingLeft: 18,
+                        margin: 0,
+                        lineHeight: 1.6,
+                        fontSize: 14
+                      }}
+                    >
+                      {profitOptimizer.variants?.map((v: any, idx: number) => (
+                        <li key={idx}>
+                          {v.label} adds approximately $
+                          {v.extraProfit.toFixed(0)} profit while staying inside
+                          policy.
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: colors.textSecondary,
+                      marginBottom: 8
+                    }}
+                  >
+                    No optimized structures calculated for this deal yet. Try
+                    adjusting sale price, down payment or term and running the
+                    analysis again.
+                  </p>
+                )}
+
+                {result?.underwriting?.adjustments && (
+                  <>
+                    <ul
+                      style={{
+                        paddingLeft: 0,
+                        listStyle: "none",
+                        margin: 0,
+                        marginTop: 10,
+                        marginBottom: 12
+                      }}
+                    >
+                      {typeof result.underwriting.adjustments.newDownPayment ===
+                        "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>Down payment target</span>
+                          <span style={summaryValue}>
+                            $
+                            {result.underwriting.adjustments.newDownPayment.toFixed(
+                              2
+                            )}
+                          </span>
+                        </li>
                       )}
-                    </span>
-                  </li>
-                )}
-                {typeof result.underwriting.adjustments.newTermWeeks ===
-                  "number" && (
-                  <li style={summaryRow}>
-                    <span style={summaryLabel}>Term target</span>
-                    <span style={summaryValue}>
-                      {result.underwriting.adjustments.newTermWeeks} weeks
-                    </span>
-                  </li>
-                )}
-                {typeof result.underwriting.adjustments.newSalePrice ===
-                  "number" && (
-                  <li style={summaryRow}>
-                    <span style={summaryLabel}>Sale price target</span>
-                    <span style={summaryValue}>
-                      $
-                      {result.underwriting.adjustments.newSalePrice.toFixed(2)}
-                    </span>
-                  </li>
-                )}
-                {typeof result.underwriting.adjustments.newApr === "number" && (
-                  <li style={summaryRow}>
-                    <span style={summaryLabel}>APR target</span>
-                    <span style={summaryValue}>
-                      {result.underwriting.adjustments.newApr.toFixed(2)} percent
-                    </span>
-                  </li>
-                )}
-              </ul>
-            )}
+                      {typeof result.underwriting.adjustments.newTermWeeks ===
+                        "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>Term target</span>
+                          <span style={summaryValue}>
+                            {result.underwriting.adjustments.newTermWeeks} weeks
+                          </span>
+                        </li>
+                      )}
+                      {typeof result.underwriting.adjustments.newSalePrice ===
+                        "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>Sale price target</span>
+                          <span style={summaryValue}>
+                            $
+                            {result.underwriting.adjustments.newSalePrice.toFixed(
+                              2
+                            )}
+                          </span>
+                        </li>
+                      )}
+                      {typeof result.underwriting.adjustments.newApr ===
+                        "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>APR target</span>
+                          <span style={summaryValue}>
+                            {result.underwriting.adjustments.newApr.toFixed(2)}{" "}
+                            percent
+                          </span>
+                        </li>
+                      )}
+                    </ul>
 
-            {isPro && result?.underwriting?.adjustments && (
-              <button
-                type="button"
-                style={btnSecondary}
-                onClick={() => {
-                  if (!loading) {
-                    void applySuggestedStructure();
-                  }
-                }}
-              >
-                Apply suggested structure to form
-              </button>
-            )}
-
-            {!isPro && (
-              <div style={blurOverlay}>
-                <div style={blurOverlayTitle}>Unlock profit optimizer</div>
-                <p style={{ marginBottom: 10 }}>
-                  Pro suggests alternate structures that often add hundreds in
-                  profit while staying inside your policy.
+                    <button
+                      type="button"
+                      style={btnSecondary}
+                      onClick={() => {
+                        if (!loading) {
+                          void applySuggestedStructure();
+                        }
+                      }}
+                    >
+                      Apply suggested structure to form
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: colors.textSecondary,
+                    marginBottom: 8
+                  }}
+                >
+                  Pro finds alternate structures that increase profit without
+                  breaking PTI or LTV, such as slightly higher price, longer
+                  term or stronger down payment.
                 </p>
-                <a href="/billing" style={btnSecondary}>
-                  See profit optimized options
-                </a>
-              </div>
+
+                <div style={blurOverlay}>
+                  <div style={blurOverlayTitle}>Unlock profit optimizer</div>
+                  <p style={{ marginBottom: 10 }}>
+                    Pro suggests alternate structures that often add hundreds in
+                    profit while staying inside your policy.
+                  </p>
+                  <a href="/billing" style={btnSecondary}>
+                    See profit optimized options
+                  </a>
+                </div>
+              </>
             )}
           </div>
         </section>
+
 
         {/* customer offer sheet */}
         <section style={panel}>
