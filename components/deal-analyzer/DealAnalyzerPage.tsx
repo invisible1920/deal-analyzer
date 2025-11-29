@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { themeColors } from "@/app/theme";
 import { useDealAnalyzer } from "@/hooks/useDealAnalyzer";
 
@@ -8,8 +8,28 @@ import { DealForm } from "@/components/deal-analyzer/DealForm";
 import { UsagePanel } from "@/components/deal-analyzer/UsagePanel";
 import { ResultsDashboard } from "@/components/deal-analyzer/ResultsDashboard";
 
+// simple hook to detect small screens
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined") {
+        setIsMobile(window.innerWidth <= breakpoint);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export function DealAnalyzerPage() {
   const colors = themeColors.light;
+  const isMobile = useIsMobile();
 
   const {
     form,
@@ -33,9 +53,31 @@ export function DealAnalyzerPage() {
     margin: "0 auto"
   };
 
+  const header: CSSProperties = {
+    display: "flex",
+    justifyContent: isMobile ? "flex-start" : "space-between",
+    gap: "20px",
+    alignItems: isMobile ? "flex-start" : "center",
+    marginBottom: 10,
+    flexDirection: isMobile ? "column" : "row"
+  };
+
+  const titleRow: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10
+  };
+
+  const title: CSSProperties = {
+    fontSize: isMobile ? "24px" : "30px",
+    fontWeight: 700
+  };
+
   const contentGrid: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)",
+    gridTemplateColumns: isMobile
+      ? "minmax(0, 1fr)" // stack form and usage on top of each other
+      : "minmax(0, 2fr) minmax(0, 1fr)", // current desktop layout
     gap: "20px",
     marginTop: "24px",
     alignItems: "start"
@@ -49,7 +91,8 @@ export function DealAnalyzerPage() {
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: ".08em",
-    textTransform: "uppercase"
+    textTransform: "uppercase",
+    whiteSpace: "nowrap"
   };
 
   const upgradeBtn: CSSProperties = {
@@ -61,29 +104,20 @@ export function DealAnalyzerPage() {
     letterSpacing: ".04em",
     cursor: "pointer",
     fontSize: 13,
-    whiteSpace: "nowrap",
+    whiteSpace: isMobile ? "normal" : "nowrap",
     textDecoration: "none",
-    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.3)"
+    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.3)",
+    width: isMobile ? "100%" : "auto",
+    textAlign: "center"
   };
 
   return (
     <div style={{ width: "100%" }}>
       <div style={shell}>
         {/* HEADER */}
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "20px",
-            alignItems: "center",
-            marginBottom: 10
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <h1 style={{ fontSize: "30px", fontWeight: 700 }}>
-              BHPH Deal Analyzer
-            </h1>
-
+        <header style={header}>
+          <div style={titleRow}>
+            <h1 style={title}>BHPH Deal Analyzer</h1>
             {authLoaded && isPro && <span style={proBadge}>Pro</span>}
           </div>
 
