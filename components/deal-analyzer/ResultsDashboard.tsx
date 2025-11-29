@@ -268,107 +268,102 @@ export function ResultsDashboard(props: Props) {
       ? Math.round(result.approvalScore)
       : null;
 
-  const termWeeks =
+    const termWeeks =
     typeof result?.termWeeks === "number"
       ? result.termWeeks
       : typeof result?.termInWeeks === "number"
       ? result.termInWeeks
       : null;
 
-  const advancedRiskFlags: string[] =
-    result?.riskFlags ||
-    result?.advancedRiskFlags ||
-    (result
-      ? (() => {
-          const flags: string[] = [];
+  const advancedRiskFlags: string[] = (() => {
+    if (!result) return [];
 
-          // PTI flag
-          if (ptiValue === null) {
-            flags.push(
-              "No income on file so PTI risk cannot be calculated."
-            );
-          } else if (ptiValue > ptiLimit) {
-            flags.push(
-              `Payment to income is above your max PTI of ${(ptiLimit * 100).toFixed(
-                0
-              )} percent.`
-            );
-          } else if (ptiValue > ptiLimit * 0.9) {
-            flags.push(
-              `Payment to income is close to your max PTI of ${(ptiLimit * 100).toFixed(
-                0
-              )} percent.`
-            );
-          } else {
-            flags.push(
-              `Payment to income is comfortably inside your PTI limit at ${(
-                ptiValue * 100
-              ).toFixed(1)} percent.`
-            );
-          }
+    const flags: string[] = [];
 
-          // LTV flag
-          if (typeof result?.ltv === "number") {
-            if (result.ltv > policy.maxLTV) {
-              flags.push(
-                `LTV is above your policy max of ${(policy.maxLTV * 100).toFixed(
-                  0
-                )} percent.`
-              );
-            } else if (result.ltv > policy.maxLTV * 0.95) {
-              flags.push(
-                `LTV is high for this policy at ${(result.ltv * 100).toFixed(
-                  1
-                )} percent.`
-              );
-            } else {
-              flags.push(
-                `LTV is within normal range at ${(result.ltv * 100).toFixed(
-                  1
-                )} percent.`
-              );
-            }
-          }
+    // PTI flag
+    if (ptiValue === null) {
+      flags.push("No income on file so PTI risk cannot be calculated.");
+    } else if (ptiValue > ptiLimit) {
+      flags.push(
+        `Payment to income is above your max PTI of ${(ptiLimit * 100).toFixed(
+          0
+        )} percent at ${((ptiValue || 0) * 100).toFixed(1)} percent.`
+      );
+    } else if (ptiValue > ptiLimit * 0.9) {
+      flags.push(
+        `Payment to income is close to your max PTI of ${(ptiLimit * 100).toFixed(
+          0
+        )} percent at ${((ptiValue || 0) * 100).toFixed(1)} percent.`
+      );
+    } else {
+      flags.push(
+        `Payment to income is comfortably inside your PTI limit at ${(
+          ptiValue * 100
+        ).toFixed(1)} percent.`
+      );
+    }
 
-          // Break even timing flag
-          if (
-            typeof result?.breakEvenWeek === "number" &&
-            termWeeks &&
-            termWeeks > 0
-          ) {
-            const pct = result.breakEvenWeek / termWeeks;
+    // LTV flag
+    if (typeof result?.ltv === "number") {
+      const ltvPct = (result.ltv * 100).toFixed(1);
+      const maxLtvPct = (policy.maxLTV * 100).toFixed(0);
 
-            if (pct >= 0.6) {
-              flags.push(
-                `Break even hits late at week ${result.breakEvenWeek} of ${termWeeks}, so you recover cost slowly.`
-              );
-            } else if (pct <= 0.35) {
-              flags.push(
-                `Break even hits early at week ${result.breakEvenWeek} of ${termWeeks}, giving more room for loss.`
-              );
-            } else {
-              flags.push(
-                `Break even is in the middle of the term at week ${result.breakEvenWeek} of ${termWeeks}.`
-              );
-            }
-          }
+      if (result.ltv > policy.maxLTV) {
+        flags.push(
+          `LTV is above your policy max of ${maxLtvPct} percent at ${ltvPct} percent.`
+        );
+      } else if (result.ltv > policy.maxLTV * 0.95) {
+        flags.push(
+          `LTV is high for this policy at ${ltvPct} percent, near the max of ${maxLtvPct} percent.`
+        );
+      } else {
+        flags.push(
+          `LTV is within normal range at ${ltvPct} percent against a max of ${maxLtvPct} percent.`
+        );
+      }
+    }
 
-          // Repo history flag
-          if (typeof form.repoCount === "number") {
-            if (form.repoCount >= 2) {
-              flags.push(
-                "Multiple prior repos on file. Expect higher early default risk."
-              );
-            } else if (form.repoCount === 1) {
-              flags.push(
-                "One prior repo on file. Consider stronger down payment or shorter term."
-              );
-            }
-          }
+    // Break even timing flag
+    if (
+      typeof result?.breakEvenWeek === "number" &&
+      termWeeks &&
+      termWeeks > 0
+    ) {
+      const pct = result.breakEvenWeek / termWeeks;
 
-          return flags;
-        })()
-      : []);
+      if (pct >= 0.6) {
+        flags.push(
+          `Break even hits late at week ${result.breakEvenWeek} of ${termWeeks}, so you recover cost slowly.`
+        );
+      } else if (pct <= 0.35) {
+        flags.push(
+          `Break even hits early at week ${result.breakEvenWeek} of ${termWeeks}, giving more room for loss.`
+        );
+      } else {
+        flags.push(
+          `Break even is in the middle of the term at week ${result.breakEvenWeek} of ${termWeeks}.`
+        );
+      }
+    }
+
+    // Repo history flag
+    if (typeof form.repoCount === "number") {
+      if (form.repoCount >= 2) {
+        flags.push(
+          "Multiple prior repos on file. Expect higher early default risk."
+        );
+      } else if (form.repoCount === 1) {
+        flags.push(
+          "One prior repo on file. Consider stronger down payment or shorter term."
+        );
+      } else {
+        flags.push("No prior repos on file for this customer in your form.");
+      }
+    }
+
+    return flags;
+  })();
+
 
 
 
