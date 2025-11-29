@@ -2,6 +2,7 @@
 
 import { CSSProperties } from "react";
 import type { FormState } from "@/hooks/useDealAnalyzer";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 type Props = {
   form: FormState;
@@ -22,18 +23,29 @@ export function DealForm({
   userId,
   colors
 }: Props) {
+  const isMobile = useIsMobile(768);
+
   const panel: CSSProperties = {
     background: colors.panel,
     border: `1px solid ${colors.border}`,
     borderRadius: 14,
     padding: 20,
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)"
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    overflowX: "hidden"
   };
 
   const formGrid: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: 16
+    gridTemplateColumns: isMobile
+      ? "minmax(0, 1fr)"
+      : "repeat(2, minmax(0, 1fr))",
+    gap: 16,
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box"
   };
 
   const fieldHeader: CSSProperties = {
@@ -79,7 +91,10 @@ export function DealForm({
     opacity: loading ? 0.6 : 1,
     fontSize: 14,
     boxShadow: "0 8px 24px rgba(15, 23, 42, 0.3)",
-    transition: "transform 0.1s ease, box-shadow 0.1s ease"
+    transition: "transform 0.1s ease, box-shadow 0.1s ease",
+    width: isMobile ? "100%" : "auto",
+    maxWidth: "100%",
+    boxSizing: "border-box"
   };
 
   async function onSubmit(e: React.FormEvent) {
@@ -165,7 +180,10 @@ export function DealForm({
         </div>
       )}
 
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 20 }}>
+      <form
+        onSubmit={onSubmit}
+        style={{ display: "grid", gap: 20, width: "100%", maxWidth: "100%" }}
+      >
         <div style={formGrid}>
           {/* vehicleCost */}
           <div>
@@ -402,7 +420,13 @@ export function DealForm({
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: isMobile ? "stretch" : "flex-end",
+            width: "100%"
+          }}
+        >
           <button type="submit" style={btn} disabled={loading}>
             {loading ? "Analyzing..." : "Analyze deal"}
           </button>
