@@ -78,20 +78,24 @@ export function DealAnalyzerPage() {
   };
 
   const upgradeBtn: CSSProperties = {
-    padding: "10px 20px",
-    borderRadius: 999,
-    background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
-    color: "white",
-    fontWeight: 600,
-    letterSpacing: ".04em",
-    cursor: "pointer",
-    fontSize: 13,
-    whiteSpace: isMobile ? "normal" : "nowrap",
-    textDecoration: "none",
-    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.3)",
-    width: isMobile ? "100%" : "auto",
-    textAlign: "center"
-  };
+  padding: "10px 20px",
+  borderRadius: 999,
+  background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
+  color: "white",
+  fontWeight: 600,
+  letterSpacing: ".04em",
+  cursor: "pointer",
+  fontSize: 13,
+  whiteSpace: isMobile ? "normal" : "nowrap",
+  textDecoration: "none",
+  boxShadow: "0 8px 24px rgba(15, 23, 42, 0.3)",
+  width: isMobile ? "100%" : "auto",
+  maxWidth: "100%",
+  textAlign: "center",
+  display: "block",
+  alignSelf: isMobile ? "stretch" : "flex-start"
+};
+
 
   return (
     <div style={{ width: "100%" }}>
