@@ -2,17 +2,24 @@
 
 import { type CSSProperties } from "react";
 
-export default function PageContainer({ children }: { children: React.ReactNode }) {
+export default function PageContainer({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const wrapper: CSSProperties = {
     display: "flex",
     justifyContent: "center",
     width: "100%",
-    padding: "32px 16px"
+    padding: "32px 16px",
+    boxSizing: "border-box",
+    maxWidth: "100vw",
+    overflowX: "hidden",
   };
 
   const inner: CSSProperties = {
     width: "100%",
-    maxWidth: "1180px"
+    maxWidth: "1180px",
   };
 
   return (
