@@ -68,6 +68,11 @@ const formatDelta = (
   return `${prefix}${dir} ${Math.abs(diff).toFixed(2)}${suffix}`;
 };
 
+const profitOptimizer =
+  result?.profitOptimizer ||
+  result?.underwriting?.profitOptimizer ||
+  null;
+
 const maxExtraProfit =
   profitOptimizer?.variants && profitOptimizer.variants.length > 0
     ? profitOptimizer.variants.reduce(
@@ -78,6 +83,7 @@ const maxExtraProfit =
         0
       )
     : 0;
+
 
 
   const lockedPanelInner: CSSProperties = {
@@ -416,10 +422,7 @@ const maxExtraProfit =
       ? "Higher early payment risk due to tight PTI."
       : "Standard delinquency risk for this PTI and stability pattern.");
 
-  const profitOptimizer =
-    result?.profitOptimizer ||
-    result?.underwriting?.profitOptimizer ||
-    null;
+
 
   const portfolioComparison = result?.portfolioComparison || null;
 
