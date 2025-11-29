@@ -263,20 +263,19 @@ export function ResultsDashboard(props: Props) {
   const verdictText =
     result?.underwriting?.verdict || result?.underwriting?.status || "Pending";
 
-  const approvalScore =
+   const approvalScore =
     typeof result?.approvalScore === "number"
       ? Math.round(result.approvalScore)
       : null;
 
-    const termWeeks =
+  const termWeeks =
     typeof result?.termWeeks === "number"
       ? result.termWeeks
-      : typeof form.termWeeks === "number"
-      ? form.termWeeks
+      : typeof result?.termInWeeks === "number"
+      ? result.termInWeeks
       : null;
 
-
-    const advancedRiskFlags: string[] =
+  const advancedRiskFlags: string[] =
     result?.riskFlags ||
     result?.advancedRiskFlags ||
     (result
@@ -370,6 +369,7 @@ export function ResultsDashboard(props: Props) {
           return flags;
         })()
       : []);
+
 
 
   const delinquencyRisk =
