@@ -52,39 +52,49 @@ export function ResultsDashboard(props: Props) {
   };
 
   const basePayment =
-  typeof result?.payment === "number" ? result.payment : null;
+    typeof result?.payment === "number" ? result.payment : null;
 
-const formatDelta = (
-  base: number | null,
-  alt: number | undefined,
-  opts: { prefix?: string; suffix?: string } = {}
-) => {
-  if (base === null || typeof alt !== "number") return null;
-  const diff = alt - base;
-  const { prefix = "", suffix = "" } = opts;
+  const formatDelta = (
+    base: number | null,
+    alt: number | undefined,
+    opts: { prefix?: string; suffix?: string } = {}
+  ) => {
+    if (base === null || typeof alt !== "number") return null;
+    const diff = alt - base;
+    const { prefix = "", suffix = "" } = opts;
 
-  if (Math.abs(diff) < 0.005) return `${prefix}no change${suffix}`;
-  const dir = diff > 0 ? "up" : "down";
-  return `${prefix}${dir} ${Math.abs(diff).toFixed(2)}${suffix}`;
-};
+    if (Math.abs(diff) < 0.005) return `${prefix}no change${suffix}`;
+    const dir = diff > 0 ? "up" : "down";
+    return `${prefix}${dir} ${Math.abs(diff).toFixed(2)}${suffix}`;
+  };
 
-const profitOptimizer =
-  result?.profitOptimizer ||
-  result?.underwriting?.profitOptimizer ||
-  null;
+  const profitOptimizer =
+    result?.profitOptimizer ||
+    result?.underwriting?.profitOptimizer ||
+    null;
 
-const maxExtraProfit =
-  profitOptimizer?.variants && profitOptimizer.variants.length > 0
-    ? profitOptimizer.variants.reduce(
-        (max: number, v: any) =>
-          typeof v.extraProfit === "number"
-            ? Math.max(max, v.extraProfit)
-            : max,
-        0
-      )
-    : 0;
+  const hasVariants =
+    !!profitOptimizer &&
+    Array.isArray(profitOptimizer.variants) &&
+    profitOptimizer.variants.length > 0;
 
+  const hasAdjustments =
+    !!result?.underwriting?.adjustments &&
+    (typeof result.underwriting.adjustments.newDownPayment === "number" ||
+      typeof result.underwriting.adjustments.newTermWeeks === "number" ||
+      typeof result.underwriting.adjustments.newSalePrice === "number" ||
+      typeof result.underwriting.adjustments.newApr === "number");
 
+  const maxExtraProfit =
+    hasVariants
+      ? profitOptimizer.variants.reduce(
+          (max: number, v: any) =>
+            typeof v.extraProfit === "number"
+              ? Math.max(max, v.extraProfit)
+              : max,
+          0
+        )
+      : 0;
 
   const lockedPanelInner: CSSProperties = {
     position: "relative",
@@ -298,7 +308,7 @@ const maxExtraProfit =
   const verdictText =
     result?.underwriting?.verdict || result?.underwriting?.status || "Pending";
 
-     const approvalScore =
+  const approvalScore =
     typeof result?.approvalScore === "number"
       ? Math.round(result.approvalScore)
       : null;
@@ -399,8 +409,7 @@ const maxExtraProfit =
     return flags;
   })();
 
-
-    const hiddenRiskSeverity =
+  const hiddenRiskSeverity =
     typeof result?.riskScore === "string" ? result.riskScore : "Medium";
 
   const primaryRiskFocus =
@@ -412,17 +421,11 @@ const maxExtraProfit =
       ? "Customer history shows repos. Consider stronger down, GPS or a shorter term before funding."
       : "Structure is inside policy. Focus on profit and compliance checks rather than raw risk.";
 
-
-
-
-
   const delinquencyRisk =
     result?.delinquencyRisk ||
     (ptiValue !== null && ptiValue > ptiLimit
       ? "Higher early payment risk due to tight PTI."
       : "Standard delinquency risk for this PTI and stability pattern.");
-
-
 
   const portfolioComparison = result?.portfolioComparison || null;
 
@@ -734,7 +737,7 @@ const maxExtraProfit =
           </section>
         )}
 
-               {/* hidden risk flags */}
+        {/* hidden risk flags */}
         <section style={panel}>
           <div style={lockedPanelInner}>
             <h2 style={{ fontSize: 17, marginBottom: 6 }}>Hidden risk flags</h2>
@@ -803,7 +806,6 @@ const maxExtraProfit =
           </div>
         </section>
 
-
         {/* payment schedule */}
         {result?.schedulePreview && (
           <section style={panel}>
@@ -863,283 +865,341 @@ const maxExtraProfit =
           </section>
         )}
 
-       {/* profit optimizer */}
-<section style={panel}>
-  <div style={lockedPanelInner}>
-    <h2 style={{ fontSize: 17, marginBottom: 4 }}>Profit optimizer</h2>
+        {/* profit optimizer */}
+        <section style={panel}>
+          <div style={lockedPanelInner}>
+            <h2 style={{ fontSize: 17, marginBottom: 4 }}>Profit optimizer</h2>
 
-    {isPro && maxExtraProfit > 0 && (
-      <p
-        style={{
-          fontSize: 12,
-          marginBottom: 10,
-          color: colors.textSecondary,
-          textTransform: "uppercase",
-          letterSpacing: ".08em"
-        }}
-      >
-        Up to ${maxExtraProfit.toFixed(0)} more profit inside policy
-      </p>
-    )}
+            {isPro && hasVariants && maxExtraProfit > 0 && (
+              <p
+                style={{
+                  fontSize: 12,
+                  marginBottom: 10,
+                  color: colors.textSecondary,
+                  textTransform: "uppercase",
+                  letterSpacing: ".08em"
+                }}
+              >
+                Up to ${maxExtraProfit.toFixed(0)} more profit inside policy
+              </p>
+            )}
 
-    {isPro ? (
-      <>
-        {profitOptimizer && profitOptimizer.variants?.length > 0 ? (
-          <>
-            <p
-              style={{
-                fontSize: 14,
-                color: colors.textSecondary,
-                marginBottom: 10
-              }}
-            >
-              Pick a structure below. All options stay inside your PTI and LTV
-              policy rules. Start with the first option for the best balance of
-              profit and risk.
-            </p>
+            {isPro ? (
+              <>
+                {hasVariants ? (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginBottom: 10
+                      }}
+                    >
+                      Pick a structure below. All options stay inside your PTI
+                      and LTV policy rules. Start with the first option for the
+                      best balance of profit and risk.
+                    </p>
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                marginBottom: 12
-              }}
-            >
-              {profitOptimizer.variants.map((v: any, idx: number) => {
-                const paymentDelta = formatDelta(basePayment, v.payment, {
-                  prefix: "Payment ",
-                  suffix: " per week"
-                });
-
-                const ptiDelta =
-                  typeof v.pti === "number" && typeof result?.paymentToIncome === "number"
-                    ? formatDelta(result.paymentToIncome, v.pti, {
-                        prefix: "PTI ",
-                        suffix: " points"
-                      })
-                    : null;
-
-                const termDelta =
-                  typeof termWeeks === "number" && typeof v.termWeeks === "number"
-                    ? formatDelta(termWeeks, v.termWeeks, {
-                        prefix: "Term ",
-                        suffix: " weeks"
-                      })
-                    : null;
-
-                const ltvDelta =
-                  typeof result?.ltv === "number" && typeof v.ltv === "number"
-                    ? formatDelta(result.ltv, v.ltv, {
-                        prefix: "LTV ",
-                        suffix: " points"
-                      })
-                    : null;
-
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      borderRadius: 12,
-                      border: `1px solid ${colors.border}`,
-                      padding: 10,
-                      background: idx === 0 ? "rgba(34,197,94,0.07)" : "transparent"
-                    }}
-                  >
                     <div
                       style={{
                         display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 4,
-                        gap: 8
+                        flexDirection: "column",
+                        gap: 10,
+                        marginBottom: 12
                       }}
                     >
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          fontSize: 14
-                        }}
-                      >
-                        {v.label}
-                      </span>
-                      <span
-                        style={{
-                          padding: "3px 9px",
-                          borderRadius: 999,
-                          fontSize: 11,
-                          fontWeight: 700,
-                          background: "#dcfce7",
-                          color: "#166534",
-                          whiteSpace: "nowrap"
-                        }}
-                      >
-                        +${v.extraProfit.toFixed(0)} profit
-                      </span>
+                      {profitOptimizer.variants.map(
+                        (v: any, idx: number) => {
+                          const paymentDelta = formatDelta(
+                            basePayment,
+                            v.payment,
+                            {
+                              prefix: "Payment ",
+                              suffix: " per week"
+                            }
+                          );
+
+                          const ptiDelta =
+                            typeof v.pti === "number" &&
+                            typeof result?.paymentToIncome === "number"
+                              ? formatDelta(
+                                  result.paymentToIncome,
+                                  v.pti,
+                                  {
+                                    prefix: "PTI ",
+                                    suffix: " points"
+                                  }
+                                )
+                              : null;
+
+                          const termDelta =
+                            typeof termWeeks === "number" &&
+                            typeof v.termWeeks === "number"
+                              ? formatDelta(termWeeks, v.termWeeks, {
+                                  prefix: "Term ",
+                                  suffix: " weeks"
+                                })
+                              : null;
+
+                          const ltvDelta =
+                            typeof result?.ltv === "number" &&
+                            typeof v.ltv === "number"
+                              ? formatDelta(result.ltv, v.ltv, {
+                                  prefix: "LTV ",
+                                  suffix: " points"
+                                })
+                              : null;
+
+                          return (
+                            <div
+                              key={idx}
+                              style={{
+                                borderRadius: 12,
+                                border: `1px solid ${colors.border}`,
+                                padding: 10,
+                                background:
+                                  idx === 0
+                                    ? "rgba(34,197,94,0.07)"
+                                    : "transparent"
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  marginBottom: 4,
+                                  gap: 8
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontWeight: 600,
+                                    fontSize: 14
+                                  }}
+                                >
+                                  {v.label}
+                                </span>
+                                {typeof v.extraProfit === "number" && (
+                                  <span
+                                    style={{
+                                      padding: "3px 9px",
+                                      borderRadius: 999,
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      background: "#dcfce7",
+                                      color: "#166534",
+                                      whiteSpace: "nowrap"
+                                    }}
+                                  >
+                                    +${v.extraProfit.toFixed(0)} profit
+                                  </span>
+                                )}
+                              </div>
+
+                              <ul
+                                style={{
+                                  margin: 0,
+                                  paddingLeft: 18,
+                                  fontSize: 13,
+                                  lineHeight: 1.5
+                                }}
+                              >
+                                {paymentDelta && <li>{paymentDelta}</li>}
+                                {termDelta && <li>{termDelta}</li>}
+                                {ptiDelta && <li>{ptiDelta}</li>}
+                                {ltvDelta && <li>{ltvDelta}</li>}
+                                {!paymentDelta &&
+                                  !termDelta &&
+                                  !ptiDelta &&
+                                  !ltvDelta && (
+                                    <li>
+                                      Adjusts structure to add profit while
+                                      staying inside policy.
+                                    </li>
+                                  )}
+                              </ul>
+
+                              {idx === 0 && (
+                                <p
+                                  style={{
+                                    marginTop: 6,
+                                    marginBottom: 0,
+                                    fontSize: 11,
+                                    color: colors.textSecondary
+                                  }}
+                                >
+                                  Recommended starting point for this customer.
+                                </p>
+                              )}
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
+                  </>
+                ) : hasAdjustments ? (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginBottom: 10
+                      }}
+                    >
+                      We found a tighter structure for this deal. Apply the
+                      targets below to move profit and PTI in the right
+                      direction while staying inside your policy.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginBottom: 8
+                      }}
+                    >
+                      No optimized structures calculated for this deal yet. Try
+                      adjusting sale price, down payment or term and run the
+                      analysis again.
+                    </p>
+                  </>
+                )}
+
+                {hasAdjustments && (
+                  <>
+                    <h3
+                      style={{
+                        fontSize: 13,
+                        marginTop: 8,
+                        marginBottom: 6,
+                        color: colors.textSecondary,
+                        textTransform: "uppercase",
+                        letterSpacing: ".08em"
+                      }}
+                    >
+                      {hasVariants
+                        ? "Targets for the structure you choose"
+                        : "Suggested structure for this deal"}
+                    </h3>
 
                     <ul
                       style={{
+                        paddingLeft: 0,
+                        listStyle: "none",
                         margin: 0,
-                        paddingLeft: 18,
-                        fontSize: 13,
-                        lineHeight: 1.5
+                        marginBottom: 10
                       }}
                     >
-                      {paymentDelta && <li>{paymentDelta}</li>}
-                      {termDelta && <li>{termDelta}</li>}
-                      {ptiDelta && <li>{ptiDelta}</li>}
-                      {ltvDelta && <li>{ltvDelta}</li>}
-                      {!paymentDelta &&
-                        !termDelta &&
-                        !ptiDelta &&
-                        !ltvDelta && (
-                          <li>
-                            Adjusts structure to add profit while staying inside
-                            policy.
-                          </li>
-                        )}
+                      {typeof result.underwriting.adjustments
+                        .newDownPayment === "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>
+                            Down payment target
+                          </span>
+                          <span style={summaryValue}>
+                            $
+                            {result.underwriting.adjustments.newDownPayment.toFixed(
+                              2
+                            )}
+                          </span>
+                        </li>
+                      )}
+                      {typeof result.underwriting.adjustments
+                        .newTermWeeks === "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>Term target</span>
+                          <span style={summaryValue}>
+                            {
+                              result.underwriting.adjustments
+                                .newTermWeeks
+                            }{" "}
+                            weeks
+                          </span>
+                        </li>
+                      )}
+                      {typeof result.underwriting.adjustments
+                        .newSalePrice === "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>
+                            Sale price target
+                          </span>
+                          <span style={summaryValue}>
+                            $
+                            {result.underwriting.adjustments.newSalePrice.toFixed(
+                              2
+                            )}
+                          </span>
+                        </li>
+                      )}
+                      {typeof result.underwriting.adjustments.newApr ===
+                        "number" && (
+                        <li style={summaryRow}>
+                          <span style={summaryLabel}>APR target</span>
+                          <span style={summaryValue}>
+                            {result.underwriting.adjustments.newApr.toFixed(
+                              2
+                            )}{" "}
+                            percent
+                          </span>
+                        </li>
+                      )}
                     </ul>
 
-                    {idx === 0 && (
-                      <p
-                        style={{
-                          marginTop: 6,
-                          marginBottom: 0,
-                          fontSize: 11,
-                          color: colors.textSecondary
-                        }}
-                      >
-                        Recommended starting point for this customer.
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <p
-            style={{
-              fontSize: 14,
-              color: colors.textSecondary,
-              marginBottom: 8
-            }}
-          >
-            No optimized structures calculated for this deal yet. Try adjusting
-            sale price, down payment or term and run the analysis again.
-          </p>
-        )}
+                    <button
+                      type="button"
+                      style={btnSecondary}
+                      onClick={() => {
+                        if (!loading) {
+                          void applySuggestedStructure();
+                        }
+                      }}
+                    >
+                      {hasVariants
+                        ? "Apply best structure to form"
+                        : "Apply suggested structure to form"}
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: colors.textSecondary,
+                    marginBottom: 8
+                  }}
+                >
+                  Pro tests alternate structures for you and suggests options
+                  that add profit without breaking PTI or LTV rules. See how a
+                  slightly stronger down payment, longer term or higher price
+                  changes payment and risk.
+                </p>
 
-        {result?.underwriting?.adjustments && (
-          <>
-            <h3
-              style={{
-                fontSize: 13,
-                marginTop: 8,
-                marginBottom: 6,
-                color: colors.textSecondary,
-                textTransform: "uppercase",
-                letterSpacing: ".08em"
-              }}
-            >
-              Targets for the structure you choose
-            </h3>
-
-            <ul
-              style={{
-                paddingLeft: 0,
-                listStyle: "none",
-                margin: 0,
-                marginBottom: 10
-              }}
-            >
-              {typeof result.underwriting.adjustments.newDownPayment ===
-                "number" && (
-                <li style={summaryRow}>
-                  <span style={summaryLabel}>Down payment target</span>
-                  <span style={summaryValue}>
-                    $
-                    {result.underwriting.adjustments.newDownPayment.toFixed(2)}
-                  </span>
-                </li>
-              )}
-              {typeof result.underwriting.adjustments.newTermWeeks ===
-                "number" && (
-                <li style={summaryRow}>
-                  <span style={summaryLabel}>Term target</span>
-                  <span style={summaryValue}>
-                    {result.underwriting.adjustments.newTermWeeks} weeks
-                  </span>
-                </li>
-              )}
-              {typeof result.underwriting.adjustments.newSalePrice ===
-                "number" && (
-                <li style={summaryRow}>
-                  <span style={summaryLabel}>Sale price target</span>
-                  <span style={summaryValue}>
-                    $
-                    {result.underwriting.adjustments.newSalePrice.toFixed(2)}
-                  </span>
-                </li>
-              )}
-              {typeof result.underwriting.adjustments.newApr === "number" && (
-                <li style={summaryRow}>
-                  <span style={summaryLabel}>APR target</span>
-                  <span style={summaryValue}>
-                    {result.underwriting.adjustments.newApr.toFixed(2)} percent
-                  </span>
-                </li>
-              )}
-            </ul>
-
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => {
-                if (!loading) {
-                  void applySuggestedStructure();
-                }
-              }}
-            >
-              Apply best structure to form
-            </button>
-          </>
-        )}
-      </>
-    ) : (
-      <>
-        <p
-          style={{
-            fontSize: 14,
-            color: colors.textSecondary,
-            marginBottom: 8
-          }}
-        >
-          Pro tests alternate structures for you and suggests options that add
-          profit without breaking PTI or LTV rules. See how a slightly stronger
-          down payment, longer term or higher price changes payment and risk.
-        </p>
-
-        <div style={blurOverlay}>
-          <div style={blurOverlayTitle}>Unlock profit optimizer</div>
-          <p style={{ marginBottom: 10 }}>
-            Pro often finds an extra one hundred to five hundred in profit on
-            deals you already plan to fund, while staying inside your policy.
-          </p>
-          <a href="/billing" style={btnSecondary}>
-            See profit optimized options
-          </a>
-        </div>
-      </>
-    )}
-  </div>
-</section>
-
+                <div style={blurOverlay}>
+                  <div style={blurOverlayTitle}>Unlock profit optimizer</div>
+                  <p style={{ marginBottom: 10 }}>
+                    Pro often finds an extra one hundred to five hundred in
+                    profit on deals you already plan to fund, while staying
+                    inside your policy.
+                  </p>
+                  <a href="/billing" style={btnSecondary}>
+                    See profit optimized options
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
 
         {/* customer offer sheet */}
         <section style={panel}>
-          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Customer offer sheet</h2>
+          <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+            Customer offer sheet
+          </h2>
           <p
             style={{
               fontSize: 14,
@@ -1168,7 +1228,9 @@ const maxExtraProfit =
 
         {/* underwriting packet */}
         <section style={panel}>
-          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Underwriting packet</h2>
+          <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+            Underwriting packet
+          </h2>
           <p
             style={{
               fontSize: 14,
