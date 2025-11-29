@@ -412,6 +412,62 @@ export function ResultsDashboard(props: Props) {
         Deal analysis
       </h2>
 
+      {/* AI deal opinion above grid */}
+      {result.aiExplanation && (
+        <section
+          style={{
+            ...panel,
+            marginTop: 16
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10
+            }}
+          >
+            <h2 style={{ fontSize: 17 }}>AI deal opinion</h2>
+            {!isPro && (
+              <span
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  background:
+                    "linear-gradient(to right, #22c55e, #4ade80)",
+                  color: "#052e16",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase"
+                }}
+              >
+                Pro
+              </span>
+            )}
+          </div>
+
+          <p
+            style={{
+              fontSize: 14,
+              lineHeight: 1.6,
+              whiteSpace: "pre-wrap"
+            }}
+          >
+            {result.aiExplanation}
+          </p>
+
+          {!isPro && (
+            <div style={{ marginTop: 12 }}>
+              <a href="/billing" style={btnSecondary}>
+                Unlock full AI underwriting with Pro
+              </a>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* results grid */}
       <div style={resultsGrid}>
         {/* deal summary card */}
@@ -446,61 +502,6 @@ export function ResultsDashboard(props: Props) {
             </li>
           </ul>
         </section>
-
-        {/* AI deal opinion moved here */}
-        {result.aiExplanation && (
-          <section
-            style={{
-              ...panel
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 10
-              }}
-            >
-              <h2 style={{ fontSize: 17 }}>AI deal opinion</h2>
-              {!isPro && (
-                <span
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 999,
-                    background:
-                      "linear-gradient(to right, #22c55e, #4ade80)",
-                    color: "#052e16",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: ".08em",
-                    textTransform: "uppercase"
-                  }}
-                >
-                  Pro
-                </span>
-              )}
-            </div>
-
-            <p
-              style={{
-                fontSize: 14,
-                lineHeight: 1.6,
-                whiteSpace: "pre-wrap"
-              }}
-            >
-              {result.aiExplanation}
-            </p>
-
-            {!isPro && (
-              <div style={{ marginTop: 12 }}>
-                <a href="/billing" style={btnSecondary}>
-                  Unlock full AI underwriting with Pro
-                </a>
-              </div>
-            )}
-          </section>
-        )}
 
         {/* basic risk */}
         <section style={panel}>
