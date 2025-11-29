@@ -7,12 +7,12 @@ export default function PageContainer({ children }: { children: React.ReactNode 
     display: "flex",
     justifyContent: "center",
     width: "100%",
-    padding: "32px 16px",
+    padding: "32px 16px"
   };
 
   const inner: CSSProperties = {
     width: "100%",
-    maxWidth: "1180px",
+    maxWidth: "1180px"
   };
 
   return (
