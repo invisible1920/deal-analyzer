@@ -170,6 +170,180 @@ export function ResultsDashboard(props: Props) {
     overflowX: "hidden"
   };
 
+  const complianceAnalysis = (() => {
+  if (!result) {
+    return {
+      status: "Unknown",
+      severity: "medium" as "low" | "medium" | "high",
+      bullets: [] as string[]
+    };
+  }
+
+  const bullets: string[] = [];
+  let severity: "low" | "medium" | "high" = "low";
+
+  // PTI vs policy
+  if (ptiValue === null) {
+    bullets.push("No income on file so PTI can not be checked against policy.");
+    severity = "high";
+  } else if (ptiValue > ptiLimit) {
+    bullets.push(
+      `Payment to income exceeds your max PTI of ${(ptiLimit * 100).toFixed(
+        0
+      )} percent at ${((ptiValue || 0) * 100).toFixed(1)} percent.`
+    );
+    severity = "high";
+  } else if (ptiValue > ptiLimit * 0.9) {
+    bullets.push(
+      `Payment to income is close to your PTI limit at ${(
+        ptiValue * 100
+      ).toFixed(1)} percent.`
+    );
+    severity = severity === "low" ? "medium" : severity;
+  }
+
+  // LTV vs policy
+  if (typeof result?.ltv === "number") {
+    const ltvPct = (result.ltv * 100).toFixed(1);
+    const maxLtvPct = (policy.maxLTV * 100).toFixed(0);
+
+    if (result.ltv > policy.maxLTV) {
+      bullets.push(
+        `LTV is above your policy max of ${maxLtvPct} percent at ${ltvPct} percent.`
+      );
+      severity = "high";
+    } else if (result.ltv > policy.maxLTV * 0.95) {
+      bullets.push(
+        `LTV is high for this policy at ${ltvPct} percent, near the max of ${maxLtvPct} percent.`
+      );
+      severity = severity === "low" ? "medium" : severity;
+    }
+  }
+
+  // Term vs policy
+  if (termWeeks && policy.maxTermWeeks) {
+    if (termWeeks > policy.maxTermWeeks) {
+      bullets.push(
+        `Term is over your policy max of ${policy.maxTermWeeks} weeks at ${termWeeks} weeks.`
+      );
+      severity = "high";
+    } else if (termWeeks > policy.maxTermWeeks * 0.95) {
+      bullets.push(
+        `Term is near your policy max at ${termWeeks} weeks.`
+      );
+      severity = severity === "low" ? "medium" : severity;
+    }
+  }
+
+  // Optional doc fee check if you have these fields
+  if (
+    typeof result?.docFee === "number" &&
+    typeof result?.docFeeCap === "number"
+  ) {
+    if (result.docFee > result.docFeeCap) {
+      bullets.push(
+        `Doc fee of $${result.docFee.toFixed(
+          2
+        )} is above the cap you set at $${result.docFeeCap.toFixed(2)}.`
+      );
+      severity = "high";
+    }
+  }
+
+  if (!bullets.length) {
+    return {
+      status: "Clean",
+      severity: "low" as const,
+      bullets: [
+        "Rate, term and doc fee are inside the limits you have on file. Still confirm against your state rules before funding."
+      ]
+    };
+  }
+
+  return {
+    status: "Needs review",
+    severity,
+    bullets
+  };
+})();
+
+const delinquencyAnalysis = (() => {
+  const bullets: string[] = [];
+  let level: "Low" | "Medium" | "High" = "Medium";
+
+  // PTI pressure
+  if (ptiValue === null) {
+    bullets.push("No income on file, PTI and payment pressure are unknown.");
+    level = "High";
+  } else if (ptiValue > ptiLimit) {
+    bullets.push(
+      `PTI is above your policy limit at ${(
+        ptiValue * 100
+      ).toFixed(1)} percent so payment pressure is high.`
+    );
+    level = "High";
+  } else if (ptiValue > ptiLimit * 0.9) {
+    bullets.push(
+      `PTI is near your limit at ${(
+        ptiValue * 100
+      ).toFixed(1)} percent. Expect tighter first six payments.`
+    );
+    level = "Medium";
+  } else {
+    bullets.push(
+      `PTI is comfortably inside policy at ${(
+        ptiValue * 100
+      ).toFixed(1)} percent.`
+    );
+  }
+
+  // Repo history
+  if (typeof form.repoCount === "number") {
+    if (form.repoCount >= 2) {
+      bullets.push("Customer has multiple prior repos on file.");
+      level = "High";
+    } else if (form.repoCount === 1) {
+      bullets.push("Customer has one prior repo on file.");
+      if (level === "Low") level = "Medium";
+    } else {
+      bullets.push("No prior repos recorded in your form.");
+    }
+  }
+
+  // Optional employment or stability flags if you have them
+  if (
+    typeof result?.employmentMonths === "number" &&
+    result.employmentMonths < 6
+  ) {
+    bullets.push("Time on job under six months.");
+    if (level === "Low") level = "Medium";
+  }
+
+  const action =
+    level === "High"
+      ? "Strongly consider higher down, GPS or a shorter term and monitor the first six payments closely."
+      : level === "Medium"
+      ? "Consider a slightly stronger down or shorter term and keep a closer eye on the first few payments."
+      : "Risk looks typical for a working BHPH profile. Standard follow up on the first six payments is still recommended.";
+
+  return { level, bullets, action };
+})();
+
+const complianceChipLabel =
+  complianceAnalysis.status === "Clean"
+    ? "Low compliance risk"
+    : "Needs review";
+
+const complianceChipScore =
+  complianceAnalysis.severity === "low"
+    ? "Low"
+    : complianceAnalysis.severity === "medium"
+    ? "Medium"
+    : "High";
+
+const delinquencyChipLabel = `${delinquencyAnalysis.level} risk`;
+
+
   const summaryChipLabel: CSSProperties = {
     fontSize: 11,
     textTransform: "uppercase",
@@ -1286,74 +1460,127 @@ export function ResultsDashboard(props: Props) {
         </section>
 
         {/* compliance and delinquency */}
-        <section style={panel}>
-          <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-              Compliance and delinquency view
-            </h2>
-            <h3
-              style={{
-                fontSize: 13,
-                marginBottom: 6,
-                color: colors.textSecondary,
-                textTransform: "uppercase",
-                letterSpacing: ".08em"
-              }}
-            >
-              Compliance flags
-            </h3>
-            <ul
-              style={{
-                paddingLeft: 18,
-                marginTop: 0,
-                marginBottom: 10,
-                lineHeight: 1.5,
-                fontSize: 14
-              }}
-            >
-              {complianceFlags.map((c, idx) => (
-                <li key={idx}>{c}</li>
-              ))}
-            </ul>
+<section style={panel}>
+  <div style={lockedPanelInner}>
+    <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+      Compliance and early delinquency check
+    </h2>
 
-            <h3
-              style={{
-                fontSize: 13,
-                marginBottom: 6,
-                marginTop: 10,
-                color: colors.textSecondary,
-                textTransform: "uppercase",
-                letterSpacing: ".08em"
-              }}
-            >
-              Delinquency predictor
-            </h3>
-            <p
-              style={{
-                fontSize: 14,
-                lineHeight: 1.5
-              }}
-            >
-              {delinquencyRisk}
-            </p>
+    {/* compliance block */}
+    <h3
+      style={{
+        fontSize: 13,
+        marginBottom: 4,
+        color: colors.textSecondary,
+        textTransform: "uppercase",
+        letterSpacing: ".08em"
+      }}
+    >
+      Compliance status
+    </h3>
 
-            {!isPro && (
-              <div style={blurOverlay}>
-                <div style={blurOverlayTitle}>
-                  State level risk and delinquency prediction
-                </div>
-                <p style={{ marginBottom: 10 }}>
-                  Pro highlights state specific limits and gives an AI view of
-                  early payment risk so you know which deals need tighter
-                  structure.
-                </p>
-                <a href="/billing" style={btnSecondary}>
-                  Unlock compliance and delinquency tools
-                </a>
-              </div>
-            )}
-          </div>
-        </section>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 6,
+        gap: 8
+      }}
+    >
+      <span style={{ fontSize: 12, color: colors.textSecondary }}>
+        Policy and common cap checks
+      </span>
+      <span style={riskChipStyle(complianceChipScore)}>
+        {complianceChipLabel}
+      </span>
+    </div>
+
+    <ul
+      style={{
+        paddingLeft: 18,
+        marginTop: 0,
+        marginBottom: 10,
+        lineHeight: 1.5,
+        fontSize: 14
+      }}
+    >
+      {complianceAnalysis.bullets.map((c, idx) => (
+        <li key={idx}>{c}</li>
+      ))}
+    </ul>
+
+    {/* delinquency block */}
+    <h3
+      style={{
+        fontSize: 13,
+        marginBottom: 4,
+        marginTop: 10,
+        color: colors.textSecondary,
+        textTransform: "uppercase",
+        letterSpacing: ".08em"
+      }}
+    >
+      First six payments risk
+    </h3>
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 6,
+        gap: 8
+      }}
+    >
+      <span style={{ fontSize: 12, color: colors.textSecondary }}>
+        Likely early delinquency on this structure
+      </span>
+      <span style={riskChipStyle(delinquencyChipLabel)}>
+        {delinquencyChipLabel}
+      </span>
+    </div>
+
+    <ul
+      style={{
+        paddingLeft: 18,
+        marginTop: 0,
+        lineHeight: 1.5,
+        fontSize: 14
+      }}
+    >
+      {delinquencyAnalysis.bullets.map((d, idx) => (
+        <li key={idx}>{d}</li>
+      ))}
+    </ul>
+
+    <p
+      style={{
+        fontSize: 13,
+        marginTop: 4,
+        color: colors.textSecondary
+      }}
+    >
+      Action before funding: {delinquencyAnalysis.action}
+    </p>
+
+    {!isPro && (
+      <div style={blurOverlay}>
+        <div style={blurOverlayTitle}>
+          Detailed compliance and delinquency drivers
+        </div>
+        <p style={{ marginBottom: 10 }}>
+          Pro breaks this view down by PTI, LTV, term, repos and fees so you
+          know exactly which field to tighten before funding.
+        </p>
+        <a href="/billing" style={btnSecondary}>
+          Unlock compliance and delinquency tools
+        </a>
+      </div>
+    )}
+  </div>
+</section>
+
 
         {/* portfolio benchmarking */}
         <section style={panel}>
