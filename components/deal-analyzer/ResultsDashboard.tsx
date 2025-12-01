@@ -39,6 +39,54 @@ export function ResultsDashboard(props: Props) {
 
   // shared styles
 
+    const scriptIntro: CSSProperties = {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 10
+  };
+
+  const scriptDetails: CSSProperties = {
+    borderRadius: 12,
+    border: `1px solid ${colors.border}`,
+    background: "rgba(15,23,42,0.02)",
+    padding: 10
+  };
+
+  const scriptSummaryRow: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    cursor: "pointer",
+    listStyle: "none",
+    fontSize: 13,
+    fontWeight: 600
+  };
+
+  const scriptTag: CSSProperties = {
+    padding: "2px 8px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 600,
+    background: "rgba(34,197,94,0.12)",
+    color: "#166534",
+    whiteSpace: "nowrap"
+  };
+
+  const scriptBody: CSSProperties = {
+    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 1.7,
+    whiteSpace: "pre-wrap"
+  };
+
+  const scriptHint: CSSProperties = {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 10
+  };
+
+
   const panel: CSSProperties = {
     background: colors.panel,
     border: `1px solid ${colors.border}`,
@@ -1714,7 +1762,7 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           </div>
         </section>
 
-        {/* sales scripts / save the deal help */}
+                {/* sales scripts / save the deal help */}
         <section style={panel}>
           <div style={lockedPanelInner}>
             <h2 style={{ fontSize: 17, marginBottom: 10 }}>
@@ -1723,17 +1771,10 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
 
             {isPro && scriptScenarios.length > 0 ? (
               <>
-                <p
-                  style={{
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    color: colors.textSecondary,
-                    marginBottom: 12
-                  }}
-                >
+                <p style={scriptIntro}>
                   Use these ready to read scripts when a customer pushes back on
-                  payment, down payment or term. Each script is built off this
-                  exact structure.
+                  payment, down payment or term. Tap a situation to see what to
+                  say.
                 </p>
 
                 <div
@@ -1743,48 +1784,24 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     gap: 10
                   }}
                 >
-                  {scriptScenarios.map((s) => (
-                    <div
+                  {scriptScenarios.map((s, idx) => (
+                    <details
                       key={s.id}
-                      style={{
-                        borderRadius: 12,
-                        border: `1px solid ${colors.border}`,
-                        padding: 10,
-                        background: "rgba(15,23,42,0.02)"
-                      }}
+                      style={scriptDetails}
+                      open={idx === 0}
                     >
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          marginBottom: 4
-                        }}
-                      >
-                        {s.title}
-                      </div>
-                      <p
-                        style={{
-                          fontSize: 13,
-                          lineHeight: 1.7,
-                          whiteSpace: "pre-wrap",
-                          margin: 0
-                        }}
-                      >
-                        {s.script}
-                      </p>
-                    </div>
+                      <summary style={scriptSummaryRow}>
+                        <span>{s.title}</span>
+                        <span style={scriptTag}>Lot ready</span>
+                      </summary>
+                      <div style={scriptBody}>{s.script}</div>
+                    </details>
                   ))}
                 </div>
 
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                    marginTop: 10
-                  }}
-                >
-                  Tip: save your favorite lines in your CRM or route book so
-                  new salespeople can reuse what works.
+                <p style={scriptHint}>
+                  Tip: drop your favorite lines into your CRM or route book so
+                  new salespeople can plug in what already works.
                 </p>
               </>
             ) : (
