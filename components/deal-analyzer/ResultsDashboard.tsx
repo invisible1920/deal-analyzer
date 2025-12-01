@@ -545,16 +545,19 @@ export function ResultsDashboard(props: Props) {
     typeof portfolioComparison.ltvDelta === "number" &&
     typeof portfolioComparison.profitDelta === "number";
 
-  const dealPtiPct =
-    typeof result.paymentToIncome === "number"
+    const dealPtiPct =
+    result && typeof result.paymentToIncome === "number"
       ? result.paymentToIncome * 100
       : null;
 
   const dealLtvPct =
-    typeof result.ltv === "number" ? result.ltv * 100 : null;
+    result && typeof result.ltv === "number" ? result.ltv * 100 : null;
 
   const dealProfit =
-    typeof result.totalProfit === "number" ? result.totalProfit : null;
+    result && typeof result.totalProfit === "number"
+      ? result.totalProfit
+      : null;
+
 
   const portfolioPtiPct =
     dealPtiPct !== null && hasPortfolioBenchmark
