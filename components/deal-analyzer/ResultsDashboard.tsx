@@ -196,19 +196,18 @@ export function ResultsDashboard(props: Props) {
     fontVariantNumeric: "tabular-nums"
   };
 
-  const summaryBar: CSSProperties = {
+    const summaryBar: CSSProperties = {
     marginTop: 24,
     padding: "14px 20px",
-    borderRadius: 20,
+    borderRadius: 24,
     border: `1px solid ${colors.border}`,
     background: "rgba(15, 23, 42, 0.96)",
     color: "#e5e7eb",
     display: "flex",
     flexDirection: isMobile ? "column" : "row",
     alignItems: isMobile ? "flex-start" : "center",
-    flexWrap: isMobile ? "nowrap" : "wrap",
-    gap: isMobile ? 16 : 24,
     justifyContent: isMobile ? "flex-start" : "space-between",
+    gap: isMobile ? 16 : 24,
     position: isMobile ? "static" : "sticky",
     top: 16,
     zIndex: 10,
@@ -227,16 +226,29 @@ export function ResultsDashboard(props: Props) {
 
   const summaryChipValue: CSSProperties = {
     fontSize: 16,
-    fontWeight: 600
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontVariantNumeric: "tabular-nums"
   };
 
   const summaryChipGroup: CSSProperties = {
     display: "flex",
-    gap: 28,
     flexWrap: "wrap",
-    width: "100%",
-    rowGap: 12
+    rowGap: 10,
+    columnGap: 24,
+    width: "100%"
   };
+
+  const summaryChipBox: CSSProperties = {
+    minWidth: isMobile ? "48%" : 140,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 2
+  };
+
 
     const benchGrid: CSSProperties = {
     display: "grid",
@@ -872,30 +884,34 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
   return (
     <>
       {/* sticky summary bar */}
-      <div style={summaryBar}>
+            <div style={summaryBar}>
         <div style={summaryChipGroup}>
-          <div>
+          <div style={summaryChipBox}>
             <div style={summaryChipLabel}>Payment</div>
             <div style={summaryChipValue}>${result.payment.toFixed(2)}</div>
           </div>
-          <div>
+
+          <div style={summaryChipBox}>
             <div style={summaryChipLabel}>Total profit</div>
             <div style={summaryChipValue}>
               ${result.totalProfit.toFixed(2)}
             </div>
           </div>
-          <div>
+
+          <div style={summaryChipBox}>
             <div style={summaryChipLabel}>PTI</div>
             <div style={summaryChipValue}>{ptiDisplay}</div>
           </div>
-          <div>
+
+          <div style={summaryChipBox}>
             <div style={summaryChipLabel}>Verdict</div>
             <div style={summaryChipValue}>
               <span style={verdictChipStyle(verdictText)}>{verdictText}</span>
             </div>
           </div>
+
           {approvalScore !== null && (
-            <div>
+            <div style={summaryChipBox}>
               <div style={summaryChipLabel}>Approval score</div>
               <div style={summaryChipValue}>{approvalScore} percent</div>
             </div>
@@ -919,6 +935,7 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           </a>
         )}
       </div>
+
 
       {/* label for results area */}
       <h2
