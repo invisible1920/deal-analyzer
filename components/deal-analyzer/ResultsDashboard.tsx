@@ -438,7 +438,7 @@ export function ResultsDashboard(props: Props) {
         ]
       : []);
 
-  // compliance analysis (uses derived metrics above)
+  // compliance analysis
 
   const complianceAnalysis = (() => {
     if (!result) {
@@ -539,7 +539,7 @@ export function ResultsDashboard(props: Props) {
     };
   })();
 
-  // delinquency analysis with numeric scoring to keep TS happy
+  // delinquency analysis
 
   const delinquencyAnalysis = (() => {
     const bullets: string[] = [];
@@ -622,6 +622,66 @@ export function ResultsDashboard(props: Props) {
       : "High";
 
   const delinquencyChipLabel = `${delinquencyAnalysis.level} risk`;
+
+  // helper to build sales scripts
+
+  const scriptScenarios = (() => {
+    if (!result || typeof result.payment !== "number") {
+      return [];
+    }
+
+    const payment = result.payment;
+    const term = termWeeks || result?.termInWeeks || null;
+    const dp =
+      typeof result?.downPayment === "number"
+        ? result.downPayment
+        : typeof result?.cashDown === "number"
+        ? result.cashDown
+        : null;
+
+    const nicerPayment = payment.toFixed(2);
+    const nicerTerm = term ? `${term} weeks` : "this term";
+    const nicerDown = dp !== null ? `$${dp.toFixed(0)}` : "your down payment";
+
+    return [
+      {
+        id: "paymentHigh",
+        title: "Customer says the payment feels too high",
+        script: `Intro:
+I completely understand wanting to keep the weekly comfortable. Right now this structure puts you at about $${nicerPayment} each week over ${nicerTerm}.
+
+Middle:
+If we can move a little more money to the front, I can work on lowering that payment for you. For example, if you are able to bump ${nicerDown} just a bit, I can tighten the term and reduce what you pay each week while still keeping you approved on this vehicle.
+
+Close:
+Would you rather keep the smaller down payment and live with the higher weekly payment, or put a little more down today so the payment feels lighter every week you drive it`
+      },
+      {
+        id: "downShort",
+        title: "Customer is light on down payment",
+        script: `Intro:
+I hear you on wanting to keep as much cash in your pocket as possible. The bank is looking at your income, history and the price of the car, and with the current numbers this is the structure that gets you approved.
+
+Middle:
+If we stay at this lower down payment, they are going to keep the payment where it is to cover the risk. If you can bring a little more today, I can either push the payment down or shorten the term so you pay the car off faster and save interest.
+
+Close:
+If we can get a little closer to their target down, I can lock this approval in and make the numbers work the way you want them. How close can you get to that so we can wrap this up`
+      },
+      {
+        id: "longTerm",
+        title: "Customer worries the term is too long",
+        script: `Intro:
+Totally fair question. The way this is set up now, the longer term is what lets us keep the payment around $${nicerPayment} each week so it fits your budget.
+
+Middle:
+If you prefer to be done sooner, we can look at a couple of options. One is to put a little more down today so we can shorten the term. The other is to keep this comfortable payment and you always have the option to pay extra with no penalty, which cuts months off the back of the loan.
+
+Close:
+Would you rather keep the lower payment and pay extra when you can, or put a little more down today so we officially shorten the term on paper`
+      }
+    ];
+  })();
 
   // early return views
 
@@ -1660,31 +1720,101 @@ export function ResultsDashboard(props: Props) {
             <h2 style={{ fontSize: 17, marginBottom: 10 }}>
               Save the deal scripts
             </h2>
-            <p
-              style={{
-                fontSize: 14,
-                lineHeight: 1.6,
-                color: colors.textSecondary
-              }}
-            >
-              Pro can generate quick talking points and scripts based on this
-              structure, such as how to present a higher down payment or longer
-              term without losing the customer.
-            </p>
 
-            {!isPro && (
-              <div style={blurOverlay}>
-                <div style={blurOverlayTitle}>
-                  Turn structure into a close
-                </div>
-                <p style={{ marginBottom: 10 }}>
-                  Unlock Pro to get simple scripts you can use on the lot when a
-                  customer pushes back on payment or down payment.
+            {isPro && scriptScenarios.length > 0 ? (
+              <>
+                <p
+                  style={{
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: colors.textSecondary,
+                    marginBottom: 12
+                  }}
+                >
+                  Use these ready to read scripts when a customer pushes back on
+                  payment, down payment or term. Each script is built off this
+                  exact structure.
                 </p>
-                <a href="/billing" style={btnSecondary}>
-                  Upgrade to Pro
-                </a>
-              </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10
+                  }}
+                >
+                  {scriptScenarios.map((s) => (
+                    <div
+                      key={s.id}
+                      style={{
+                        borderRadius: 12,
+                        border: `1px solid ${colors.border}`,
+                        padding: 10,
+                        background: "rgba(15,23,42,0.02)"
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          marginBottom: 4
+                        }}
+                      >
+                        {s.title}
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 13,
+                          lineHeight: 1.7,
+                          whiteSpace: "pre-wrap",
+                          margin: 0
+                        }}
+                      >
+                        {s.script}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: colors.textSecondary,
+                    marginTop: 10
+                  }}
+                >
+                  Tip: save your favorite lines in your CRM or route book so
+                  new salespeople can reuse what works.
+                </p>
+              </>
+            ) : (
+              <>
+                <p
+                  style={{
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: colors.textSecondary
+                  }}
+                >
+                  Pro can turn this structure into simple talk tracks and
+                  objection handlers you can read right to the customer. See
+                  how to present a stronger down payment, a longer term or the
+                  current structure without losing the customer.
+                </p>
+
+                <div style={blurOverlay}>
+                  <div style={blurOverlayTitle}>
+                    Turn structure into a close
+                  </div>
+                  <p style={{ marginBottom: 10 }}>
+                    Unlock Pro to get lot ready scripts for payment, down
+                    payment and term objections on every deal you run.
+                  </p>
+                  <a href="/billing" style={btnSecondary}>
+                    Upgrade to Pro
+                  </a>
+                </div>
+              </>
             )}
           </div>
         </section>
