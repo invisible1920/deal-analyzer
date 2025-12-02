@@ -1,40 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
-import { useState } from "react";
 
 export type PaymentFrequency = "monthly" | "biweekly" | "weekly";
-
-export function useDealAnalyzer() {
-  const [result, setResult] = useState(null);
-  const [optimized, setOptimized] = useState([]);
-
-  async function analyzeDeal(payload: any) {
-    const res = await fetch("/api/analyzeDeal", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    setResult(data);
-    setOptimized([]); // reset
-  }
-
-  async function optimizeDeal(payload: any) {
-    const res = await fetch("/api/optimizeDeal", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    setOptimized(data.results);
-  }
-
-  return {
-    result,
-    optimized,
-    analyzeDeal,
-    optimizeDeal,
-  };
-}
-
 
 export type FormState = {
   vehicleCost: number;
@@ -61,13 +28,13 @@ const defaultForm: FormState = {
   paymentFrequency: "monthly",
   monthlyIncome: 2400,
   monthsOnJob: 6,
-  repoCount: 0
+  repoCount: 0,
 };
 
 const defaultPolicy = {
   maxPTI: 0.25,
   maxLTV: 1.75,
-  maxTermWeeks: 160
+  maxTermWeeks: 160,
 };
 
 type Usage = {
@@ -105,7 +72,7 @@ export function useDealAnalyzer() {
         const res = await fetch("/api/profile-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: uid })
+          body: JSON.stringify({ userId: uid }),
         });
 
         if (res.ok) {
@@ -123,7 +90,7 @@ export function useDealAnalyzer() {
           ) {
             setUsage({
               dealsThisMonth: json.dealsThisMonth,
-              freeDealsPerMonth: json.freeDealsPerMonth
+              freeDealsPerMonth: json.freeDealsPerMonth,
             });
           }
         } else {
@@ -140,10 +107,10 @@ export function useDealAnalyzer() {
   }, []);
 
   function handleChange(field: keyof FormState, value: string | number) {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       [field]:
-        typeof prev[field] === "number" ? Number(value) : (value as any)
+        typeof prev[field] === "number" ? Number(value) : (value as any),
     }));
   }
 
@@ -158,13 +125,13 @@ export function useDealAnalyzer() {
       const payload = {
         ...formState,
         termWeeks,
-        userId
+        userId,
       };
 
       const res = await fetch("/api/analyzeDeal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       let data: any;
@@ -182,7 +149,7 @@ export function useDealAnalyzer() {
         setError(
           typeof data?.error === "string"
             ? data.error
-            : rawText || `Server error ${res.status}`
+            : rawText || `Server error ${res.status}`,
         );
         return;
       }
@@ -199,7 +166,7 @@ export function useDealAnalyzer() {
       ) {
         setUsage({
           dealsThisMonth: data.dealsThisMonth,
-          freeDealsPerMonth: data.freeDealsPerMonth
+          freeDealsPerMonth: data.freeDealsPerMonth,
         });
       }
     } catch (err: any) {
@@ -224,11 +191,13 @@ export function useDealAnalyzer() {
           ? adj.newSalePrice
           : form.salePrice,
       apr:
-        typeof adj.newApr === "number" && adj.newApr > 0 ? adj.newApr : form.apr,
+        typeof adj.newApr === "number" && adj.newApr > 0
+          ? adj.newApr
+          : form.apr,
       termMonths:
         typeof adj.newTermWeeks === "number" && adj.newTermWeeks > 0
           ? Math.round(adj.newTermWeeks / 4.345)
-          : form.termMonths
+          : form.termMonths,
     };
 
     setForm(nextForm);
@@ -249,6 +218,6 @@ export function useDealAnalyzer() {
     isPro,
     policy,
     authLoaded,
-    userId
+    userId,
   };
 }
