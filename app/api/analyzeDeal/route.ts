@@ -59,7 +59,12 @@ type CoreResult = {
 type ProfitOptimizerVariant = {
   label: string;
   extraProfit: number;
+  payment: number;        // weekly payment used for PTI comparison
+  pti: number | null;     // payment to income ratio for this variant
+  termWeeks: number;      // total term in weeks
+  ltv: number;            // loan to value for this variant
 };
+
 
 type ProfitOptimizerResult = {
   variants: ProfitOptimizerVariant[];
@@ -460,12 +465,16 @@ function buildProfitOptimizer(
 
     const extraProfit = nextCore.totalProfit - baseProfit;
     if (extraProfit > 50) {
-      variants.push({
-        label,
-        extraProfit: Math.round(extraProfit),
-      });
-    }
-  }
+  variants.push({
+    label,
+    extraProfit: Math.round(extraProfit),
+    payment: weeklyPaymentForRisk,
+    pti: nextRisk.paymentToIncome ?? null,
+    termWeeks: nextInput.termWeeks,
+    ltv: nextLtv
+  });
+}
+
 
   // Variant 1: slightly stronger down
   testVariant("Ask for about five hundred more down", {
