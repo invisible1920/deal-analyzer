@@ -1,7 +1,40 @@
 import { useEffect, useState } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { useState } from "react";
 
 export type PaymentFrequency = "monthly" | "biweekly" | "weekly";
+
+export function useDealAnalyzer() {
+  const [result, setResult] = useState(null);
+  const [optimized, setOptimized] = useState([]);
+
+  async function analyzeDeal(payload: any) {
+    const res = await fetch("/api/analyzeDeal", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    setResult(data);
+    setOptimized([]); // reset
+  }
+
+  async function optimizeDeal(payload: any) {
+    const res = await fetch("/api/optimizeDeal", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    setOptimized(data.results);
+  }
+
+  return {
+    result,
+    optimized,
+    analyzeDeal,
+    optimizeDeal,
+  };
+}
+
 
 export type FormState = {
   vehicleCost: number;
