@@ -464,17 +464,18 @@ function buildProfitOptimizer(
     if (!withinPolicy) return;
 
     const extraProfit = nextCore.totalProfit - baseProfit;
-    if (extraProfit > 50) {
-  variants.push({
-    label,
-    extraProfit: Math.round(extraProfit),
-    payment: weeklyPaymentForRisk,
-    pti: nextRisk.paymentToIncome ?? null,
-    termWeeks: nextInput.termWeeks,
-    ltv: nextLtv
-  });
-}
 
+    if (extraProfit > 50) {
+      variants.push({
+        label,
+        extraProfit: Math.round(extraProfit),
+        payment: weeklyPaymentForRisk,
+        pti: nextRisk.paymentToIncome ?? null,
+        termWeeks: nextInput.termWeeks,
+        ltv: nextLtv,
+      });
+    }
+  }
 
   // Variant 1: slightly stronger down
   testVariant("Ask for about five hundred more down", {
@@ -493,6 +494,7 @@ function buildProfitOptimizer(
 
   return { variants };
 }
+
 
 // ============================================================================
 // Main POST Handler
