@@ -1,0 +1,83 @@
+import { NextResponse } from "next/server";
+import { runUnderwritingEngine } from "../../analyzeDeal/engine";
+import { calculateSchedule } from "../../analyzeDeal/schedule";
+
+export async function POST(req) {
+  try {
+    const body = await req.json();
+
+    const {
+      monthly_income,
+      available_down,
+      apr,
+      term_options,
+      max_pti,
+      vehicle_cost_min,
+      vehicle_cost_max
+    } = body;
+
+    if (!monthly_income || !apr || !term_options || !max_pti) {
+      return NextResponse.json(
+        { error: "Required inputs missing" },
+        { status: 400 }
+      );
+    }
+
+    function pti_ok(payment) {
+      const pti_val = payment / monthly_income;
+      return pti_val <= max_pti;
+    }
+
+    let best_structure = null;
+
+    for (let price = vehicle_cost_min; price <= vehicle_cost_max; price += 250) {
+      for (let t of term_options) {
+        const financed = price - available_down;
+        if (financed < 0) continue;
+
+        const schedule = calculateSchedule({
+          amount: financed,
+          apr,
+          term: t
+        });
+
+        const payment = schedule.monthly_payment;
+
+        if (!pti_ok(payment)) continue;
+
+        const deal_result = runUnderwritingEngine({
+          amount: price,
+          down: available_down,
+          apr,
+          term: t,
+          income: monthly_income
+        });
+
+        if (!deal_result || deal_result.verdict === "deny") continue;
+
+        best_structure = {
+          price,
+          financed,
+          payment,
+          term: t,
+          apr,
+          pti: payment / monthly_income,
+          underwriting: deal_result
+        };
+      }
+    }
+
+    if (!best_structure) {
+      return NextResponse.json({ result: null });
+    }
+
+    return NextResponse.json({
+      result: best_structure
+    });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e.message || "server failure" },
+      { status: 500 }
+    );
+  }
+}
