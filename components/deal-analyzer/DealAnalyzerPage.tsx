@@ -1,3 +1,4 @@
+// components/deal-analyzer/DealAnalyzerPage.tsx
 "use client";
 
 import { CSSProperties, useState } from "react";
@@ -34,6 +35,18 @@ export function DealAnalyzerPage() {
   } = useDealAnalyzer();
 
   const [mode, setMode] = useState<"deal" | "affordability">("deal");
+
+  // helper for quick what if scenarios
+  function handleScenarioRun(patch: Partial<FormState>) {
+    const nextForm: FormState = { ...form, ...patch };
+
+    // keep hook state in sync
+    (Object.keys(patch) as (keyof FormState)[]).forEach((field) => {
+      handleChange(field, nextForm[field] as any);
+    });
+
+    void runAnalysis(nextForm);
+  }
 
   // Outer shell for this page
   const outer: CSSProperties = {
@@ -276,6 +289,7 @@ export function DealAnalyzerPage() {
           form={form}
           applySuggestedStructure={applySuggestedStructure}
           planType={planType}
+          onScenarioRun={handleScenarioRun}
         />
       </div>
     </div>
