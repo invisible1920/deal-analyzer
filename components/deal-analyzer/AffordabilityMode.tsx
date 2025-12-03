@@ -42,6 +42,9 @@ type ApiResponse = {
   recommendedDownPayment: number | null;
 };
 
+// simple choices for term, mapped to week counts
+type TermChoice = "78" | "104" | "both";
+
 export function AffordabilityMode(props: Props) {
   const {
     isPro,
@@ -68,9 +71,9 @@ export function AffordabilityMode(props: Props) {
     form.reconCost.toString()
   );
   const [apr, setApr] = useState(defaultApr.toString());
-  const [termOptions, setTermOptions] = useState("78, 104");
   const [paymentFrequency, setPaymentFrequency] =
     useState<PaymentFrequency>(form.paymentFrequency);
+  const [termChoice, setTermChoice] = useState<TermChoice>("104");
   const [targetWeeklyPayment, setTargetWeeklyPayment] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -79,7 +82,6 @@ export function AffordabilityMode(props: Props) {
     useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // If user is not Pro, show simple upsell panel
   if (!isPro) {
     return (
       <div
@@ -96,15 +98,15 @@ export function AffordabilityMode(props: Props) {
           Affordability mode is a Pro feature
         </div>
         <p style={{ margin: 0, color: colors.textSecondary }}>
-          Upgrade to Pro to see the maximum sale price and suggested
-          structure your customer can qualify for based only on their
-          income and down payment.
+          Upgrade to Pro to see the max sale price and structure they can
+          qualify for from income and down payment.
         </p>
       </div>
     );
   }
 
-  // Use the same panel and input styling as DealForm
+  // shared styles
+
   const panel: CSSProperties = {
     background: colors.panel,
     border: `1px solid ${colors.border}`,
@@ -117,6 +119,16 @@ export function AffordabilityMode(props: Props) {
     overflowX: "hidden"
   };
 
+  const sectionTitle: CSSProperties = {
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: ".12em",
+    textTransform: "uppercase",
+    color: colors.textSecondary,
+    marginTop: 16,
+    marginBottom: 8
+  };
+
   const formGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile
@@ -125,8 +137,7 @@ export function AffordabilityMode(props: Props) {
     gap: 16,
     width: "100%",
     maxWidth: "100%",
-    boxSizing: "border-box",
-    marginTop: 16
+    boxSizing: "border-box"
   };
 
   const field: CSSProperties = {
@@ -145,6 +156,11 @@ export function AffordabilityMode(props: Props) {
     textTransform: "uppercase"
   };
 
+  const hintStyle: CSSProperties = {
+    fontSize: 11,
+    color: colors.textSecondary
+  };
+
   const inputStyle: CSSProperties = {
     width: "100%",
     padding: "10px 14px",
@@ -161,6 +177,23 @@ export function AffordabilityMode(props: Props) {
   const selectStyle: CSSProperties = {
     ...inputStyle
   };
+
+  const chipRow: CSSProperties = {
+    display: "inline-flex",
+    gap: 8,
+    flexWrap: "wrap"
+  };
+
+  const chip = (active: boolean): CSSProperties => ({
+    padding: "6px 10px",
+    borderRadius: 999,
+    border: active ? "none" : "1px solid #e5e7eb",
+    background: active ? "#0f172a" : "#ffffff",
+    color: active ? "#f9fafb" : colors.text,
+    fontSize: 12,
+    fontWeight: active ? 600 : 500,
+    cursor: "pointer"
+  });
 
   const runBtn: CSSProperties = {
     padding: "12px 22px",
@@ -184,18 +217,21 @@ export function AffordabilityMode(props: Props) {
     marginTop: 10
   };
 
+  function getTermWeeksOptions(): number[] {
+    if (termChoice === "78") return [78];
+    if (termChoice === "104") return [104];
+    return [78, 104];
+  }
+
   async function handleRun() {
     setError(null);
     setLoading(true);
     setResult(null);
     setRecommendedDown(null);
 
-    const parsedTerms = termOptions
-      .split(",")
-      .map((t) => Number(t.trim()))
-      .filter((n) => !Number.isNaN(n) && n > 0);
+    const termWeeksOptions = getTermWeeksOptions();
 
-    // We hide the price range from the user and just sweep around the current deal
+    // base sale price and sweep range
     const baseSale =
       form.salePrice && form.salePrice > 0
         ? form.salePrice
@@ -219,7 +255,7 @@ export function AffordabilityMode(props: Props) {
           salePriceStep,
           apr: Number(apr),
           paymentFrequency,
-          termWeeksOptions: parsedTerms,
+          termWeeksOptions,
           maxPTIOverride: policy.maxPTI,
           targetWeeklyPayment: targetWeeklyPayment
             ? Number(targetWeeklyPayment)
@@ -276,7 +312,7 @@ export function AffordabilityMode(props: Props) {
     <div style={panel}>
       <div
         style={{
-          fontSize: 15,
+          fontSize: 16,
           fontWeight: 700,
           marginBottom: 4
         }}
@@ -290,11 +326,13 @@ export function AffordabilityMode(props: Props) {
           color: colors.textSecondary
         }}
       >
-        Start from income and available down. We will search around your
-        current sale price and find the highest price that stays in policy
-        and passes underwriting.
+        Start from income and available down. We search around your current
+        sale price and find the highest price that stays inside policy and
+        passes underwriting.
       </p>
 
+      {/* CUSTOMER INFO */}
+      <div style={sectionTitle}>Customer info</div>
       <div style={formGrid}>
         <div style={field}>
           <label style={labelStyle}>Monthly income</label>
@@ -304,6 +342,7 @@ export function AffordabilityMode(props: Props) {
             onChange={(e) => setMonthlyIncome(e.target.value)}
             inputMode="decimal"
           />
+          <span style={hintStyle}>Use take home or what you use in PTI.</span>
         </div>
 
         <div style={field}>
@@ -314,10 +353,15 @@ export function AffordabilityMode(props: Props) {
             onChange={(e) => setAvailableDown(e.target.value)}
             inputMode="decimal"
           />
+          <span style={hintStyle}>Cash they can put down today.</span>
         </div>
+      </div>
 
+      {/* COST IN THE CAR */}
+      <div style={sectionTitle}>Your cost in the car</div>
+      <div style={formGrid}>
         <div style={field}>
-          <label style={labelStyle}>Vehicle cost (your cost)</label>
+          <label style={labelStyle}>Vehicle cost</label>
           <input
             style={inputStyle}
             value={vehicleCost}
@@ -334,8 +378,15 @@ export function AffordabilityMode(props: Props) {
             onChange={(e) => setReconCost(e.target.value)}
             inputMode="decimal"
           />
+          <span style={hintStyle}>
+            What you plan to spend getting it front line ready.
+          </span>
         </div>
+      </div>
 
+      {/* DEAL STRUCTURE */}
+      <div style={sectionTitle}>Deal structure</div>
+      <div style={formGrid}>
         <div style={field}>
           <label style={labelStyle}>APR</label>
           <input
@@ -344,19 +395,6 @@ export function AffordabilityMode(props: Props) {
             onChange={(e) => setApr(e.target.value)}
             inputMode="decimal"
           />
-        </div>
-
-        <div style={field}>
-          <label style={labelStyle}>Term weeks options</label>
-          <input
-            style={inputStyle}
-            value={termOptions}
-            onChange={(e) => setTermOptions(e.target.value)}
-            placeholder="78, 104"
-          />
-          <span style={{ fontSize: 11, color: colors.textSecondary }}>
-            We will test each term you list.
-          </span>
         </div>
 
         <div style={field}>
@@ -375,8 +413,38 @@ export function AffordabilityMode(props: Props) {
         </div>
 
         <div style={field}>
+          <label style={labelStyle}>Term</label>
+          <div style={chipRow}>
+            <button
+              type="button"
+              style={chip(termChoice === "78")}
+              onClick={() => setTermChoice("78")}
+            >
+              78 weeks
+            </button>
+            <button
+              type="button"
+              style={chip(termChoice === "104")}
+              onClick={() => setTermChoice("104")}
+            >
+              104 weeks
+            </button>
+            <button
+              type="button"
+              style={chip(termChoice === "both")}
+              onClick={() => setTermChoice("both")}
+            >
+              Try both
+            </button>
+          </div>
+          <span style={hintStyle}>
+            We will stay under your max term of {policy.maxTermWeeks} weeks.
+          </span>
+        </div>
+
+        <div style={field}>
           <label style={labelStyle}>
-            Target weekly payment (optional)
+            Payment target per week (optional)
           </label>
           <input
             style={inputStyle}
@@ -384,9 +452,9 @@ export function AffordabilityMode(props: Props) {
             onChange={(e) => setTargetWeeklyPayment(e.target.value)}
             inputMode="decimal"
           />
-          <span style={{ fontSize: 11, color: colors.textSecondary }}>
-            If you fill this in we will suggest a down payment that hits
-            this payment on the qualified structure.
+          <span style={hintStyle}>
+            If you fill this in we will suggest a down payment that hits this
+            payment on the qualified structure.
           </span>
         </div>
       </div>
@@ -432,16 +500,20 @@ export function AffordabilityMode(props: Props) {
           >
             Qualified structure
           </div>
-          <div>Sale price {result.salePrice.toFixed(0)}</div>
-          <div>
-            Weekly payment {result.weeklyPayment.toFixed(2)} (
-            {(result.pti * 100).toFixed(1)} percent PTI)
+
+          <div style={{ marginBottom: 4 }}>
+            They can afford about{" "}
+            <strong>{result.salePrice.toFixed(0)}</strong> at about{" "}
+            <strong>{result.weeklyPayment.toFixed(2)} a week</strong> for{" "}
+            <strong>{result.termWeeks} weeks</strong>.
           </div>
+
           <div>
-            Term {result.termWeeks} weeks, LTV{" "}
-            {(result.ltv * 100).toFixed(1)} percent
+            PTI {(result.pti * 100).toFixed(1)} percent, LTV{" "}
+            {(result.ltv * 100).toFixed(1)} percent, total profit{" "}
+            {result.totalProfit.toFixed(0)}.
           </div>
-          <div>Total profit {result.totalProfit.toFixed(0)}</div>
+
           <div style={{ marginTop: 6 }}>
             Underwriting verdict {result.underwriting.verdict}
           </div>
@@ -466,8 +538,8 @@ export function AffordabilityMode(props: Props) {
                 fontSize: 12
               }}
             >
-              Suggested down payment to hit target payment about{" "}
-              {recommendedDown.toFixed(0)}
+              Suggested down payment to hit your target around{" "}
+              {recommendedDown.toFixed(0)}.
             </div>
           )}
 
