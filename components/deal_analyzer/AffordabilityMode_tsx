@@ -1,0 +1,135 @@
+"use client";
+
+import { useState } from "react";
+
+export default function AffordabilityMode(props) {
+  const { isPro, onApplyStructure } = props;
+
+  const [monthly_income, setMonthlyIncome] = useState("");
+  const [available_down, setAvailableDown] = useState("");
+  const [apr, setApr] = useState("24.99");
+  const [max_pti, setMaxPti] = useState("0.18");
+  const [vehicle_cost_min, setVehicleCostMin] = useState("5000");
+  const [vehicle_cost_max, setVehicleCostMax] = useState("22000");
+  const [term_options, setTermOptions] = useState("36,48,60");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  if (!isPro) {
+    return (
+      <div className="p4 text_center text_red800">
+        This feature is available for Pro users only.
+      </div>
+    );
+  }
+
+  async function run() {
+    setLoading(true);
+    setResult(null);
+
+    const terms = term_options
+      .split(",")
+      .map(t => parseInt(t.trim()))
+      .filter(Boolean);
+
+    const res = await fetch("/api/affordability", {
+      method: "POST",
+      body: JSON.stringify({
+        monthly_income: Number(monthly_income),
+        available_down: Number(available_down),
+        apr: Number(apr),
+        term_options: terms,
+        max_pti: Number(max_pti),
+        vehicle_cost_min: Number(vehicle_cost_min),
+        vehicle_cost_max: Number(vehicle_cost_max)
+      })
+    });
+
+    const data = await res.json();
+    setResult(data.result);
+    setLoading(false);
+  }
+
+  function apply_to_main() {
+    if (!result) return;
+    onApplyStructure({
+      amount: result.price,
+      down: Number(available_down),
+      apr: Number(apr),
+      term: result.term
+    });
+  }
+
+  return (
+    <div className="p4 space_y4">
+      <div className="grid grid_cols_2 gap4">
+        <input
+          className="input"
+          placeholder="monthly income"
+          value={monthly_income}
+          onChange={e => setMonthlyIncome(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="available down"
+          value={available_down}
+          onChange={e => setAvailableDown(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="apr"
+          value={apr}
+          onChange={e => setApr(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="max pti"
+          value={max_pti}
+          onChange={e => setMaxPti(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="vehicle cost min"
+          value={vehicle_cost_min}
+          onChange={e => setVehicleCostMin(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="vehicle cost max"
+          value={vehicle_cost_max}
+          onChange={e => setVehicleCostMax(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="term list"
+          value={term_options}
+          onChange={e => setTermOptions(e.target.value)}
+        />
+      </div>
+
+      <button
+        className="btn_primary w_full"
+        onClick={run}
+        disabled={loading}
+      >
+        {loading ? "working..." : "run affordability"}
+      </button>
+
+      {result && (
+        <div className="p4 bg_gray100 rounded">
+          <div>price: {result.price}</div>
+          <div>payment: {result.payment}</div>
+          <div>term: {result.term}</div>
+          <div>pti: {(result.pti * 100).toFixed(1)} percent</div>
+
+          <button
+            className="btn_success w_full mt4"
+            onClick={apply_to_main}
+          >
+            use this structure
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
