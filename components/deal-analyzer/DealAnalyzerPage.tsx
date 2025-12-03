@@ -2,7 +2,7 @@
 
 import { CSSProperties, useState } from "react";
 import { themeColors } from "@/app/theme";
-import { useDealAnalyzer } from "@/hooks/useDealAnalyzer";
+import { useDealAnalyzer, type FormState } from "@/hooks/useDealAnalyzer";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 import { DealForm } from "@/components/deal-analyzer/DealForm";
@@ -217,35 +217,53 @@ export function DealAnalyzerPage() {
           )}
 
           {mode === "affordability" && (
-            <>
-              <AffordabilityMode
-  isPro={isPro}
-  colors={colors}
-  policy={policy}
-  userId={userId}
-  defaultApr={form.apr}
-  form={form}
-  onApplyStructure={(structure) => {
-    // push into main form state
-    handleChange("salePrice", structure.salePrice);
-    handleChange("downPayment", structure.downPayment);
-    handleChange("apr", structure.apr);
-    handleChange(
-      "termMonths",
-      Number(structure.termMonths.toFixed(1))
-    );
-    handleChange("paymentFrequency", structure.paymentFrequency);
+  <>
+    <AffordabilityMode
+      isPro={isPro}
+      colors={colors}
+      policy={policy}
+      userId={userId}
+      defaultApr={form.apr}
+      form={form}
+      onApplyStructure={(structure) => {
+        // build next form state with applied structure
+        const termMonths = Number(structure.termMonths.toFixed(1));
 
-    // flip back to normal deal analyzer
-    setMode("deal");
+        const nextForm: FormState = {
+          ...form,
+          salePrice: structure.salePrice,
+          downPayment: structure.downPayment,
+          apr: structure.apr,
+          termMonths,
+          paymentFrequency: structure.paymentFrequency
+        };
 
-    // run analysis on the applied structure
-    // small timeout lets React commit the state update first
-    setTimeout(() => {
-      runAnalysis();
-    }, 0);
-  }}
-/>
+        // update form state so UI reflects the new structure
+        handleChange("salePrice", nextForm.salePrice);
+        handleChange("downPayment", nextForm.downPayment);
+        handleChange("apr", nextForm.apr);
+        handleChange("termMonths", nextForm.termMonths);
+        handleChange("paymentFrequency", nextForm.paymentFrequency);
+
+        // flip back to the normal deal analyzer tab
+        setMode("deal");
+
+        // run analysis on the applied structure
+        // small timeout lets React commit the state updates first
+        setTimeout(() => {
+          runAnalysis(nextForm);
+        }, 0);
+      }}
+    />
+
+    <UsagePanel
+      planType={planType}
+      usage={usage}
+      colors={colors}
+    />
+  </>
+)}
+
 
 
               <UsagePanel
