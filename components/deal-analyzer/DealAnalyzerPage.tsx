@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 import { themeColors } from "@/app/theme";
 import { useDealAnalyzer } from "@/hooks/useDealAnalyzer";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { DealForm } from "@/components/deal-analyzer/DealForm";
 import { UsagePanel } from "@/components/deal-analyzer/UsagePanel";
 import { ResultsDashboard } from "@/components/deal-analyzer/ResultsDashboard";
+import { AffordabilityMode } from "@/components/deal-analyzer/AffordabilityMode";
 
 export function DealAnalyzerPage() {
   const colors = themeColors.light;
@@ -28,6 +29,9 @@ export function DealAnalyzerPage() {
     authLoaded,
     userId
   } = useDealAnalyzer();
+
+    const [mode, setMode] = useState<"deal" | "affordability">("deal");
+
 
   // Outer shell for this page
   const outer: CSSProperties = {
@@ -94,6 +98,30 @@ export function DealAnalyzerPage() {
     whiteSpace: "nowrap"
   };
 
+    const modeToggle: CSSProperties = {
+    display: "inline-flex",
+    borderRadius: 999,
+    border: "1px solid rgba(148,163,184,0.4)",
+    padding: 4,
+    background: "rgba(15,23,42,0.9)",
+    marginTop: 12,
+    marginBottom: 12,
+  };
+
+  const modeButton = (active: boolean): CSSProperties => ({
+    padding: "6px 12px",
+    borderRadius: 999,
+    border: "none",
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+    background: active
+      ? "rgba(37,99,235,1)"
+      : "transparent",
+    color: active ? "#f9fafb" : colors.textSecondary,
+  });
+
+
   const upgradeBtn: CSSProperties = {
     padding: "10px 20px",
     borderRadius: 999,
@@ -148,20 +176,82 @@ export function DealAnalyzerPage() {
           {policy.maxTermWeeks} weeks.
         </p>
 
-        {/* FORM + USAGE */}
-        <div style={contentGrid}>
-          <DealForm
-            form={form}
-            handleChange={handleChange}
-            runAnalysis={runAnalysis}
-            loading={loading}
-            authLoaded={authLoaded}
-            userId={userId}
-            colors={colors}
-          />
-
-          <UsagePanel planType={planType} usage={usage} colors={colors} />
+                <div style={modeToggle}>
+          <button
+            type="button"
+            style={modeButton(mode === "deal")}
+            onClick={() => setMode("deal")}
+          >
+            Deal analyzer
+          </button>
+          <button
+            type="button"
+            style={modeButton(mode === "affordability")}
+            onClick={() => setMode("affordability")}
+          >
+            Affordability mode
+          </button>
         </div>
+
+
+                {/* FORM + USAGE */}
+        <div style={contentGrid}>
+          {mode === "deal" && (
+            <>
+              <DealForm
+                form={form}
+                handleChange={handleChange}
+                runAnalysis={runAnalysis}
+                loading={loading}
+                authLoaded={authLoaded}
+                userId={userId}
+                colors={colors}
+              />
+
+              <UsagePanel
+                planType={planType}
+                usage={usage}
+                colors={colors}
+              />
+            </>
+          )}
+
+          {mode === "affordability" && (
+            <>
+              <AffordabilityMode
+                isPro={isPro}
+                colors={colors}
+                policy={policy}
+                userId={userId}
+                defaultApr={form.apr}
+                form={form}
+                onApplyStructure={(structure) => {
+                  handleChange("salePrice", structure.salePrice);
+                  handleChange(
+                    "downPayment",
+                    structure.downPayment,
+                  );
+                  handleChange("apr", structure.apr);
+                  handleChange(
+                    "termMonths",
+                    Number(structure.termMonths.toFixed(1)),
+                  );
+                  handleChange(
+                    "paymentFrequency",
+                    structure.paymentFrequency,
+                  );
+                }}
+              />
+
+              <UsagePanel
+                planType={planType}
+                usage={usage}
+                colors={colors}
+              />
+            </>
+          )}
+        </div>
+
 
         {/* RESULTS */}
         <ResultsDashboard
