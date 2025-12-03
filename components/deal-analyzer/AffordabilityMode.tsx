@@ -2,8 +2,8 @@
 
 import { CSSProperties, useState } from "react";
 import type {
-  PaymentFrequency,
   FormState,
+  PaymentFrequency
 } from "@/hooks/useDealAnalyzer";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
@@ -23,7 +23,7 @@ type Props = {
   }) => void;
 };
 
-type ApiBest = {
+type BestStructure = {
   salePrice: number;
   termWeeks: number;
   weeklyPayment: number;
@@ -38,33 +38,35 @@ type ApiBest = {
 
 type ApiResponse = {
   planType: "free" | "pro";
-  bestStructure: ApiBest | null;
+  bestStructure: BestStructure | null;
   recommendedDownPayment: number | null;
 };
 
 export function AffordabilityMode(props: Props) {
-  const { isPro, colors, policy, userId, defaultApr, form, onApplyStructure } =
-    props;
+  const {
+    isPro,
+    colors,
+    policy,
+    userId,
+    defaultApr,
+    form,
+    onApplyStructure
+  } = props;
 
   const isMobile = useIsMobile(768);
 
   const [monthlyIncome, setMonthlyIncome] = useState(
-    form.monthlyIncome.toString(),
+    form.monthlyIncome.toString()
   );
   const [availableDown, setAvailableDown] = useState(
-    form.downPayment.toString(),
+    form.downPayment.toString()
   );
   const [vehicleCost, setVehicleCost] = useState(
-    form.vehicleCost.toString(),
+    form.vehicleCost.toString()
   );
   const [reconCost, setReconCost] = useState(
-    form.reconCost.toString(),
+    form.reconCost.toString()
   );
-  const [saleMin, setSaleMin] = useState(form.salePrice.toString());
-  const [saleMax, setSaleMax] = useState(
-    Math.round(form.salePrice * 1.4).toString(),
-  );
-  const [saleStep, setSaleStep] = useState("500");
   const [apr, setApr] = useState(defaultApr.toString());
   const [termOptions, setTermOptions] = useState("78, 104");
   const [paymentFrequency, setPaymentFrequency] =
@@ -72,26 +74,28 @@ export function AffordabilityMode(props: Props) {
   const [targetWeeklyPayment, setTargetWeeklyPayment] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ApiBest | null>(null);
+  const [result, setResult] = useState<BestStructure | null>(null);
   const [recommendedDown, setRecommendedDown] =
     useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // If user is not Pro, show simple upsell panel
   if (!isPro) {
     return (
       <div
         style={{
           padding: 16,
-          borderRadius: 16,
-          background: "rgba(15,23,42,0.9)",
-          color: "#f9fafb",
-          fontSize: 14,
+          borderRadius: 14,
+          background: colors.panel,
+          border: `1px solid ${colors.border}`,
+          color: colors.text,
+          fontSize: 14
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 4 }}>
           Affordability mode is a Pro feature
         </div>
-        <p style={{ margin: 0, opacity: 0.85 }}>
+        <p style={{ margin: 0, color: colors.textSecondary }}>
           Upgrade to Pro to see the maximum sale price and suggested
           structure your customer can qualify for based only on their
           income and down payment.
@@ -100,71 +104,84 @@ export function AffordabilityMode(props: Props) {
     );
   }
 
-  const shell: CSSProperties = {
-    borderRadius: 16,
-    border: "1px solid rgba(148,163,184,0.22)",
-    background: "rgba(15,23,42,0.96)",
-    padding: 16,
-    color: "#e5e7eb",
+  // Use the same panel and input styling as DealForm
+  const panel: CSSProperties = {
+    background: colors.panel,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 14,
+    padding: 20,
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)",
     width: "100%",
+    maxWidth: "100%",
     boxSizing: "border-box",
+    overflowX: "hidden"
   };
 
-  const grid: CSSProperties = {
+  const formGrid: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
-    gap: 12,
-    marginTop: 12,
-  };
-
-  const label: CSSProperties = {
-    fontSize: 12,
-    fontWeight: 500,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  };
-
-  const input: CSSProperties = {
+    gridTemplateColumns: isMobile
+      ? "minmax(0, 1fr)"
+      : "repeat(2, minmax(0, 1fr))",
+    gap: 16,
     width: "100%",
-    padding: "8px 10px",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    marginTop: 16
+  };
+
+  const field: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6
+  };
+
+  const labelStyle: CSSProperties = {
+    fontSize: 11,
+    marginBottom: 0,
+    display: "block",
+    fontWeight: 600,
+    color: colors.textSecondary,
+    letterSpacing: ".08em",
+    textTransform: "uppercase"
+  };
+
+  const inputStyle: CSSProperties = {
+    width: "100%",
+    padding: "10px 14px",
     borderRadius: 10,
-    border: "1px solid rgba(148,163,184,0.45)",
-    background: "#020617",
-    color: "#e5e7eb",
-    fontSize: 13,
-    boxSizing: "border-box" as const,
+    border: "1px solid #e5e7eb",
+    background: "#ffffff",
+    color: colors.text,
+    fontSize: 14,
+    boxSizing: "border-box",
     outline: "none",
-    fontVariantNumeric: "tabular-nums",
+    fontVariantNumeric: "tabular-nums"
   };
 
-  const select: CSSProperties = {
-    ...input,
+  const selectStyle: CSSProperties = {
+    ...inputStyle
   };
 
-  const runButton: CSSProperties = {
-    padding: "10px 18px",
+  const runBtn: CSSProperties = {
+    padding: "12px 22px",
     borderRadius: 999,
     border: "none",
-    background:
-      "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
+    background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
     color: "white",
     fontWeight: 600,
     letterSpacing: ".04em",
     cursor: loading ? "default" : "pointer",
-    opacity: loading ? 0.7 : 1,
+    opacity: loading ? 0.75 : 1,
     fontSize: 13,
-    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.3)",
+    marginTop: 18,
     width: isMobile ? "100%" : "auto",
-    maxWidth: "100%",
-    boxSizing: "border-box" as const,
-    marginTop: 12,
+    boxSizing: "border-box"
   };
 
-  const applyButton: CSSProperties = {
-    ...runButton,
-    background:
-      "linear-gradient(to right, #22c55e, #16a34a, #22c55e)",
-    marginTop: 10,
+  const applyBtn: CSSProperties = {
+    ...runBtn,
+    background: "linear-gradient(to right, #22c55e, #16a34a, #22c55e)",
+    marginTop: 10
   };
 
   async function handleRun() {
@@ -178,6 +195,16 @@ export function AffordabilityMode(props: Props) {
       .map((t) => Number(t.trim()))
       .filter((n) => !Number.isNaN(n) && n > 0);
 
+    // We hide the price range from the user and just sweep around the current deal
+    const baseSale =
+      form.salePrice && form.salePrice > 0
+        ? form.salePrice
+        : Math.round(Number(vehicleCost || "0") * 1.25);
+
+    const salePriceMin = baseSale;
+    const salePriceMax = Math.round(baseSale * 1.4);
+    const salePriceStep = 250;
+
     try {
       const res = await fetch("/api/affordability", {
         method: "POST",
@@ -187,9 +214,9 @@ export function AffordabilityMode(props: Props) {
           availableDown: Number(availableDown),
           vehicleCost: Number(vehicleCost),
           reconCost: Number(reconCost) || 0,
-          salePriceMin: Number(saleMin),
-          salePriceMax: Number(saleMax),
-          salePriceStep: Number(saleStep) || 500,
+          salePriceMin,
+          salePriceMax,
+          salePriceStep,
           apr: Number(apr),
           paymentFrequency,
           termWeeksOptions: parsedTerms,
@@ -197,18 +224,20 @@ export function AffordabilityMode(props: Props) {
           targetWeeklyPayment: targetWeeklyPayment
             ? Number(targetWeeklyPayment)
             : undefined,
-          userId,
-        }),
+          monthsOnJob: form.monthsOnJob,
+          repoCount: form.repoCount,
+          userId
+        })
       });
 
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as ApiResponse | { error?: string };
 
       if (!res.ok) {
-        setError(
-          typeof data?.error === "string"
+        const msg =
+          "error" in data && typeof data.error === "string"
             ? data.error
-            : `Server error ${res.status}`,
-        );
+            : `Server error ${res.status}`;
+        setError(msg);
         setLoading(false);
         return;
       }
@@ -239,154 +268,132 @@ export function AffordabilityMode(props: Props) {
       downPayment: down,
       apr: Number(apr),
       termMonths,
-      paymentFrequency,
+      paymentFrequency
     });
   }
 
   return (
-    <div style={shell}>
+    <div style={panel}>
       <div
         style={{
-          fontSize: 14,
-          fontWeight: 600,
-          marginBottom: 4,
-          color: "#e5e7eb",
+          fontSize: 15,
+          fontWeight: 700,
+          marginBottom: 4
         }}
       >
         Affordability mode
       </div>
       <p
         style={{
-          fontSize: 12,
+          fontSize: 13,
           margin: 0,
-          color: "rgba(148,163,184,0.9)",
+          color: colors.textSecondary
         }}
       >
-        Start from the customer, not the car. Enter income and down
-        payment and we will find the highest sale price that stays in
-        policy and passes underwriting.
+        Start from income and available down. We will search around your
+        current sale price and find the highest price that stays in policy
+        and passes underwriting.
       </p>
 
-      <div style={grid}>
-        <div>
-          <div style={label}>Monthly income</div>
+      <div style={formGrid}>
+        <div style={field}>
+          <label style={labelStyle}>Monthly income</label>
           <input
-            style={input}
+            style={inputStyle}
             value={monthlyIncome}
             onChange={(e) => setMonthlyIncome(e.target.value)}
             inputMode="decimal"
           />
         </div>
 
-        <div>
-          <div style={label}>Available down payment</div>
+        <div style={field}>
+          <label style={labelStyle}>Available down payment</label>
           <input
-            style={input}
+            style={inputStyle}
             value={availableDown}
             onChange={(e) => setAvailableDown(e.target.value)}
             inputMode="decimal"
           />
         </div>
 
-        <div>
-          <div style={label}>Vehicle cost (your cost)</div>
+        <div style={field}>
+          <label style={labelStyle}>Vehicle cost (your cost)</label>
           <input
-            style={input}
+            style={inputStyle}
             value={vehicleCost}
             onChange={(e) => setVehicleCost(e.target.value)}
             inputMode="decimal"
           />
         </div>
 
-        <div>
-          <div style={label}>Recon cost</div>
+        <div style={field}>
+          <label style={labelStyle}>Recon cost</label>
           <input
-            style={input}
+            style={inputStyle}
             value={reconCost}
             onChange={(e) => setReconCost(e.target.value)}
             inputMode="decimal"
           />
         </div>
 
-        <div>
-          <div style={label}>Sale price minimum</div>
+        <div style={field}>
+          <label style={labelStyle}>APR</label>
           <input
-            style={input}
-            value={saleMin}
-            onChange={(e) => setSaleMin(e.target.value)}
-            inputMode="decimal"
-          />
-        </div>
-
-        <div>
-          <div style={label}>Sale price maximum</div>
-          <input
-            style={input}
-            value={saleMax}
-            onChange={(e) => setSaleMax(e.target.value)}
-            inputMode="decimal"
-          />
-        </div>
-
-        <div>
-          <div style={label}>Sale price step</div>
-          <input
-            style={input}
-            value={saleStep}
-            onChange={(e) => setSaleStep(e.target.value)}
-            inputMode="decimal"
-          />
-        </div>
-
-        <div>
-          <div style={label}>APR</div>
-          <input
-            style={input}
+            style={inputStyle}
             value={apr}
             onChange={(e) => setApr(e.target.value)}
             inputMode="decimal"
           />
         </div>
 
-        <div>
-          <div style={label}>Term weeks options</div>
+        <div style={field}>
+          <label style={labelStyle}>Term weeks options</label>
           <input
-            style={input}
+            style={inputStyle}
             value={termOptions}
             onChange={(e) => setTermOptions(e.target.value)}
             placeholder="78, 104"
           />
+          <span style={{ fontSize: 11, color: colors.textSecondary }}>
+            We will test each term you list.
+          </span>
         </div>
 
-        <div>
-          <div style={label}>Payment frequency</div>
+        <div style={field}>
+          <label style={labelStyle}>Payment frequency</label>
           <select
-            style={select}
+            style={selectStyle}
             value={paymentFrequency}
             onChange={(e) =>
               setPaymentFrequency(e.target.value as PaymentFrequency)
             }
           >
             <option value="weekly">Weekly</option>
-            <option value="biweekly">Every two weeks</option>
+            <option value="biweekly">Every 2 weeks</option>
             <option value="monthly">Monthly</option>
           </select>
         </div>
 
-        <div>
-          <div style={label}>Target weekly payment (optional)</div>
+        <div style={field}>
+          <label style={labelStyle}>
+            Target weekly payment (optional)
+          </label>
           <input
-            style={input}
+            style={inputStyle}
             value={targetWeeklyPayment}
             onChange={(e) => setTargetWeeklyPayment(e.target.value)}
             inputMode="decimal"
           />
+          <span style={{ fontSize: 11, color: colors.textSecondary }}>
+            If you fill this in we will suggest a down payment that hits
+            this payment on the qualified structure.
+          </span>
         </div>
       </div>
 
       <button
         type="button"
-        style={runButton}
+        style={runBtn}
         disabled={loading}
         onClick={handleRun}
       >
@@ -398,7 +405,7 @@ export function AffordabilityMode(props: Props) {
           style={{
             marginTop: 10,
             fontSize: 12,
-            color: "#fecaca",
+            color: "#b91c1c"
           }}
         >
           {error}
@@ -408,19 +415,19 @@ export function AffordabilityMode(props: Props) {
       {result && (
         <div
           style={{
-            marginTop: 14,
-            padding: 12,
+            marginTop: 16,
+            padding: 14,
             borderRadius: 12,
-            background: "rgba(15,23,42,0.9)",
-            border: "1px solid rgba(34,197,94,0.4)",
-            fontSize: 13,
+            background: "#ecfdf3",
+            border: "1px solid #22c55e",
+            color: "#052e16",
+            fontSize: 13
           }}
         >
           <div
             style={{
-              fontWeight: 600,
-              marginBottom: 6,
-              color: "#bbf7d0",
+              fontWeight: 700,
+              marginBottom: 4
             }}
           >
             Qualified structure
@@ -443,7 +450,7 @@ export function AffordabilityMode(props: Props) {
               style={{
                 margin: "6px 0 0",
                 paddingLeft: 18,
-                fontSize: 12,
+                fontSize: 12
               }}
             >
               {result.underwriting.reasons.map((r, idx) => (
@@ -456,8 +463,7 @@ export function AffordabilityMode(props: Props) {
             <div
               style={{
                 marginTop: 8,
-                fontSize: 12,
-                color: "#bfdbfe",
+                fontSize: 12
               }}
             >
               Suggested down payment to hit target payment about{" "}
@@ -467,7 +473,7 @@ export function AffordabilityMode(props: Props) {
 
           <button
             type="button"
-            style={applyButton}
+            style={applyBtn}
             onClick={handleApplyToAnalyzer}
           >
             Apply this structure to the main deal
