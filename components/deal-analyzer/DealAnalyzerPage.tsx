@@ -219,29 +219,34 @@ export function DealAnalyzerPage() {
           {mode === "affordability" && (
             <>
               <AffordabilityMode
-                isPro={isPro}
-                colors={colors}
-                policy={policy}
-                userId={userId}
-                defaultApr={form.apr}
-                form={form}
-                onApplyStructure={(structure) => {
-                  handleChange("salePrice", structure.salePrice);
-                  handleChange(
-                    "downPayment",
-                    structure.downPayment,
-                  );
-                  handleChange("apr", structure.apr);
-                  handleChange(
-                    "termMonths",
-                    Number(structure.termMonths.toFixed(1)),
-                  );
-                  handleChange(
-                    "paymentFrequency",
-                    structure.paymentFrequency,
-                  );
-                }}
-              />
+  isPro={isPro}
+  colors={colors}
+  policy={policy}
+  userId={userId}
+  defaultApr={form.apr}
+  form={form}
+  onApplyStructure={(structure) => {
+    // push into main form state
+    handleChange("salePrice", structure.salePrice);
+    handleChange("downPayment", structure.downPayment);
+    handleChange("apr", structure.apr);
+    handleChange(
+      "termMonths",
+      Number(structure.termMonths.toFixed(1))
+    );
+    handleChange("paymentFrequency", structure.paymentFrequency);
+
+    // flip back to normal deal analyzer
+    setMode("deal");
+
+    // run analysis on the applied structure
+    // small timeout lets React commit the state update first
+    setTimeout(() => {
+      runAnalysis();
+    }, 0);
+  }}
+/>
+
 
               <UsagePanel
                 planType={planType}
