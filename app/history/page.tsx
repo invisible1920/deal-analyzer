@@ -308,3 +308,246 @@ export default function HistoryPage() {
             </div>
 
             <div style={headerRightStyle}>
+              {userId && (
+                <div style={statPillRowStyle}>
+                  <span style={statPillStyle}>
+                    <span
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "999px",
+                        background: totalDeals > 0 ? "#22c55e" : "#6b7280"
+                      }}
+                    />
+                    <span>Deals this account</span>
+                    <span style={{ color: colors.text, fontWeight: 600 }}>
+                      {totalDeals}
+                    </span>
+                  </span>
+                </div>
+              )}
+
+              {userId && deals.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  style={exportButtonStyle}
+                >
+                  <span>Export CSV</span>
+                  <span style={{ fontSize: "10px", opacity: 0.8 }}>▾</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!userId && !loading && (
+            <p
+              style={{
+                color: "#92400e",
+                fontSize: "13px",
+                marginBottom: "12px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 10px",
+                borderRadius: "999px",
+                background: "#fef3c7",
+                border: "1px solid #facc15"
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "12px"
+                }}
+              >
+                You are not logged in. Log in to see your own deal history.
+              </span>
+            </p>
+          )}
+
+          <div style={panelStyle}>
+            {loading && (
+              <p
+                style={{
+                  ...mutedTextStyle,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  fontSize: "13px"
+                }}
+              >
+                <span
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    borderRadius: "999px",
+                    border: "2px solid rgba(148, 163, 184, 0.5)",
+                    borderTopColor: "#2563eb",
+                    animation: "spin 700ms linear infinite"
+                  }}
+                />
+                Loading deals
+              </p>
+            )}
+
+            {error && (
+              <p
+                style={{
+                  color: "#b91c1c",
+                  marginBottom: "8px",
+                  fontSize: "13px"
+                }}
+              >
+                Error: {error}
+              </p>
+            )}
+
+            {!loading && !error && userId && deals.length === 0 && (
+              <div
+                style={{
+                  padding: "14px 12px",
+                  borderRadius: "12px",
+                  border: `1px dashed ${colors.border}`,
+                  background: colors.bg
+                }}
+              >
+                <p style={{ ...mutedTextStyle, marginBottom: "2px" }}>
+                  No deals saved yet.
+                </p>
+                <p style={{ ...mutedTextStyle, fontSize: "12px" }}>
+                  Run a few analyses from the main page and they will appear here.
+                </p>
+              </div>
+            )}
+
+            {!loading && !error && userId && deals.length > 0 && (
+              <div style={tableWrapperStyle}>
+                <table style={tableStyle}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Date</th>
+                      <th style={thStyle}>Income</th>
+                      <th style={thStyle}>Sale</th>
+                      <th style={thStyle}>Down</th>
+                      <th style={thStyle}>Payment</th>
+                      <th style={thStyle}>Profit</th>
+                      <th style={thStyle}>PTI</th>
+                      <th style={thStyle}>LTV</th>
+                      <th style={thStyle}>Verdict</th>
+                      <th style={thStyle}>View</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deals.map(deal => {
+                      const date = new Date(deal.createdAt);
+                      const ptiDisplay =
+                        deal.result.paymentToIncome != null
+                          ? `${(deal.result.paymentToIncome * 100).toFixed(1)} percent`
+                          : "n a";
+                      const ltvPercent =
+                        (deal.result.ltv * 100).toFixed(1) + " percent";
+
+                      const verdict = deal.result.underwritingVerdict || "";
+                      const verdictStyle =
+                        verdictStyles[verdict] ?? verdictStyles.DEFAULT;
+
+                      const combinedRowStyle: CSSProperties = {
+                        ...rowStyle
+                      };
+
+                      return (
+                        <tr
+                          key={deal.id}
+                          style={combinedRowStyle}
+                          onMouseEnter={e => {
+                            Object.assign(
+                              (e.currentTarget as HTMLTableRowElement).style,
+                              rowHoverStyle
+                            );
+                          }}
+                          onMouseLeave={e => {
+                            Object.assign(
+                              (e.currentTarget as HTMLTableRowElement).style,
+                              rowStyle
+                            );
+                          }}
+                        >
+                          <td style={tdStyle}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "2px"
+                              }}
+                            >
+                              <span style={{ fontSize: "13px" }}>
+                                {date.toLocaleDateString()}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  color: colors.textSecondary
+                                }}
+                              >
+                                {date.toLocaleTimeString()}
+                              </span>
+                            </div>
+                          </td>
+                          <td style={tdStyle}>
+                            {deal.input.monthlyIncome
+                              ? formatCurrency(deal.input.monthlyIncome)
+                              : "n a"}
+                          </td>
+                          <td style={tdStyle}>
+                            {formatCurrency(deal.input.salePrice)}
+                          </td>
+                          <td style={tdStyle}>
+                            {formatCurrency(deal.input.downPayment)}
+                          </td>
+                          <td style={tdStyle}>
+                            {formatCurrencyCents(deal.result.payment)}
+                          </td>
+                          <td style={tdStyle}>
+                            {formatCurrencyCents(deal.result.totalProfit)}
+                          </td>
+                          <td style={tdStyle}>{ptiDisplay}</td>
+                          <td style={tdStyle}>{ltvPercent}</td>
+                          <td style={tdStyle}>
+                            <span style={verdictStyle}>
+                              {deal.result.underwritingVerdict}
+                            </span>
+                          </td>
+                          <td style={tdStyle}>
+                            <a href={`/history/${deal.id}`} style={linkStyle}>
+                              <span>Details</span>
+                              <span
+                                style={{
+                                  fontSize: "10px",
+                                  opacity: 0.8
+                                }}
+                              >
+                                {"›"}
+                              </span>
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </PageContainer>
+
+      <style jsx>{`
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
+    </main>
+  );
+}
