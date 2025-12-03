@@ -2,7 +2,10 @@
 
 import { CSSProperties, useState } from "react";
 import { themeColors } from "@/app/theme";
-import { useDealAnalyzer, type FormState } from "@/hooks/useDealAnalyzer";
+import {
+  useDealAnalyzer,
+  type FormState
+} from "@/hooks/useDealAnalyzer";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 import { DealForm } from "@/components/deal-analyzer/DealForm";
@@ -30,8 +33,7 @@ export function DealAnalyzerPage() {
     userId
   } = useDealAnalyzer();
 
-    const [mode, setMode] = useState<"deal" | "affordability">("deal");
-
+  const [mode, setMode] = useState<"deal" | "affordability">("deal");
 
   // Outer shell for this page
   const outer: CSSProperties = {
@@ -98,14 +100,14 @@ export function DealAnalyzerPage() {
     whiteSpace: "nowrap"
   };
 
-    const modeToggle: CSSProperties = {
+  const modeToggle: CSSProperties = {
     display: "inline-flex",
     borderRadius: 999,
     border: "1px solid rgba(148,163,184,0.4)",
     padding: 4,
     background: "rgba(15,23,42,0.9)",
     marginTop: 12,
-    marginBottom: 12,
+    marginBottom: 12
   };
 
   const modeButton = (active: boolean): CSSProperties => ({
@@ -115,12 +117,9 @@ export function DealAnalyzerPage() {
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer",
-    background: active
-      ? "rgba(37,99,235,1)"
-      : "transparent",
-    color: active ? "#f9fafb" : colors.textSecondary,
+    background: active ? "rgba(37,99,235,1)" : "transparent",
+    color: active ? "#f9fafb" : colors.textSecondary
   });
-
 
   const upgradeBtn: CSSProperties = {
     padding: "10px 20px",
@@ -176,7 +175,8 @@ export function DealAnalyzerPage() {
           {policy.maxTermWeeks} weeks.
         </p>
 
-                <div style={modeToggle}>
+        {/* MODE TOGGLE */}
+        <div style={modeToggle}>
           <button
             type="button"
             style={modeButton(mode === "deal")}
@@ -193,10 +193,9 @@ export function DealAnalyzerPage() {
           </button>
         </div>
 
-
-                {/* FORM + USAGE */}
+        {/* FORM + USAGE */}
         <div style={contentGrid}>
-          {mode === "deal" && (
+          {mode === "deal" ? (
             <>
               <DealForm
                 form={form}
@@ -214,57 +213,48 @@ export function DealAnalyzerPage() {
                 colors={colors}
               />
             </>
-          )}
+          ) : (
+            <>
+              <AffordabilityMode
+                isPro={isPro}
+                colors={colors}
+                policy={policy}
+                userId={userId}
+                defaultApr={form.apr}
+                form={form}
+                onApplyStructure={(structure) => {
+                  const termMonths = Number(
+                    structure.termMonths.toFixed(1)
+                  );
 
-          {mode === "affordability" && (
-  <>
-    <AffordabilityMode
-      isPro={isPro}
-      colors={colors}
-      policy={policy}
-      userId={userId}
-      defaultApr={form.apr}
-      form={form}
-      onApplyStructure={(structure) => {
-        // build next form state with applied structure
-        const termMonths = Number(structure.termMonths.toFixed(1));
+                  const nextForm: FormState = {
+                    ...form,
+                    salePrice: structure.salePrice,
+                    downPayment: structure.downPayment,
+                    apr: structure.apr,
+                    termMonths,
+                    paymentFrequency: structure.paymentFrequency
+                  };
 
-        const nextForm: FormState = {
-          ...form,
-          salePrice: structure.salePrice,
-          downPayment: structure.downPayment,
-          apr: structure.apr,
-          termMonths,
-          paymentFrequency: structure.paymentFrequency
-        };
+                  // update main form state
+                  handleChange("salePrice", nextForm.salePrice);
+                  handleChange("downPayment", nextForm.downPayment);
+                  handleChange("apr", nextForm.apr);
+                  handleChange("termMonths", nextForm.termMonths);
+                  handleChange(
+                    "paymentFrequency",
+                    nextForm.paymentFrequency
+                  );
 
-        // update form state so UI reflects the new structure
-        handleChange("salePrice", nextForm.salePrice);
-        handleChange("downPayment", nextForm.downPayment);
-        handleChange("apr", nextForm.apr);
-        handleChange("termMonths", nextForm.termMonths);
-        handleChange("paymentFrequency", nextForm.paymentFrequency);
+                  // flip back to normal deal analyzer
+                  setMode("deal");
 
-        // flip back to the normal deal analyzer tab
-        setMode("deal");
-
-        // run analysis on the applied structure
-        // small timeout lets React commit the state updates first
-        setTimeout(() => {
-          runAnalysis(nextForm);
-        }, 0);
-      }}
-    />
-
-    <UsagePanel
-      planType={planType}
-      usage={usage}
-      colors={colors}
-    />
-  </>
-)}
-
-
+                  // run the analysis on the new structure
+                  setTimeout(() => {
+                    runAnalysis(nextForm);
+                  }, 0);
+                }}
+              />
 
               <UsagePanel
                 planType={planType}
@@ -274,7 +264,6 @@ export function DealAnalyzerPage() {
             </>
           )}
         </div>
-
 
         {/* RESULTS */}
         <ResultsDashboard
