@@ -20,6 +20,7 @@ type Props = {
   form: FormState;
   applySuggestedStructure: () => Promise<void>;
   planType: PlanType;
+  onScenarioRun?: (patch: Partial<FormState>) => void;
 };
 
 export function ResultsDashboard(props: Props) {
@@ -32,14 +33,15 @@ export function ResultsDashboard(props: Props) {
     loading,
     form,
     applySuggestedStructure,
-    planType
+    planType,
+    onScenarioRun
   } = props;
 
   const isMobile = useIsMobile(768);
 
   // shared styles
 
-    const scriptIntro: CSSProperties = {
+  const scriptIntro: CSSProperties = {
     fontSize: 13,
     color: colors.textSecondary,
     marginBottom: 10
@@ -85,7 +87,6 @@ export function ResultsDashboard(props: Props) {
     color: colors.textSecondary,
     marginTop: 10
   };
-
 
   const panel: CSSProperties = {
     background: colors.panel,
@@ -196,7 +197,7 @@ export function ResultsDashboard(props: Props) {
     fontVariantNumeric: "tabular-nums"
   };
 
-    const summaryBar: CSSProperties = {
+  const summaryBar: CSSProperties = {
     marginTop: 24,
     padding: "14px 20px",
     borderRadius: 24,
@@ -249,8 +250,7 @@ export function ResultsDashboard(props: Props) {
     gap: 2
   };
 
-
-    const benchGrid: CSSProperties = {
+  const benchGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile
       ? "minmax(0, 1fr)"
@@ -310,7 +310,6 @@ export function ResultsDashboard(props: Props) {
     background: "#fef9c3",
     color: "#854d0e"
   };
-
 
   const btnSecondary: CSSProperties = {
     padding: "8px 16px",
@@ -551,13 +550,13 @@ export function ResultsDashboard(props: Props) {
 
   const portfolioComparison = result?.portfolioComparison || null;
 
-    const hasPortfolioBenchmark =
+  const hasPortfolioBenchmark =
     !!portfolioComparison &&
     typeof portfolioComparison.ptiDelta === "number" &&
     typeof portfolioComparison.ltvDelta === "number" &&
     typeof portfolioComparison.profitDelta === "number";
 
-    const dealPtiPct =
+  const dealPtiPct =
     result && typeof result.paymentToIncome === "number"
       ? result.paymentToIncome * 100
       : null;
@@ -569,7 +568,6 @@ export function ResultsDashboard(props: Props) {
     result && typeof result.totalProfit === "number"
       ? result.totalProfit
       : null;
-
 
   const portfolioPtiPct =
     dealPtiPct !== null && hasPortfolioBenchmark
@@ -585,7 +583,6 @@ export function ResultsDashboard(props: Props) {
     dealProfit !== null && hasPortfolioBenchmark
       ? dealProfit - portfolioComparison.profitDelta
       : null;
-
 
   const complianceFlags: string[] =
     result?.complianceFlags ||
@@ -781,6 +778,19 @@ export function ResultsDashboard(props: Props) {
 
   const delinquencyChipLabel = `${delinquencyAnalysis.level} risk`;
 
+  // what if helpers
+  function bumpTerm(deltaMonths: number) {
+    if (!onScenarioRun) return;
+    const next = Math.max(6, form.termMonths + deltaMonths);
+    onScenarioRun({ termMonths: next });
+  }
+
+  function bumpDown(delta: number) {
+    if (!onScenarioRun) return;
+    const next = Math.max(0, form.downPayment + delta);
+    onScenarioRun({ downPayment: next });
+  }
+
   // helper to build sales scripts
 
   const scriptScenarios = (() => {
@@ -884,7 +894,7 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
   return (
     <>
       {/* sticky summary bar */}
-            <div style={summaryBar}>
+      <div style={summaryBar}>
         <div style={summaryChipGroup}>
           <div style={summaryChipBox}>
             <div style={summaryChipLabel}>Payment</div>
@@ -936,7 +946,6 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
         )}
       </div>
 
-
       {/* label for results area */}
       <h2
         style={{
@@ -950,6 +959,97 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
       >
         Deal analysis
       </h2>
+
+      {/* quick what if lab */}
+      {onScenarioRun && (
+        <section
+          style={{
+            ...panel,
+            marginTop: 16
+          }}
+        >
+          <h2 style={{ fontSize: 16, marginBottom: 8 }}>Quick what if lab</h2>
+          <p
+            style={{
+              fontSize: 13,
+              color: colors.textSecondary,
+              marginBottom: 10
+            }}
+          >
+            Tap a button to try a slightly different term or down payment and
+            see the new payment and profit instantly.
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8
+            }}
+          >
+            <button
+              type="button"
+              style={btnSecondary}
+              onClick={() => bumpTerm(-3)}
+              disabled={loading}
+            >
+              Shorter term
+            </button>
+            <button
+              type="button"
+              style={btnSecondary}
+              onClick={() => bumpTerm(0)}
+              disabled={loading}
+            >
+              Same term
+            </button>
+            <button
+              type="button"
+              style={btnSecondary}
+              onClick={() => bumpTerm(3)}
+              disabled={loading}
+            >
+              Longer term
+            </button>
+
+            <button
+              type="button"
+              style={btnSecondary}
+              onClick={() => bumpDown(-500)}
+              disabled={loading}
+            >
+              Lower down
+            </button>
+            <button
+              type="button"
+              style={btnSecondary}
+              onClick={() => bumpDown(0)}
+              disabled={loading}
+            >
+              Same down
+            </button>
+            <button
+              type="button"
+              style={btnSecondary}
+              onClick={() => bumpDown(500)}
+              disabled={loading}
+            >
+              Higher down
+            </button>
+          </div>
+
+          <p
+            style={{
+              marginTop: 8,
+              fontSize: 11,
+              color: colors.textSecondary
+            }}
+          >
+            Lab uses your current deal as a base and reruns the analyzer with
+            the tweaks you pick.
+          </p>
+        </section>
+      )}
 
       {/* AI deal opinion above grid */}
       {result.aiExplanation && (
@@ -1816,181 +1916,181 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
         </section>
 
         {/* portfolio benchmarking */}
-<section style={panel}>
-  <div style={lockedPanelInner}>
-    <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-      Portfolio benchmarking
-    </h2>
+        <section style={panel}>
+          <div style={lockedPanelInner}>
+            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+              Portfolio benchmarking
+            </h2>
 
-    {!isPro ? (
-      <>
-        <p
-          style={{
-            fontSize: 14,
-            color: colors.textSecondary,
-            marginBottom: 8
-          }}
-        >
-          Pro compares this deal against your last month of funded deals
-          and shows where PTI, LTV and profit sit against your normal
-          numbers instead of guessing from one structure at a time.
-        </p>
+            {!isPro ? (
+              <>
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: colors.textSecondary,
+                    marginBottom: 8
+                  }}
+                >
+                  Pro compares this deal against your last month of funded deals
+                  and shows where PTI, LTV and profit sit against your normal
+                  numbers instead of guessing from one structure at a time.
+                </p>
 
-        <div style={blurOverlay}>
-          <div style={blurOverlayTitle}>See how this deal stacks up</div>
-          <p style={{ marginBottom: 10 }}>
-            Unlock Pro to see PTI, LTV and profit side by side with your
-            store averages on every deal, so you can tighten the outlier
-            structures before you fund them.
-          </p>
-          <a href="/billing" style={btnSecondary}>
-            Unlock portfolio benchmarking
-          </a>
-        </div>
-      </>
-    ) : hasPortfolioBenchmark ? (
-      <>
-        <p
-          style={{
-            fontSize: 13,
-            color: colors.textSecondary,
-            marginBottom: 6
-          }}
-        >
-          Quick read on how this structure compares to what you usually
-          fund in the store.
-        </p>
+                <div style={blurOverlay}>
+                  <div style={blurOverlayTitle}>
+                    See how this deal stacks up
+                  </div>
+                  <p style={{ marginBottom: 10 }}>
+                    Unlock Pro to see PTI, LTV and profit side by side with your
+                    store averages on every deal, so you can tighten the outlier
+                    structures before you fund them.
+                  </p>
+                  <a href="/billing" style={btnSecondary}>
+                    Unlock portfolio benchmarking
+                  </a>
+                </div>
+              </>
+            ) : hasPortfolioBenchmark ? (
+              <>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: colors.textSecondary,
+                    marginBottom: 6
+                  }}
+                >
+                  Quick read on how this structure compares to what you usually
+                  fund in the store.
+                </p>
 
-        <div style={benchGrid}>
-          {/* PTI tile */}
-          <div style={benchTile}>
-            <div style={benchLabel}>Payment to income</div>
-            <div style={benchCurrent}>
-              {dealPtiPct !== null
-                ? `${dealPtiPct.toFixed(1)} percent`
-                : "N A"}
-            </div>
-            {portfolioPtiPct !== null && (
-              <div style={benchBaseline}>
-                Store average {portfolioPtiPct.toFixed(1)} percent
-              </div>
+                <div style={benchGrid}>
+                  {/* PTI tile */}
+                  <div style={benchTile}>
+                    <div style={benchLabel}>Payment to income</div>
+                    <div style={benchCurrent}>
+                      {dealPtiPct !== null
+                        ? `${dealPtiPct.toFixed(1)} percent`
+                        : "N A"}
+                    </div>
+                    {portfolioPtiPct !== null && (
+                      <div style={benchBaseline}>
+                        Store average {portfolioPtiPct.toFixed(1)} percent
+                      </div>
+                    )}
+                    <div
+                      style={
+                        portfolioComparison.ptiDelta > 0
+                          ? benchTagWarn
+                          : benchTagGood
+                      }
+                    >
+                      {portfolioComparison.ptiDelta > 0
+                        ? `${portfolioComparison.ptiDelta.toFixed(
+                            1
+                          )} points hotter than normal`
+                        : `${Math.abs(
+                            portfolioComparison.ptiDelta
+                          ).toFixed(1)} points softer than normal`}
+                    </div>
+                  </div>
+
+                  {/* LTV tile */}
+                  <div style={benchTile}>
+                    <div style={benchLabel}>LTV</div>
+                    <div style={benchCurrent}>
+                      {dealLtvPct !== null
+                        ? `${dealLtvPct.toFixed(1)} percent`
+                        : "N A"}
+                    </div>
+                    {portfolioLtvPct !== null && (
+                      <div style={benchBaseline}>
+                        Store average {portfolioLtvPct.toFixed(1)} percent
+                      </div>
+                    )}
+                    <div
+                      style={
+                        portfolioComparison.ltvDelta > 0
+                          ? benchTagWarn
+                          : benchTagGood
+                      }
+                    >
+                      {portfolioComparison.ltvDelta > 0
+                        ? `${portfolioComparison.ltvDelta.toFixed(
+                            1
+                          )} points higher than normal`
+                        : `${Math.abs(
+                            portfolioComparison.ltvDelta
+                          ).toFixed(1)} points lower than normal`}
+                    </div>
+                  </div>
+
+                  {/* profit tile */}
+                  <div style={benchTile}>
+                    <div style={benchLabel}>Profit per deal</div>
+                    <div style={benchCurrent}>
+                      {dealProfit !== null ? `$${dealProfit.toFixed(0)}` : "N A"}
+                    </div>
+                    {portfolioProfit !== null && (
+                      <div style={benchBaseline}>
+                        Store average ${portfolioProfit.toFixed(0)}
+                      </div>
+                    )}
+                    <div
+                      style={
+                        portfolioComparison.profitDelta >= 0
+                          ? benchTagGood
+                          : benchTagWarn
+                      }
+                    >
+                      {portfolioComparison.profitDelta >= 0
+                        ? `About $${portfolioComparison.profitDelta.toFixed(
+                            0
+                          )} more profit than average`
+                        : `About $${Math.abs(
+                            portfolioComparison.profitDelta
+                          ).toFixed(0)} less profit than average`}
+                    </div>
+                  </div>
+                </div>
+
+                <p
+                  style={{
+                    marginTop: 10,
+                    fontSize: 12,
+                    color: colors.textSecondary
+                  }}
+                >
+                  Five second read: tighten deals that are hotter on PTI or LTV
+                  than your norm unless profit is carrying the extra risk.
+                </p>
+              </>
+            ) : (
+              <>
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: colors.textSecondary,
+                    marginBottom: 6
+                  }}
+                >
+                  We will start benchmarking once you have at least one month of funded
+                  deals with PTI, LTV and profit captured in the system.
+                </p>
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: colors.textSecondary
+                  }}
+                >
+                  Run and fund a few more deals, then come back to see how new
+                  structures stack up against your real portfolio.
+                </p>
+              </>
             )}
-            <div
-              style={
-                portfolioComparison.ptiDelta > 0
-                  ? benchTagWarn
-                  : benchTagGood
-              }
-            >
-              {portfolioComparison.ptiDelta > 0
-                ? `${portfolioComparison.ptiDelta.toFixed(
-                    1
-                  )} points hotter than normal`
-                : `${Math.abs(
-                    portfolioComparison.ptiDelta
-                  ).toFixed(1)} points softer than normal`}
-            </div>
           </div>
+        </section>
 
-          {/* LTV tile */}
-          <div style={benchTile}>
-            <div style={benchLabel}>LTV</div>
-            <div style={benchCurrent}>
-              {dealLtvPct !== null
-                ? `${dealLtvPct.toFixed(1)} percent`
-                : "N A"}
-            </div>
-            {portfolioLtvPct !== null && (
-              <div style={benchBaseline}>
-                Store average {portfolioLtvPct.toFixed(1)} percent
-              </div>
-            )}
-            <div
-              style={
-                portfolioComparison.ltvDelta > 0
-                  ? benchTagWarn
-                  : benchTagGood
-              }
-            >
-              {portfolioComparison.ltvDelta > 0
-                ? `${portfolioComparison.ltvDelta.toFixed(
-                    1
-                  )} points higher than normal`
-                : `${Math.abs(
-                    portfolioComparison.ltvDelta
-                  ).toFixed(1)} points lower than normal`}
-            </div>
-          </div>
-
-          {/* profit tile */}
-          <div style={benchTile}>
-            <div style={benchLabel}>Profit per deal</div>
-            <div style={benchCurrent}>
-              {dealProfit !== null ? `$${dealProfit.toFixed(0)}` : "N A"}
-            </div>
-            {portfolioProfit !== null && (
-              <div style={benchBaseline}>
-                Store average ${portfolioProfit.toFixed(0)}
-              </div>
-            )}
-            <div
-              style={
-                portfolioComparison.profitDelta >= 0
-                  ? benchTagGood
-                  : benchTagWarn
-              }
-            >
-              {portfolioComparison.profitDelta >= 0
-                ? `About $${portfolioComparison.profitDelta.toFixed(
-                    0
-                  )} more profit than average`
-                : `About $${Math.abs(
-                    portfolioComparison.profitDelta
-                  ).toFixed(0)} less profit than average`}
-            </div>
-          </div>
-        </div>
-
-        <p
-          style={{
-            marginTop: 10,
-            fontSize: 12,
-            color: colors.textSecondary
-          }}
-        >
-          Five second read: tighten deals that are hotter on PTI or LTV
-          than your norm unless profit is carrying the extra risk.
-        </p>
-      </>
-    ) : (
-      <>
-        <p
-          style={{
-            fontSize: 14,
-            color: colors.textSecondary,
-            marginBottom: 6
-          }}
-        >
-          We will start benchmarking once you have at least one month of funded
-          deals with PTI, LTV and profit captured in the system.
-        </p>
-        <p
-          style={{
-            fontSize: 12,
-            color: colors.textSecondary
-          }}
-        >
-          Run and fund a few more deals, then come back to see how new
-          structures stack up against your real portfolio.
-        </p>
-      </>
-    )}
-  </div>
-</section>
-
-
-
-                {/* sales scripts / save the deal help */}
+        {/* sales scripts / save the deal help */}
         <section style={panel}>
           <div style={lockedPanelInner}>
             <h2 style={{ fontSize: 17, marginBottom: 10 }}>
