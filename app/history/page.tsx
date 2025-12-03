@@ -1,9 +1,12 @@
+// app/history/page.tsx
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { themeColors } from "@/app/theme";
 import PageContainer from "@/components/PageContainer";
+
+type PlanType = "free" | "pro" | null;
 
 type SavedDeal = {
   id: string;
@@ -42,6 +45,13 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [planType, setPlanType] = useState<PlanType>(null);
+
+  // filters
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [ptiMax, setPtiMax] = useState("");
+  const [ltvMax, setLtvMax] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -55,17 +65,37 @@ export default function HistoryPage() {
         if (!uid) {
           setDeals([]);
           setLoading(false);
+          setPlanType(null);
           return;
         }
 
-        const res = await fetch(`/api/deals?userId=${encodeURIComponent(uid)}`);
-        if (!res.ok) {
-          const text = await res.text();
-          setError(text || `HTTP ${res.status}`);
-          return;
+        const [dealsRes, planRes] = await Promise.all([
+          fetch(`/api/deals?userId=${encodeURIComponent(uid)}`),
+          fetch("/api/profile-plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: uid })
+          })
+        ]);
+
+        if (!dealsRes.ok) {
+          const text = await dealsRes.text();
+          setError(text || `HTTP ${dealsRes.status}`);
+        } else {
+          const json = await dealsRes.json();
+          setDeals(json.deals || []);
         }
-        const json = await res.json();
-        setDeals(json.deals || []);
+
+        if (planRes.ok) {
+          const planJson = await planRes.json();
+          if (planJson.planType === "pro" || planJson.planType === "free") {
+            setPlanType(planJson.planType);
+          } else {
+            setPlanType("free");
+          }
+        } else {
+          setPlanType("free");
+        }
       } catch (err: any) {
         setError(err?.message || "Failed to load deals");
       } finally {
@@ -105,19 +135,12 @@ export default function HistoryPage() {
     gap: "4px"
   };
 
-  const headerRightStyle: CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    flexWrap: "wrap",
-    justifyContent: "flex-end"
-  };
-
   const statPillRowStyle: CSSProperties = {
     display: "flex",
     gap: "8px",
     fontSize: "11px",
-    flexWrap: "wrap"
+    flexWrap: "wrap",
+    alignItems: "center"
   };
 
   const statPillStyle: CSSProperties = {
@@ -131,31 +154,33 @@ export default function HistoryPage() {
     color: colors.textSecondary
   };
 
-  const exportButtonStyle: CSSProperties = {
-    borderRadius: "999px",
-    border: "none",
-    padding: "6px 12px",
-    fontSize: "12px",
-    fontWeight: 600,
-    cursor: deals.length > 0 ? "pointer" : "default",
-    background: deals.length > 0 ? "#020617" : "#111827",
-    color: "#f9fafb",
-    boxShadow: deals.length > 0
-      ? "0 4px 12px rgba(15, 23, 42, 0.45)"
-      : "none",
-    opacity: deals.length > 0 ? 1 : 0.5,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    whiteSpace: "nowrap"
-  };
-
   const panelStyle: CSSProperties = {
     background: colors.panel,
     border: `1px solid ${colors.border}`,
     borderRadius: "16px",
     padding: "16px",
     boxShadow: "0 14px 32px rgba(15, 23, 42, 0.12)"
+  };
+
+  const filterRowStyle: CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "8px",
+    marginBottom: "12px"
+  };
+
+  const inputStyle: CSSProperties = {
+    borderRadius: "999px",
+    border: `1px solid ${colors.border}`,
+    padding: "6px 10px",
+    fontSize: "12px",
+    background: colors.bg,
+    color: colors.text,
+    minWidth: "120px"
+  };
+
+  const selectStyle: CSSProperties = {
+    ...inputStyle
   };
 
   const tableWrapperStyle: CSSProperties = {
@@ -192,7 +217,7 @@ export default function HistoryPage() {
   };
 
   const rowStyle: CSSProperties = {
-    transition: "background 120ms ease, transform 120ms ease, boxShadow 120ms",
+    transition: "background 120ms ease, transform 120ms ease, box-shadow 120ms",
     cursor: "pointer"
   };
 
@@ -252,6 +277,18 @@ export default function HistoryPage() {
     gap: "4px"
   };
 
+  const exportButtonStyle: CSSProperties = {
+    borderRadius: "999px",
+    padding: "6px 10px",
+    fontSize: "11px",
+    fontWeight: 600,
+    background: "#020617",
+    color: "#f9fafb",
+    border: "none",
+    cursor: userId && planType === "pro" ? "pointer" : "default",
+    opacity: userId && planType === "pro" ? 1 : 0.6
+  };
+
   const mutedTextStyle: CSSProperties = {
     color: colors.textSecondary,
     fontSize: "13px"
@@ -272,14 +309,55 @@ export default function HistoryPage() {
     })}`;
   }
 
+  function getStatusFromVerdict(verdict: string): string {
+    const v = verdict.toUpperCase();
+    if (v === "APPROVE") return "funded";
+    if (v === "COUNTER") return "countered";
+    if (v === "DECLINE" || v === "DECLINED") return "declined";
+    return "pending";
+  }
+
   const totalDeals = deals.length;
 
-  function handleExport() {
-    if (!userId || deals.length === 0) return;
-    window.location.href = `/api/deals/export?userId=${encodeURIComponent(
-      userId
-    )}`;
-  }
+  const filteredDeals = deals.filter((deal) => {
+    const verdict = deal.result.underwritingVerdict || "";
+    const status = getStatusFromVerdict(verdict);
+
+    if (statusFilter !== "all" && status !== statusFilter) return false;
+
+    if (search.trim().length > 0) {
+      const term = search.trim().toLowerCase();
+      const paymentText = deal.result.payment.toFixed(2);
+      const ptiText =
+        deal.result.paymentToIncome != null
+          ? (deal.result.paymentToIncome * 100).toFixed(1)
+          : "";
+      const saleText = deal.input.salePrice.toString();
+
+      if (
+        !paymentText.toLowerCase().includes(term) &&
+        !ptiText.toLowerCase().includes(term) &&
+        !saleText.toLowerCase().includes(term) &&
+        !verdict.toLowerCase().includes(term)
+      ) {
+        return false;
+      }
+    }
+
+    if (ptiMax.trim() !== "" && deal.result.paymentToIncome != null) {
+      const ptiVal = deal.result.paymentToIncome * 100;
+      const max = Number(ptiMax);
+      if (!Number.isNaN(max) && ptiVal > max) return false;
+    }
+
+    if (ltvMax.trim() !== "") {
+      const ltvVal = deal.result.ltv * 100;
+      const max = Number(ltvMax);
+      if (!Number.isNaN(max) && ltvVal > max) return false;
+    }
+
+    return true;
+  });
 
   return (
     <main style={pageStyle}>
@@ -307,37 +385,37 @@ export default function HistoryPage() {
               </p>
             </div>
 
-            <div style={headerRightStyle}>
-              {userId && (
-                <div style={statPillRowStyle}>
-                  <span style={statPillStyle}>
-                    <span
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "999px",
-                        background: totalDeals > 0 ? "#22c55e" : "#6b7280"
-                      }}
-                    />
-                    <span>Deals this account</span>
-                    <span style={{ color: colors.text, fontWeight: 600 }}>
-                      {totalDeals}
-                    </span>
+            {userId && (
+              <div style={statPillRowStyle}>
+                <span style={statPillStyle}>
+                  <span
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "999px",
+                      background: totalDeals > 0 ? "#22c55e" : "#6b7280"
+                    }}
+                  />
+                  <span>Deals this account</span>
+                  <span style={{ color: colors.text, fontWeight: 600 }}>
+                    {totalDeals}
                   </span>
-                </div>
-              )}
+                </span>
 
-              {userId && deals.length > 0 && (
                 <button
                   type="button"
-                  onClick={handleExport}
                   style={exportButtonStyle}
+                  onClick={() => {
+                    if (!userId || planType !== "pro") return;
+                    window.location.href = `/api/deals/export?userId=${encodeURIComponent(
+                      userId
+                    )}`;
+                  }}
                 >
-                  <span>Export CSV</span>
-                  <span style={{ fontSize: "10px", opacity: 0.8 }}>▾</span>
+                  Export CSV (Pro)
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {!userId && !loading && (
@@ -421,121 +499,162 @@ export default function HistoryPage() {
             )}
 
             {!loading && !error && userId && deals.length > 0 && (
-              <div style={tableWrapperStyle}>
-                <table style={tableStyle}>
-                  <thead>
-                    <tr>
-                      <th style={thStyle}>Date</th>
-                      <th style={thStyle}>Income</th>
-                      <th style={thStyle}>Sale</th>
-                      <th style={thStyle}>Down</th>
-                      <th style={thStyle}>Payment</th>
-                      <th style={thStyle}>Profit</th>
-                      <th style={thStyle}>PTI</th>
-                      <th style={thStyle}>LTV</th>
-                      <th style={thStyle}>Verdict</th>
-                      <th style={thStyle}>View</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {deals.map(deal => {
-                      const date = new Date(deal.createdAt);
-                      const ptiDisplay =
-                        deal.result.paymentToIncome != null
-                          ? `${(deal.result.paymentToIncome * 100).toFixed(1)} percent`
-                          : "n a";
-                      const ltvPercent =
-                        (deal.result.ltv * 100).toFixed(1) + " percent";
+              <>
+                {/* filters */}
+                <div style={filterRowStyle}>
+                  <input
+                    type="text"
+                    style={{ ...inputStyle, flex: "1 1 160px" }}
+                    placeholder="Search payment, PTI, verdict or sale price"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <select
+                    style={selectStyle}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="funded">Funded</option>
+                    <option value="countered">Countered</option>
+                    <option value="declined">Declined</option>
+                    <option value="chargeoff">Chargeoff</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                  <input
+                    type="number"
+                    style={inputStyle}
+                    placeholder="Max PTI percent"
+                    value={ptiMax}
+                    onChange={(e) => setPtiMax(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    style={inputStyle}
+                    placeholder="Max LTV percent"
+                    value={ltvMax}
+                    onChange={(e) => setLtvMax(e.target.value)}
+                  />
+                </div>
 
-                      const verdict = deal.result.underwritingVerdict || "";
-                      const verdictStyle =
-                        verdictStyles[verdict] ?? verdictStyles.DEFAULT;
+                <div style={tableWrapperStyle}>
+                  <table style={tableStyle}>
+                    <thead>
+                      <tr>
+                        <th style={thStyle}>Date</th>
+                        <th style={thStyle}>Income</th>
+                        <th style={thStyle}>Sale</th>
+                        <th style={thStyle}>Down</th>
+                        <th style={thStyle}>Payment</th>
+                        <th style={thStyle}>Profit</th>
+                        <th style={thStyle}>PTI</th>
+                        <th style={thStyle}>LTV</th>
+                        <th style={thStyle}>Status</th>
+                        <th style={thStyle}>View</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredDeals.map((deal) => {
+                        const date = new Date(deal.createdAt);
+                        const ptiDisplay =
+                          deal.result.paymentToIncome != null
+                            ? `${(deal.result.paymentToIncome * 100).toFixed(
+                                1
+                              )} percent`
+                            : "n a";
+                        const ltvPercent =
+                          (deal.result.ltv * 100).toFixed(1) + " percent";
 
-                      const combinedRowStyle: CSSProperties = {
-                        ...rowStyle
-                      };
+                        const verdict = deal.result.underwritingVerdict || "";
+                        const verdictStyle =
+                          verdictStyles[verdict] ?? verdictStyles.DEFAULT;
 
-                      return (
-                        <tr
-                          key={deal.id}
-                          style={combinedRowStyle}
-                          onMouseEnter={e => {
-                            Object.assign(
-                              (e.currentTarget as HTMLTableRowElement).style,
-                              rowHoverStyle
-                            );
-                          }}
-                          onMouseLeave={e => {
-                            Object.assign(
-                              (e.currentTarget as HTMLTableRowElement).style,
-                              rowStyle
-                            );
-                          }}
-                        >
-                          <td style={tdStyle}>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "2px"
-                              }}
-                            >
-                              <span style={{ fontSize: "13px" }}>
-                                {date.toLocaleDateString()}
-                              </span>
-                              <span
+                        const combinedRowStyle: CSSProperties = {
+                          ...rowStyle
+                        };
+
+                        return (
+                          <tr
+                            key={deal.id}
+                            style={combinedRowStyle}
+                            onMouseEnter={(e) => {
+                              Object.assign(
+                                (e.currentTarget as HTMLTableRowElement).style,
+                                rowHoverStyle
+                              );
+                            }}
+                            onMouseLeave={(e) => {
+                              Object.assign(
+                                (e.currentTarget as HTMLTableRowElement).style,
+                                rowStyle
+                              );
+                            }}
+                          >
+                            <td style={tdStyle}>
+                              <div
                                 style={{
-                                  fontSize: "11px",
-                                  color: colors.textSecondary
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "2px"
                                 }}
                               >
-                                {date.toLocaleTimeString()}
+                                <span style={{ fontSize: "13px" }}>
+                                  {date.toLocaleDateString()}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: "11px",
+                                    color: colors.textSecondary
+                                  }}
+                                >
+                                  {date.toLocaleTimeString()}
+                                </span>
+                              </div>
+                            </td>
+                            <td style={tdStyle}>
+                              {deal.input.monthlyIncome
+                                ? formatCurrency(deal.input.monthlyIncome)
+                                : "n a"}
+                            </td>
+                            <td style={tdStyle}>
+                              {formatCurrency(deal.input.salePrice)}
+                            </td>
+                            <td style={tdStyle}>
+                              {formatCurrency(deal.input.downPayment)}
+                            </td>
+                            <td style={tdStyle}>
+                              {formatCurrencyCents(deal.result.payment)}
+                            </td>
+                            <td style={tdStyle}>
+                              {formatCurrencyCents(deal.result.totalProfit)}
+                            </td>
+                            <td style={tdStyle}>{ptiDisplay}</td>
+                            <td style={tdStyle}>{ltvPercent}</td>
+                            <td style={tdStyle}>
+                              <span style={verdictStyle}>
+                                {deal.result.underwritingVerdict}
                               </span>
-                            </div>
-                          </td>
-                          <td style={tdStyle}>
-                            {deal.input.monthlyIncome
-                              ? formatCurrency(deal.input.monthlyIncome)
-                              : "n a"}
-                          </td>
-                          <td style={tdStyle}>
-                            {formatCurrency(deal.input.salePrice)}
-                          </td>
-                          <td style={tdStyle}>
-                            {formatCurrency(deal.input.downPayment)}
-                          </td>
-                          <td style={tdStyle}>
-                            {formatCurrencyCents(deal.result.payment)}
-                          </td>
-                          <td style={tdStyle}>
-                            {formatCurrencyCents(deal.result.totalProfit)}
-                          </td>
-                          <td style={tdStyle}>{ptiDisplay}</td>
-                          <td style={tdStyle}>{ltvPercent}</td>
-                          <td style={tdStyle}>
-                            <span style={verdictStyle}>
-                              {deal.result.underwritingVerdict}
-                            </span>
-                          </td>
-                          <td style={tdStyle}>
-                            <a href={`/history/${deal.id}`} style={linkStyle}>
-                              <span>Details</span>
-                              <span
-                                style={{
-                                  fontSize: "10px",
-                                  opacity: 0.8
-                                }}
-                              >
-                                {"›"}
-                              </span>
-                            </a>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td style={tdStyle}>
+                              <a href={`/history/${deal.id}`} style={linkStyle}>
+                                <span>Details</span>
+                                <span
+                                  style={{
+                                    fontSize: "10px",
+                                    opacity: 0.8
+                                  }}
+                                >
+                                  {"›"}
+                                </span>
+                              </a>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>
