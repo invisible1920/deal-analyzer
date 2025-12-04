@@ -21,7 +21,10 @@ type Props = {
   applySuggestedStructure: () => Promise<void>;
   planType: PlanType;
   onScenarioRun?: (patch: Partial<FormState>) => void;
+  onSaveScenario?: (resultForSave: any, formForSave: FormState) => void;
+  onOpenCompare?: () => void;
 };
+
 
 export function ResultsDashboard(props: Props) {
   const {
@@ -34,8 +37,11 @@ export function ResultsDashboard(props: Props) {
     form,
     applySuggestedStructure,
     planType,
-    onScenarioRun
+    onScenarioRun,
+    onSaveScenario,
+    onOpenCompare
   } = props;
+
 
   const isMobile = useIsMobile(768);
 
@@ -242,13 +248,40 @@ export function ResultsDashboard(props: Props) {
     width: "100%"
   };
 
-  const summaryChipBox: CSSProperties = {
+    const summaryChipBox: CSSProperties = {
     minWidth: isMobile ? "48%" : 140,
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",
     gap: 2
   };
+
+  const scenarioBar: CSSProperties = {
+    marginTop: 12,
+    marginBottom: 12,
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    alignItems: "center"
+  };
+
+  const scenarioBtn: CSSProperties = {
+    padding: "6px 10px",
+    borderRadius: 999,
+    border: `1px solid ${colors.border}`,
+    background: "rgba(15,23,42,0.9)",
+    color: "#e5e7eb",
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: loading ? "default" : "pointer",
+    opacity: loading ? 0.6 : 1,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center"
+  };
+
+  const benchGrid: CSSProperties = {
+
 
   const benchGrid: CSSProperties = {
     display: "grid",
@@ -945,6 +978,42 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           </a>
         )}
       </div>
+
+            {/* scenario tools */}
+      {isPro && (onSaveScenario || onOpenCompare) && (
+        <div style={scenarioBar}>
+          {onSaveScenario && (
+            <button
+              type="button"
+              style={scenarioBtn}
+              disabled={loading}
+              onClick={() => {
+                if (!loading) {
+                  onSaveScenario(result, form);
+                }
+              }}
+            >
+              Save this scenario
+            </button>
+          )}
+
+          {onOpenCompare && (
+            <button
+              type="button"
+              style={scenarioBtn}
+              disabled={loading}
+              onClick={() => {
+                if (!loading) {
+                  onOpenCompare();
+                }
+              }}
+            >
+              Compare saved scenarios
+            </button>
+          )}
+        </div>
+      )}
+
 
       {/* label for results area */}
       <h2
