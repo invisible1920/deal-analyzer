@@ -8,10 +8,9 @@ import {
   type FormState
 } from "@/hooks/useDealAnalyzer";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useState } from "react";
+
 import type { SavedScenario } from "./scenarioTypes";
 import { ScenarioCompareDrawer } from "./ScenarioCompareDrawer";
-
 
 import { DealForm } from "@/components/deal-analyzer/DealForm";
 import { UsagePanel } from "@/components/deal-analyzer/UsagePanel";
@@ -40,6 +39,9 @@ export function DealAnalyzerPage() {
 
   const [mode, setMode] = useState<"deal" | "affordability">("deal");
 
+  const [scenarios, setScenarios] = useState<SavedScenario[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
+
   // helper for quick what if scenarios
   function handleScenarioRun(patch: Partial<FormState>) {
     const nextForm: FormState = { ...form, ...patch };
@@ -50,6 +52,37 @@ export function DealAnalyzerPage() {
     });
 
     void runAnalysis(nextForm);
+  }
+
+  function handleSaveScenario(resultForSave: any, formForSave: FormState) {
+    setScenarios((prev) => {
+      const label =
+        prev.length === 0 ? "Current structure" : `Option ${prev.length + 1}`;
+
+      const scenario: SavedScenario = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        label,
+        result: resultForSave,
+        form: formForSave,
+        createdAt: new Date().toISOString(),
+        isBase: prev.length === 0
+      };
+
+      const next = [...prev, scenario];
+      // cap at three scenarios for readability
+      return next.slice(0, 3);
+    });
+  }
+
+  function handleOpenCompare() {
+    if (!result) return;
+
+    // seed with current deal if empty
+    if (scenarios.length === 0) {
+      handleSaveScenario(result, form);
+    }
+
+    setCompareOpen(true);
   }
 
   // Outer shell for this page
@@ -187,8 +220,8 @@ export function DealAnalyzerPage() {
             color: colors.textSecondary
           }}
         >
-          Policy in use max LTV {(policy.maxLTV * 100).toFixed(0)} percent, max PTI{" "}
-          {(policy.maxPTI * 100).toFixed(0)} percent, max term{" "}
+          Policy in use max LTV {(policy.maxLTV * 100).toFixed(0)} percent, max
+          PTI {(policy.maxPTI * 100).toFixed(0)} percent, max term{" "}
           {policy.maxTermWeeks} weeks.
         </p>
 
@@ -294,6 +327,15 @@ export function DealAnalyzerPage() {
           applySuggestedStructure={applySuggestedStructure}
           planType={planType}
           onScenarioRun={handleScenarioRun}
+          onSaveScenario={isPro ? handleSaveScenario : undefined}
+          onOpenCompare={isPro ? handleOpenCompare : undefined}
+        />
+
+        <ScenarioCompareDrawer
+          open={compareOpen}
+          onClose={() => setCompareOpen(false)}
+          scenarios={scenarios}
+          colors={colors}
         />
       </div>
     </div>
