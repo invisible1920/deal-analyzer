@@ -280,20 +280,7 @@ export function ResultsDashboard(props: Props) {
     justifyContent: "center"
   };
 
-  const benchGrid: CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile
-      ? "minmax(0, 1fr)"
-      : "repeat(3, minmax(0, 1fr))",
-    gap: 12,
-    marginTop: 8
-  };
-
-  const benchTile: CSSProperties = {
-
-
-
-  const benchGrid: CSSProperties = {
+    const benchGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile
       ? "minmax(0, 1fr)"
@@ -309,6 +296,7 @@ export function ResultsDashboard(props: Props) {
     background: "rgba(15,23,42,0.02)",
     fontSize: 12
   };
+
 
   const benchLabel: CSSProperties = {
     fontSize: 11,
