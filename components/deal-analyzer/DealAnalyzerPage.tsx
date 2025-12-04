@@ -8,6 +8,10 @@ import {
   type FormState
 } from "@/hooks/useDealAnalyzer";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useState } from "react";
+import type { SavedScenario } from "./scenarioTypes";
+import { ScenarioCompareDrawer } from "./ScenarioCompareDrawer";
+
 
 import { DealForm } from "@/components/deal-analyzer/DealForm";
 import { UsagePanel } from "@/components/deal-analyzer/UsagePanel";
