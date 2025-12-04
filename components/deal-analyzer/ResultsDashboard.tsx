@@ -240,7 +240,7 @@ export function ResultsDashboard(props: Props) {
     fontVariantNumeric: "tabular-nums"
   };
 
-  const summaryChipGroup: CSSProperties = {
+    const summaryChipGroup: CSSProperties = {
     display: "flex",
     flexWrap: "wrap",
     rowGap: 10,
@@ -248,7 +248,7 @@ export function ResultsDashboard(props: Props) {
     width: "100%"
   };
 
-    const summaryChipBox: CSSProperties = {
+  const summaryChipBox: CSSProperties = {
     minWidth: isMobile ? "48%" : 140,
     display: "flex",
     flexDirection: "column",
@@ -281,6 +281,16 @@ export function ResultsDashboard(props: Props) {
   };
 
   const benchGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile
+      ? "minmax(0, 1fr)"
+      : "repeat(3, minmax(0, 1fr))",
+    gap: 12,
+    marginTop: 8
+  };
+
+  const benchTile: CSSProperties = {
+
 
 
   const benchGrid: CSSProperties = {
