@@ -126,6 +126,30 @@ export default function TopNav() {
     fontSize: "14px"
   };
 
+  const isCurrentPath = (href: string) => pathname === href;
+
+  const getPrimaryLinkStyle = (href: string): CSSProperties => {
+    if (isCurrentPath(href)) {
+      return {
+        ...linkStyle,
+        color: "#ffffff",
+        fontWeight: 600
+      };
+    }
+    return linkStyle;
+  };
+
+  const getSecondaryLinkStyle = (href: string): CSSProperties => {
+    if (isCurrentPath(href)) {
+      return {
+        ...secondaryLinkStyle,
+        color: "#ffffff",
+        fontWeight: 600
+      };
+    }
+    return secondaryLinkStyle;
+  };
+
   // mobile layout
   if (isMobile) {
     return (
@@ -144,19 +168,30 @@ export default function TopNav() {
 
         {menuOpen && (
           <div style={mobileMenuStyle}>
-            <Link href="/" style={linkStyle} onClick={() => setMenuOpen(false)}>
+            <Link
+              href="/"
+              style={getPrimaryLinkStyle("/")}
+              onClick={() => setMenuOpen(false)}
+            >
               Analyzer
             </Link>
             <Link
+              href="/market-pricing"
+              style={getPrimaryLinkStyle("/market-pricing")}
+              onClick={() => setMenuOpen(false)}
+            >
+              Market pricing and LTV
+            </Link>
+            <Link
               href="/history"
-              style={secondaryLinkStyle}
+              style={getSecondaryLinkStyle("/history")}
               onClick={() => setMenuOpen(false)}
             >
               History
             </Link>
             <Link
               href="/settings"
-              style={secondaryLinkStyle}
+              style={getSecondaryLinkStyle("/settings")}
               onClick={() => setMenuOpen(false)}
             >
               Settings
@@ -167,7 +202,13 @@ export default function TopNav() {
                 Logging out...
               </span>
             ) : user ? (
-              <div style={{ ...userBoxStyle, flexDirection: "column", alignItems: "flex-start" }}>
+              <div
+                style={{
+                  ...userBoxStyle,
+                  flexDirection: "column",
+                  alignItems: "flex-start"
+                }}
+              >
                 <span style={{ fontSize: "12px", wordBreak: "break-all" }}>
                   {user.email}
                 </span>
@@ -196,17 +237,31 @@ export default function TopNav() {
 
   // desktop layout
   return (
-    <nav style={{ ...navStyle, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <nav
+      style={{
+        ...navStyle,
+        padding: "12px 24px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between"
+      }}
+    >
       <div style={titleStyle}>BHPH Deal Analyzer</div>
 
       <div style={desktopLinksStyle}>
-        <Link href="/" style={linkStyle}>
+        <Link href="/" style={getPrimaryLinkStyle("/")}>
           Analyzer
         </Link>
-        <Link href="/history" style={secondaryLinkStyle}>
+        <Link
+          href="/market-pricing"
+          style={getPrimaryLinkStyle("/market-pricing")}
+        >
+          Market pricing and LTV
+        </Link>
+        <Link href="/history" style={getSecondaryLinkStyle("/history")}>
           History
         </Link>
-        <Link href="/settings" style={secondaryLinkStyle}>
+        <Link href="/settings" style={getSecondaryLinkStyle("/settings")}>
           Settings
         </Link>
 
