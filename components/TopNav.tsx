@@ -14,7 +14,6 @@ export default function TopNav() {
   const [isMobile, setIsMobile] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // responsive breakpoint
   useEffect(() => {
     const handleResize = () => {
       if (typeof window !== "undefined") {
@@ -30,7 +29,6 @@ export default function TopNav() {
   async function handleLogout() {
     try {
       setLoading(true);
-
       await supabaseClient.auth.signOut();
       setUser(null);
       setMenuOpen(false);
@@ -47,32 +45,31 @@ export default function TopNav() {
   }, [user, pathname]);
 
   const navStyle: CSSProperties = {
-    maxWidth: "100%",
     width: "100%",
-    margin: "0 auto",
-    padding: "10px 16px",
+    padding: "12px 24px",
     boxSizing: "border-box",
-    overflowX: "hidden",
-    backgroundColor: "transparent"
+    backgroundColor: "transparent",
   };
 
   const titleStyle: CSSProperties = {
     fontWeight: 700,
     fontSize: isMobile ? "15px" : "16px",
     whiteSpace: "nowrap",
-    color: "#f9fafb"
+    color: "#f9fafb",
   };
 
   const linkStyle: CSSProperties = {
     color: "#e5e7eb",
     textDecoration: "none",
-    lineHeight: 1.4
+    lineHeight: 1.4,
+    whiteSpace: "nowrap",
   };
 
   const secondaryLinkStyle: CSSProperties = {
     color: "#9ca3af",
     textDecoration: "none",
-    lineHeight: 1.4
+    lineHeight: 1.4,
+    whiteSpace: "nowrap",
   };
 
   const userBoxStyle: CSSProperties = {
@@ -80,7 +77,15 @@ export default function TopNav() {
     alignItems: "center",
     gap: "8px",
     fontSize: "13px",
-    color: "#9ca3af"
+    color: "#9ca3af",
+    whiteSpace: "nowrap",
+  };
+
+  const emailStyle: CSSProperties = {
+    maxWidth: 260,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   };
 
   const logoutButtonStyle: CSSProperties = {
@@ -89,21 +94,28 @@ export default function TopNav() {
     color: "#f97316",
     cursor: "pointer",
     fontSize: "13px",
-    padding: 0
+    padding: 0,
+  };
+
+  const leftSectionStyle: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "24px",
+    minWidth: 0,
   };
 
   const desktopLinksStyle: CSSProperties = {
     display: "flex",
     gap: "16px",
     fontSize: "14px",
-    alignItems: "center"
+    alignItems: "center",
   };
 
   const mobileTopRowStyle: CSSProperties = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "8px"
+    gap: "8px",
   };
 
   const mobileMenuButtonStyle: CSSProperties = {
@@ -113,7 +125,7 @@ export default function TopNav() {
     fontSize: "22px",
     cursor: "pointer",
     padding: 4,
-    lineHeight: 1
+    lineHeight: 1,
   };
 
   const mobileMenuStyle: CSSProperties = {
@@ -123,37 +135,25 @@ export default function TopNav() {
     display: "flex",
     flexDirection: "column",
     gap: 8,
-    fontSize: "14px"
+    fontSize: "14px",
   };
 
   const isCurrentPath = (href: string) => pathname === href;
 
-  const getPrimaryLinkStyle = (href: string): CSSProperties => {
-    if (isCurrentPath(href)) {
-      return {
-        ...linkStyle,
-        color: "#ffffff",
-        fontWeight: 600
-      };
-    }
-    return linkStyle;
-  };
+  const getPrimaryLinkStyle = (href: string): CSSProperties =>
+    isCurrentPath(href)
+      ? { ...linkStyle, color: "#ffffff", fontWeight: 600 }
+      : linkStyle;
 
-  const getSecondaryLinkStyle = (href: string): CSSProperties => {
-    if (isCurrentPath(href)) {
-      return {
-        ...secondaryLinkStyle,
-        color: "#ffffff",
-        fontWeight: 600
-      };
-    }
-    return secondaryLinkStyle;
-  };
+  const getSecondaryLinkStyle = (href: string): CSSProperties =>
+    isCurrentPath(href)
+      ? { ...secondaryLinkStyle, color: "#ffffff", fontWeight: 600 }
+      : secondaryLinkStyle;
 
   // mobile layout
   if (isMobile) {
     return (
-      <nav style={navStyle}>
+      <nav style={{ ...navStyle, padding: "10px 16px" }}>
         <div style={mobileTopRowStyle}>
           <div style={titleStyle}>BHPH Deal Analyzer</div>
           <button
@@ -206,7 +206,8 @@ export default function TopNav() {
                 style={{
                   ...userBoxStyle,
                   flexDirection: "column",
-                  alignItems: "flex-start"
+                  alignItems: "flex-start",
+                  whiteSpace: "normal",
                 }}
               >
                 <span style={{ fontSize: "12px", wordBreak: "break-all" }}>
@@ -240,52 +241,52 @@ export default function TopNav() {
     <nav
       style={{
         ...navStyle,
-        padding: "12px 24px",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between"
+        justifyContent: "space-between",
       }}
     >
-      <div style={titleStyle}>BHPH Deal Analyzer</div>
-
-      <div style={desktopLinksStyle}>
-        <Link href="/" style={getPrimaryLinkStyle("/")}>
-          Analyzer
-        </Link>
-        <Link
-          href="/market-pricing"
-          style={getPrimaryLinkStyle("/market-pricing")}
-        >
-          Market pricing and LTV
-        </Link>
-        <Link href="/history" style={getSecondaryLinkStyle("/history")}>
-          History
-        </Link>
-        <Link href="/settings" style={getSecondaryLinkStyle("/settings")}>
-          Settings
-        </Link>
-
-        {loading ? (
-          <span style={{ color: "#4b5563", fontSize: "12px" }}>
-            Logging out...
-          </span>
-        ) : user ? (
-          <div style={userBoxStyle}>
-            <span>{user.email}</span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              style={logoutButtonStyle}
-            >
-              Logout
-            </button>
-          </div>
-        ) : (
-          <Link href="/login" style={secondaryLinkStyle}>
-            Login
+      <div style={leftSectionStyle}>
+        <div style={titleStyle}>BHPH Deal Analyzer</div>
+        <div style={desktopLinksStyle}>
+          <Link href="/" style={getPrimaryLinkStyle("/")}>
+            Analyzer
           </Link>
-        )}
+          <Link
+            href="/market-pricing"
+            style={getPrimaryLinkStyle("/market-pricing")}
+          >
+            Market pricing and LTV
+          </Link>
+          <Link href="/history" style={getSecondaryLinkStyle("/history")}>
+            History
+          </Link>
+          <Link href="/settings" style={getSecondaryLinkStyle("/settings")}>
+            Settings
+          </Link>
+        </div>
       </div>
+
+      {loading ? (
+        <span style={{ color: "#4b5563", fontSize: "12px" }}>
+          Logging out...
+        </span>
+      ) : user ? (
+        <div style={userBoxStyle}>
+          <span style={emailStyle}>{user.email}</span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={logoutButtonStyle}
+          >
+            Logout
+          </button>
+        </div>
+      ) : (
+        <Link href="/login" style={secondaryLinkStyle}>
+          Login
+        </Link>
+      )}
     </nav>
   );
 }
