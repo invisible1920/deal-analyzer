@@ -31,12 +31,17 @@ export async function GET(req: Request) {
   // 1) Years: build full range from min to max
   const yearsRes = await carQueryFetch({ cmd: "getYears" });
   const minYear = parseInt(yearsRes.Years.min_year, 10);
-  const maxYear = parseInt(yearsRes.Years.max_year, 10);
+const apiMaxYear = parseInt(yearsRes.Years.max_year, 10);
 
-  const years: string[] = [];
-  for (let y = maxYear; y >= minYear; y -= 1) {
-    years.push(String(y));
-  }
+// Hack: extend to the current year
+const currentYear = new Date().getFullYear();
+const maxYear = Math.max(apiMaxYear, currentYear);
+
+const years: string[] = [];
+for (let y = maxYear; y >= minYear; y -= 1) {
+  years.push(String(y));
+}
+
 
   // Defaults
   let makes: { id: string; name: string }[] = [];
