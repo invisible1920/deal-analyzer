@@ -16,8 +16,8 @@ type VehicleInputsProps = {
 };
 
 type MakeOption = {
-  id: string;   // ford
-  name: string; // Ford
+  id: string;   // e.g. "ford"
+  name: string; // e.g. "Ford"
 };
 
 type OptionsResponse = {
@@ -67,24 +67,26 @@ export function VehicleInputs({
 
     const data: OptionsResponse = await res.json();
 
-    // Always update years so they stay stable
+    // Always update years
     setYears(data.years || []);
 
-    // Only update the parts related to this level
     if (params.year && !params.makeId && !params.model) {
+      // after year change
       setMakes(data.makes || []);
       setModels([]);
       setTrims([]);
     } else if (params.year && params.makeId && !params.model) {
+      // after make change
       setMakes(data.makes || []);
       setModels(data.models || []);
       setTrims([]);
     } else if (params.year && params.makeId && params.model) {
+      // after model change
       setMakes(data.makes || []);
       setModels(data.models || []);
       setTrims(data.trims || []);
     } else {
-      // initial load: just years, everything else empty
+      // initial load
       setMakes([]);
       setModels([]);
       setTrims([]);
@@ -93,7 +95,7 @@ export function VehicleInputs({
     setLoadingOptions(false);
   }
 
-  // load years on first render
+  // Load years on first render
   useEffect(() => {
     fetchOptions();
   }, []);
