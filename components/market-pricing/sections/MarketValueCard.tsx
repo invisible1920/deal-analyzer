@@ -1,6 +1,6 @@
 "use client";
 
-type MarketData = {
+export type MarketData = {
   low: number;
   high: number;
   median: number;
@@ -8,11 +8,28 @@ type MarketData = {
 };
 
 interface MarketValueCardProps {
-  marketData: MarketData;
+  marketData: MarketData | null;
+}
+
+function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "N/A";
+  const num = Number(value);
+  if (Number.isNaN(num)) return "N/A";
+  return num.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 }
 
 export function MarketValueCard({ marketData }: MarketValueCardProps) {
-  const { low, high, median, comps } = marketData;
+  if (!marketData) return null;
+
+  const {
+    low = 0,
+    high = 0,
+    median = 0,
+    comps = 0,
+  } = marketData;
 
   return (
     <div className="p-6 border rounded-xl bg-white shadow-sm">
@@ -25,18 +42,22 @@ export function MarketValueCard({ marketData }: MarketValueCardProps) {
         <div>
           <div className="text-xs text-slate-500">Market range</div>
           <div className="text-lg font-semibold">
-            ${low.toLocaleString()} to ${high.toLocaleString()}
+            {formatCurrency(low)} to {formatCurrency(high)}
           </div>
         </div>
+
         <div>
           <div className="text-xs text-slate-500">Median price</div>
           <div className="text-lg font-semibold">
-            ${median.toLocaleString()}
+            {formatCurrency(median)}
           </div>
         </div>
+
         <div>
           <div className="text-xs text-slate-500">Comparable listings</div>
-          <div className="text-lg font-semibold">{comps}</div>
+          <div className="text-lg font-semibold">
+            {Number.isNaN(Number(comps)) ? "N/A" : comps}
+          </div>
         </div>
       </div>
 
