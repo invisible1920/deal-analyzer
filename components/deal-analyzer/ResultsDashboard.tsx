@@ -451,25 +451,7 @@ export function ResultsDashboard(props: Props) {
     color: "#854d0e"
   };
 
-  const btnSecondary: CSSProperties = {
-    padding: "8px 16px",
-    borderRadius: 999,
-    border: "none",
-    background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
-    color: "white",
-    fontWeight: 600,
-    letterSpacing: ".04em",
-    cursor: loading ? "default" : "pointer",
-    opacity: loading ? 0.6 : 1,
-    fontSize: 13,
-    boxShadow: "0 4px 16px rgba(15, 23, 42, 0.22)",
-    textDecoration: "none",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    maxWidth: "100%",
-    boxSizing: "border-box"
-  };
+  
 
   const resultsGrid: CSSProperties = {
     display: "grid",
