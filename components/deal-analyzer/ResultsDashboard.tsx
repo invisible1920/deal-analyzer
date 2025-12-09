@@ -42,6 +42,42 @@ export function ResultsDashboard(props: Props) {
     onOpenCompare
   } = props;
 
+    // AI states
+  const [aiUnderwriter, setAiUnderwriter] = useState<string>("");
+  const [aiCloser, setAiCloser] = useState<string>("");
+  const [aiRiskMovie, setAiRiskMovie] = useState<string>("");
+
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  async function runAi(endpoint: string, setter: (t: string) => void) {
+    setAiLoading(endpoint);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ form, result })
+      });
+      const data = await res.json();
+      setter(data.text || "No response");
+    } catch (err) {
+      setter("Error talking to AI");
+    } finally {
+      setAiLoading(null);
+    }
+  }
+
+  function runUnderwriter() {
+    runAi("/api/ai-underwriter", setAiUnderwriter);
+  }
+
+  function runCloser() {
+    runAi("/api/ai-closer-line", setAiCloser);
+  }
+
+  function runRiskMovie() {
+    runAi("/api/ai-risk-movie", setAiRiskMovie);
+  }
+
+
 
   const isMobile = useIsMobile(768);
 
@@ -1173,6 +1209,60 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           )}
         </section>
       )}
+
+            {/* AI Studio */}
+      <section style={{ 
+        marginTop: 20,
+        padding: 20,
+        borderRadius: 14,
+        border: `1px solid ${colors.border}`,
+        background: colors.panel
+      }}>
+        <h2 style={{ fontSize: 17, marginBottom: 10 }}>AI Studio</h2>
+
+        {/* Underwriter */}
+        <div style={{ marginBottom: 20 }}>
+          <button
+            onClick={runUnderwriter}
+            disabled={aiLoading === "/api/ai-underwriter"}
+            style={{ padding: "6px 12px", borderRadius: 8 }}
+          >
+            {aiLoading === "/api/ai-underwriter" ? "Thinking..." : "Run AI Underwriter"}
+          </button>
+          {aiUnderwriter && (
+            <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{aiUnderwriter}</p>
+          )}
+        </div>
+
+        {/* Closer Line */}
+        <div style={{ marginBottom: 20 }}>
+          <button
+            onClick={runCloser}
+            disabled={aiLoading === "/api/ai-closer-line"}
+            style={{ padding: "6px 12px", borderRadius: 8 }}
+          >
+            {aiLoading === "/api/ai-closer-line" ? "Thinking..." : "Generate Closer Line"}
+          </button>
+          {aiCloser && (
+            <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{aiCloser}</p>
+          )}
+        </div>
+
+        {/* Risk Movie */}
+        <div>
+          <button
+            onClick={runRiskMovie}
+            disabled={aiLoading === "/api/ai-risk-movie"}
+            style={{ padding: "6px 12px", borderRadius: 8 }}
+          >
+            {aiLoading === "/api/ai-risk-movie" ? "Projecting..." : "Generate Risk Movie"}
+          </button>
+          {aiRiskMovie && (
+            <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{aiRiskMovie}</p>
+          )}
+        </div>
+      </section>
+
 
       {/* results grid */}
       <div style={resultsGrid}>
