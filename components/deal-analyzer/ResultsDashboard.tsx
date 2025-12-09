@@ -334,11 +334,12 @@ export function ResultsDashboard(props: Props) {
   };
 
   const aiRow: CSSProperties = {
-    display: isMobile ? "block" : "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: 16,
-    marginTop: 12
-  };
+  display: isMobile ? "block" : "grid",
+  gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+  gap: 20,            // <-- was 16
+  marginTop: 12
+};
+
 
   const aiCard: CSSProperties = {
     borderRadius: 12,
@@ -394,18 +395,16 @@ export function ResultsDashboard(props: Props) {
   };
 
   const aiOutput: CSSProperties = {
-    marginTop: 6,
-    fontSize: 13,
-    lineHeight: 1.5,
-    whiteSpace: "pre-wrap",
-    maxHeight: 140,
-    overflowY: "auto"
-  };
-
-
-
-
-
+  marginTop: 8,
+  padding: 10,
+  borderRadius: 10,
+  background: "rgba(15,23,42,0.03)",
+  fontSize: 13,
+  lineHeight: 1.5,
+  whiteSpace: "pre-wrap",
+  maxHeight: 160,
+  overflowY: "auto"
+};
 
   const benchLabel: CSSProperties = {
     fontSize: 11,
@@ -1213,9 +1212,11 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
       {result.aiExplanation && (
         <section
           style={{
-            ...panel,
-            marginTop: 16
-          }}
+  ...panel,
+  marginTop: 16,
+  marginBottom: 12
+}}
+
         >
           <div
             style={{
@@ -1326,8 +1327,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     style={aiButton}
                   >
                     {aiLoading === "/api/ai-underwriter"
-                      ? "Thinking..."
-                      : "Run AI underwriter"}
+  ? "Thinking..."
+  : "Run underwriter"}
                   </button>
                   {aiUnderwriter && (
                     <div style={aiOutput}>{aiUnderwriter}</div>
@@ -1347,8 +1348,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     style={aiButton}
                   >
                     {aiLoading === "/api/ai-closer-line"
-                      ? "Thinking..."
-                      : "Generate closer line"}
+  ? "Thinking..."
+  : "Closer line"}
                   </button>
                   {aiCloser && <div style={aiOutput}>{aiCloser}</div>}
                 </div>
@@ -1366,8 +1367,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     style={aiButton}
                   >
                     {aiLoading === "/api/ai-risk-movie"
-                      ? "Projecting..."
-                      : "Generate risk movie"}
+  ? "Projecting..."
+  : "Risk movie"}
                   </button>
                   {aiRiskMovie && <div style={aiOutput}>{aiRiskMovie}</div>}
                 </div>
