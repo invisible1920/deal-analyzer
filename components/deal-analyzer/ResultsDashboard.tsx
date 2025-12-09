@@ -1210,7 +1210,7 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
         </section>
       )}
 
-                  {/* AI Studio */}
+      {/* AI Studio */}
       <section
         style={{
           ...panel,
@@ -1223,7 +1223,7 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 8
+              marginBottom: 4
             }}
           >
             <h2 style={{ fontSize: 17 }}>AI Studio</h2>
@@ -1250,94 +1250,71 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
               <p
                 style={{
                   fontSize: 13,
-                  color: colors.textSecondary,
-                  marginBottom: 12
+                  color: colors.textSecondary
                 }}
               >
-                Use AI to get a human-sounding underwriting note, a closer line,
-                and a twelve-month risk “movie” on this structure.
+                Three AI helpers for this structure. Use the one that fits what
+                you are doing right now at the desk.
               </p>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12
-                }}
-              >
-                {/* Underwriter */}
-                <div>
+              <div style={aiRow}>
+                {/* Underwriter card */}
+                <div style={aiCard}>
+                  <div style={aiTitle}>AI underwriter</div>
+                  <p style={aiHint}>
+                    One paragraph manager level take on risk, PTI, LTV and profit.
+                  </p>
                   <button
                     type="button"
                     onClick={runUnderwriter}
                     disabled={aiLoading === "/api/ai-underwriter"}
-                    style={btnSecondary}
+                    style={aiButton}
                   >
                     {aiLoading === "/api/ai-underwriter"
                       ? "Thinking..."
-                      : "Run AI Underwriter"}
+                      : "Run AI underwriter"}
                   </button>
                   {aiUnderwriter && (
-                    <p
-                      style={{
-                        marginTop: 8,
-                        fontSize: 13,
-                        whiteSpace: "pre-wrap"
-                      }}
-                    >
-                      {aiUnderwriter}
-                    </p>
+                    <div style={aiOutput}>{aiUnderwriter}</div>
                   )}
                 </div>
 
-                {/* Closer line */}
-                <div>
+                {/* Closer line card */}
+                <div style={aiCard}>
+                  <div style={aiTitle}>Closer line</div>
+                  <p style={aiHint}>
+                    Two short sentences you can read word for word to close this deal.
+                  </p>
                   <button
                     type="button"
                     onClick={runCloser}
                     disabled={aiLoading === "/api/ai-closer-line"}
-                    style={btnSecondary}
+                    style={aiButton}
                   >
                     {aiLoading === "/api/ai-closer-line"
                       ? "Thinking..."
                       : "Generate closer line"}
                   </button>
-                  {aiCloser && (
-                    <p
-                      style={{
-                        marginTop: 8,
-                        fontSize: 13,
-                        whiteSpace: "pre-wrap"
-                      }}
-                    >
-                      {aiCloser}
-                    </p>
-                  )}
+                  {aiCloser && <div style={aiOutput}>{aiCloser}</div>}
                 </div>
 
-                {/* Risk movie */}
-                <div>
+                {/* Risk movie card */}
+                <div style={aiCard}>
+                  <div style={aiTitle}>Risk movie</div>
+                  <p style={aiHint}>
+                    Twelve month story for the note so you can plan follow up.
+                  </p>
                   <button
                     type="button"
                     onClick={runRiskMovie}
                     disabled={aiLoading === "/api/ai-risk-movie"}
-                    style={btnSecondary}
+                    style={aiButton}
                   >
                     {aiLoading === "/api/ai-risk-movie"
                       ? "Projecting..."
                       : "Generate risk movie"}
                   </button>
-                  {aiRiskMovie && (
-                    <p
-                      style={{
-                        marginTop: 8,
-                        fontSize: 13,
-                        whiteSpace: "pre-wrap"
-                      }}
-                    >
-                      {aiRiskMovie}
-                    </p>
-                  )}
+                  {aiRiskMovie && <div style={aiOutput}>{aiRiskMovie}</div>}
                 </div>
               </div>
             </>
@@ -1346,19 +1323,20 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
               <p
                 style={{
                   fontSize: 14,
-                  color: colors.textSecondary
+                  color: colors.textSecondary,
+                  marginTop: 4
                 }}
               >
-                Pro turns this structure into a real-sounding underwriting note,
-                a closer line you can read at the desk, and a twelve-month risk
-                “movie” on the account.
+                Pro turns this deal into three tools: a manager style
+                underwriting note, a closer line you can read at the desk, and a
+                twelve month risk picture for the note.
               </p>
 
               <div style={blurOverlay}>
                 <div style={blurOverlayTitle}>Unlock AI Studio</div>
                 <p style={{ marginBottom: 10 }}>
                   Upgrade to Pro to run AI underwriting, closer lines and risk
-                  movies right inside the deal analyzer.
+                  movies right inside the analyzer, with no copy and paste.
                 </p>
                 <a href="/billing" style={btnSecondary}>
                   Upgrade to Pro
@@ -1368,6 +1346,7 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           )}
         </div>
       </section>
+
 
 
 
