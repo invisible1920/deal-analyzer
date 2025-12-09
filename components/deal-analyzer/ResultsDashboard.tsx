@@ -333,6 +333,55 @@ export function ResultsDashboard(props: Props) {
     fontSize: 12
   };
 
+    const aiRow: CSSProperties = {
+    display: isMobile ? "block" : "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+    gap: 16,
+    marginTop: 12
+  };
+
+  const aiCard: CSSProperties = {
+    borderRadius: 12,
+    border: `1px solid ${colors.border}`,
+    padding: 12,
+    background: "rgba(15,23,42,0.02)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 8,
+    fontSize: 13,
+    minHeight: 0
+  };
+
+  const aiTitle: CSSProperties = {
+    fontWeight: 600,
+    fontSize: 14
+  };
+
+  const aiHint: CSSProperties = {
+    fontSize: 12,
+    color: colors.textSecondary
+  };
+
+  const aiOutput: CSSProperties = {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 1.5,
+    whiteSpace: "pre-wrap",
+    maxHeight: 140,
+    overflowY: "auto"
+  };
+
+  const aiButton: CSSProperties = {
+    ...btnSecondary,
+    width: "100%",
+    justifyContent: "center",
+    paddingTop: 6,
+    paddingBottom: 6,
+    fontSize: 12
+  };
+
+
 
   const benchLabel: CSSProperties = {
     fontSize: 11,
