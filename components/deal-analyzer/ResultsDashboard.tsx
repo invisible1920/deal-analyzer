@@ -316,7 +316,7 @@ export function ResultsDashboard(props: Props) {
     justifyContent: "center"
   };
 
-    const benchGrid: CSSProperties = {
+      const benchGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile
       ? "minmax(0, 1fr)"
@@ -333,7 +333,7 @@ export function ResultsDashboard(props: Props) {
     fontSize: 12
   };
 
-    const aiRow: CSSProperties = {
+  const aiRow: CSSProperties = {
     display: isMobile ? "block" : "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
     gap: 16,
@@ -351,6 +351,27 @@ export function ResultsDashboard(props: Props) {
     gap: 8,
     fontSize: 13,
     minHeight: 0
+  };
+
+  // btnSecondary must be above aiButton
+  const btnSecondary: CSSProperties = {
+    padding: "8px 16px",
+    borderRadius: 999,
+    border: "none",
+    background: "linear-gradient(to right, #4f46e5, #6366f1, #0ea5e9)",
+    color: "white",
+    fontWeight: 600,
+    letterSpacing: ".04em",
+    cursor: loading ? "default" : "pointer",
+    opacity: loading ? 0.6 : 1,
+    fontSize: 13,
+    boxShadow: "0 4px 16px rgba(15, 23, 42, 0.22)",
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    maxWidth: "100%",
+    boxSizing: "border-box"
   };
 
   const aiButton: CSSProperties = {
@@ -380,6 +401,7 @@ export function ResultsDashboard(props: Props) {
     maxHeight: 140,
     overflowY: "auto"
   };
+
 
 
 
