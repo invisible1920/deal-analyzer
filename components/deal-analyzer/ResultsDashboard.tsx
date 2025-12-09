@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 import type { FormState } from "@/hooks/useDealAnalyzer";
 import {
   printOfferSheet,
