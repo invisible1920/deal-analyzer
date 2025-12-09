@@ -353,6 +353,15 @@ export function ResultsDashboard(props: Props) {
     minHeight: 0
   };
 
+  const aiButton: CSSProperties = {
+    ...btnSecondary,
+    width: "100%",
+    justifyContent: "center",
+    paddingTop: 6,
+    paddingBottom: 6,
+    fontSize: 12
+  };
+
   const aiTitle: CSSProperties = {
     fontWeight: 600,
     fontSize: 14
@@ -372,14 +381,7 @@ export function ResultsDashboard(props: Props) {
     overflowY: "auto"
   };
 
-  const aiButton: CSSProperties = {
-    ...btnSecondary,
-    width: "100%",
-    justifyContent: "center",
-    paddingTop: 6,
-    paddingBottom: 6,
-    fontSize: 12
-  };
+
 
 
 
