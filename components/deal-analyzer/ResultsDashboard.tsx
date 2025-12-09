@@ -1210,58 +1210,165 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
         </section>
       )}
 
-            {/* AI Studio */}
-      <section style={{ 
-        marginTop: 20,
-        padding: 20,
-        borderRadius: 14,
-        border: `1px solid ${colors.border}`,
-        background: colors.panel
-      }}>
-        <h2 style={{ fontSize: 17, marginBottom: 10 }}>AI Studio</h2>
-
-        {/* Underwriter */}
-        <div style={{ marginBottom: 20 }}>
-          <button
-            onClick={runUnderwriter}
-            disabled={aiLoading === "/api/ai-underwriter"}
-            style={{ padding: "6px 12px", borderRadius: 8 }}
+                  {/* AI Studio */}
+      <section
+        style={{
+          ...panel,
+          marginTop: 16
+        }}
+      >
+        <div style={lockedPanelInner}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8
+            }}
           >
-            {aiLoading === "/api/ai-underwriter" ? "Thinking..." : "Run AI Underwriter"}
-          </button>
-          {aiUnderwriter && (
-            <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{aiUnderwriter}</p>
-          )}
-        </div>
+            <h2 style={{ fontSize: 17 }}>AI Studio</h2>
+            {!isPro && (
+              <span
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  background: "linear-gradient(to right, #22c55e, #4ade80)",
+                  color: "#052e16",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase"
+                }}
+              >
+                Pro
+              </span>
+            )}
+          </div>
 
-        {/* Closer Line */}
-        <div style={{ marginBottom: 20 }}>
-          <button
-            onClick={runCloser}
-            disabled={aiLoading === "/api/ai-closer-line"}
-            style={{ padding: "6px 12px", borderRadius: 8 }}
-          >
-            {aiLoading === "/api/ai-closer-line" ? "Thinking..." : "Generate Closer Line"}
-          </button>
-          {aiCloser && (
-            <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{aiCloser}</p>
-          )}
-        </div>
+          {isPro ? (
+            <>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  marginBottom: 12
+                }}
+              >
+                Use AI to get a human-sounding underwriting note, a closer line,
+                and a twelve-month risk “movie” on this structure.
+              </p>
 
-        {/* Risk Movie */}
-        <div>
-          <button
-            onClick={runRiskMovie}
-            disabled={aiLoading === "/api/ai-risk-movie"}
-            style={{ padding: "6px 12px", borderRadius: 8 }}
-          >
-            {aiLoading === "/api/ai-risk-movie" ? "Projecting..." : "Generate Risk Movie"}
-          </button>
-          {aiRiskMovie && (
-            <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{aiRiskMovie}</p>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12
+                }}
+              >
+                {/* Underwriter */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={runUnderwriter}
+                    disabled={aiLoading === "/api/ai-underwriter"}
+                    style={btnSecondary}
+                  >
+                    {aiLoading === "/api/ai-underwriter"
+                      ? "Thinking..."
+                      : "Run AI Underwriter"}
+                  </button>
+                  {aiUnderwriter && (
+                    <p
+                      style={{
+                        marginTop: 8,
+                        fontSize: 13,
+                        whiteSpace: "pre-wrap"
+                      }}
+                    >
+                      {aiUnderwriter}
+                    </p>
+                  )}
+                </div>
+
+                {/* Closer line */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={runCloser}
+                    disabled={aiLoading === "/api/ai-closer-line"}
+                    style={btnSecondary}
+                  >
+                    {aiLoading === "/api/ai-closer-line"
+                      ? "Thinking..."
+                      : "Generate closer line"}
+                  </button>
+                  {aiCloser && (
+                    <p
+                      style={{
+                        marginTop: 8,
+                        fontSize: 13,
+                        whiteSpace: "pre-wrap"
+                      }}
+                    >
+                      {aiCloser}
+                    </p>
+                  )}
+                </div>
+
+                {/* Risk movie */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={runRiskMovie}
+                    disabled={aiLoading === "/api/ai-risk-movie"}
+                    style={btnSecondary}
+                  >
+                    {aiLoading === "/api/ai-risk-movie"
+                      ? "Projecting..."
+                      : "Generate risk movie"}
+                  </button>
+                  {aiRiskMovie && (
+                    <p
+                      style={{
+                        marginTop: 8,
+                        fontSize: 13,
+                        whiteSpace: "pre-wrap"
+                      }}
+                    >
+                      {aiRiskMovie}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: colors.textSecondary
+                }}
+              >
+                Pro turns this structure into a real-sounding underwriting note,
+                a closer line you can read at the desk, and a twelve-month risk
+                “movie” on the account.
+              </p>
+
+              <div style={blurOverlay}>
+                <div style={blurOverlayTitle}>Unlock AI Studio</div>
+                <p style={{ marginBottom: 10 }}>
+                  Upgrade to Pro to run AI underwriting, closer lines and risk
+                  movies right inside the deal analyzer.
+                </p>
+                <a href="/billing" style={btnSecondary}>
+                  Upgrade to Pro
+                </a>
+              </div>
+            </>
           )}
         </div>
       </section>
+
 
 
       {/* results grid */}
