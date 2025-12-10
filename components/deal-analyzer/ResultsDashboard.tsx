@@ -9,6 +9,7 @@ import {
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 type PlanType = "free" | "pro" | null;
+type TabKey = "summary" | "risk" | "tools" | "ai";
 
 type Props = {
   result: any;
@@ -47,6 +48,9 @@ export function ResultsDashboard(props: Props) {
   const [aiRiskMovie, setAiRiskMovie] = useState<string>("");
 
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+
+  // tab state
+  const [activeTab, setActiveTab] = useState<TabKey>("summary");
 
   async function runAi(endpoint: string, setter: (t: string) => void) {
     setAiLoading(endpoint);
@@ -349,7 +353,7 @@ export function ResultsDashboard(props: Props) {
     minHeight: 0
   };
 
-  // btnSecondary must be above aiButton
+  // buttons
   const btnSecondary: CSSProperties = {
     padding: "8px 16px",
     borderRadius: 999,
@@ -456,7 +460,14 @@ export function ResultsDashboard(props: Props) {
     maxWidth: "100%"
   };
 
-  // derived metrics
+  const tabsBar: CSSProperties = {
+    marginTop: 24,
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    borderBottom: `1px solid ${colors.border}`,
+    paddingBottom: 8
+  };
 
   const ptiDisplay =
     result && typeof result.paymentToIncome === "number"
@@ -708,7 +719,6 @@ export function ResultsDashboard(props: Props) {
       : []);
 
   // compliance analysis
-
   const complianceAnalysis = (() => {
     if (!result) {
       return {
@@ -809,11 +819,8 @@ export function ResultsDashboard(props: Props) {
   })();
 
   // delinquency analysis
-
   const delinquencyAnalysis = (() => {
     const bullets: string[] = [];
-
-    // score: 0 = low, 1 = medium, 2 = high
     let score = 1;
 
     // PTI pressure
@@ -893,7 +900,6 @@ export function ResultsDashboard(props: Props) {
   const delinquencyChipLabel = `${delinquencyAnalysis.level} risk`;
 
   // what if helpers
-
   function bumpTerm(deltaMonths: number) {
     if (!onScenarioRun) return;
     const next = Math.max(6, form.termMonths + deltaMonths);
@@ -907,7 +913,6 @@ export function ResultsDashboard(props: Props) {
   }
 
   // helper to build sales scripts
-
   const scriptScenarios = (() => {
     if (!result || typeof result.payment !== "number") {
       return [];
@@ -1102,7 +1107,7 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
       {/* label for results area */}
       <h2
         style={{
-          marginTop: 24,
+          marginTop: 16,
           fontSize: 15,
           fontWeight: 600,
           letterSpacing: ".12em",
@@ -1110,750 +1115,1067 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           color: colors.textSecondary
         }}
       >
-        Deal analysis
+        Deal workspace
       </h2>
 
-      {/* quick what if lab */}
-      {onScenarioRun && (
-        <section
-          style={{
-            ...panel,
-            marginTop: 16
-          }}
-        >
-          <h2 style={{ fontSize: 16, marginBottom: 8 }}>Quick what if lab</h2>
-          <p
-            style={{
-              fontSize: 13,
-              color: colors.textSecondary,
-              marginBottom: 10
-            }}
-          >
-            Tap a button to try a slightly different term or down payment and
-            see the new payment and profit instantly.
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 8
-            }}
-          >
+      {/* tab strip */}
+      <div style={tabsBar}>
+        {[
+          { id: "summary", label: "Summary" },
+          { id: "risk", label: "Risk and policy" },
+          { id: "tools", label: "Tools" },
+          { id: "ai", label: "AI and scripts" }
+        ].map(tab => {
+          const key = tab.id as TabKey;
+          const isActive = activeTab === key;
+          return (
             <button
+              key={tab.id}
               type="button"
-              style={btnSecondary}
-              onClick={() => bumpTerm(-3)}
-              disabled={loading}
+              onClick={() => setActiveTab(key)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 999,
+                border: "none",
+                fontSize: 12,
+                fontWeight: isActive ? 600 : 500,
+                cursor: "pointer",
+                background: isActive
+                  ? "rgba(15,23,42,0.06)"
+                  : "transparent",
+                color: isActive ? "#0f172a" : colors.textSecondary
+              }}
             >
-              Shorter term
+              {tab.label}
             </button>
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => bumpTerm(0)}
-              disabled={loading}
+          );
+        })}
+      </div>
+
+      {/* SUMMARY TAB */}
+      {activeTab === "summary" && (
+        <>
+          {/* quick what if lab */}
+          {onScenarioRun && (
+            <section
+              style={{
+                ...panel,
+                marginTop: 16
+              }}
             >
-              Same term
-            </button>
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => bumpTerm(3)}
-              disabled={loading}
-            >
-              Longer term
-            </button>
-
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => bumpDown(-500)}
-              disabled={loading}
-            >
-              Lower down
-            </button>
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => bumpDown(0)}
-              disabled={loading}
-            >
-              Same down
-            </button>
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => bumpDown(500)}
-              disabled={loading}
-            >
-              Higher down
-            </button>
-          </div>
-
-          <p
-            style={{
-              marginTop: 8,
-              fontSize: 11,
-              color: colors.textSecondary
-            }}
-          >
-            Lab uses your current deal as a base and reruns the analyzer with
-            the tweaks you pick.
-          </p>
-        </section>
-      )}
-
-      {/* AI deal opinion above grid */}
-      {result.aiExplanation && (
-        <section
-          style={{
-            ...panel,
-            marginTop: 16,
-            marginBottom: 12
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 10
-            }}
-          >
-            <h2 style={{ fontSize: 17 }}>AI deal opinion</h2>
-            {!isPro && (
-              <span
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 999,
-                  background:
-                    "linear-gradient(to right, #22c55e, #4ade80)",
-                  color: "#052e16",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: ".08em",
-                  textTransform: "uppercase"
-                }}
-              >
-                Pro
-              </span>
-            )}
-          </div>
-
-          <p
-            style={{
-              fontSize: 14,
-              lineHeight: 1.6,
-              whiteSpace: "pre-wrap"
-            }}
-          >
-            {result.aiExplanation}
-          </p>
-
-          {!isPro && (
-            <div style={{ marginTop: 12 }}>
-              <a href="/billing" style={btnSecondary}>
-                Unlock full AI underwriting with Pro
-              </a>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* AI Studio */}
-      <section
-        style={{
-          ...panel,
-          marginTop: 16
-        }}
-      >
-        <div style={lockedPanelInner}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 4
-            }}
-          >
-            <h2 style={{ fontSize: 17 }}>AI Studio</h2>
-            {!isPro && (
-              <span
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 999,
-                  background: "linear-gradient(to right, #22c55e, #4ade80)",
-                  color: "#052e16",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: ".08em",
-                  textTransform: "uppercase"
-                }}
-              >
-                Pro
-              </span>
-            )}
-          </div>
-
-          {isPro ? (
-            <>
+              <h2 style={{ fontSize: 16, marginBottom: 8 }}>
+                Quick what if lab
+              </h2>
               <p
                 style={{
                   fontSize: 13,
+                  color: colors.textSecondary,
+                  marginBottom: 10
+                }}
+              >
+                Tap a button to try a slightly different term or down payment
+                and see the new payment and profit instantly.
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8
+                }}
+              >
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => bumpTerm(-3)}
+                  disabled={loading}
+                >
+                  Shorter term
+                </button>
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => bumpTerm(0)}
+                  disabled={loading}
+                >
+                  Same term
+                </button>
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => bumpTerm(3)}
+                  disabled={loading}
+                >
+                  Longer term
+                </button>
+
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => bumpDown(-500)}
+                  disabled={loading}
+                >
+                  Lower down
+                </button>
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => bumpDown(0)}
+                  disabled={loading}
+                >
+                  Same down
+                </button>
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => bumpDown(500)}
+                  disabled={loading}
+                >
+                  Higher down
+                </button>
+              </div>
+
+              <p
+                style={{
+                  marginTop: 8,
+                  fontSize: 11,
                   color: colors.textSecondary
                 }}
               >
-                Three AI helpers for this structure. Use the one that fits what
-                you are doing right now at the desk.
+                Lab uses your current deal as a base and reruns the analyzer
+                with the tweaks you pick.
               </p>
-
-              <div style={aiRow}>
-                {/* Underwriter card */}
-                <div style={aiCard}>
-                  <div style={aiTitle}>AI underwriter</div>
-                  <p style={aiHint}>
-                    One paragraph manager level take on risk, PTI, LTV and
-                    profit.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={runUnderwriter}
-                    disabled={aiLoading === "/api/ai-underwriter"}
-                    style={aiButton}
-                  >
-                    {aiLoading === "/api/ai-underwriter"
-                      ? "Thinking..."
-                      : "Run underwriter"}
-                  </button>
-                  {aiUnderwriter && (
-                    <div style={aiOutput}>{aiUnderwriter}</div>
-                  )}
-                </div>
-
-                {/* Closer line card */}
-                <div style={aiCard}>
-                  <div style={aiTitle}>Closer line</div>
-                  <p style={aiHint}>
-                    Two short sentences you can read word for word to close this
-                    deal.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={runCloser}
-                    disabled={aiLoading === "/api/ai-closer-line"}
-                    style={aiButton}
-                  >
-                    {aiLoading === "/api/ai-closer-line"
-                      ? "Thinking..."
-                      : "Closer line"}
-                  </button>
-                  {aiCloser && <div style={aiOutput}>{aiCloser}</div>}
-                </div>
-
-                {/* Risk movie card */}
-                <div style={aiCard}>
-                  <div style={aiTitle}>Risk movie</div>
-                  <p style={aiHint}>
-                    Twelve month story for the note so you can plan follow up.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={runRiskMovie}
-                    disabled={aiLoading === "/api/ai-risk-movie"}
-                    style={aiButton}
-                  >
-                    {aiLoading === "/api/ai-risk-movie"
-                      ? "Projecting..."
-                      : "Risk movie"}
-                  </button>
-                  {aiRiskMovie && <div style={aiOutput}>{aiRiskMovie}</div>}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: colors.textSecondary,
-                  marginTop: 4
-                }}
-              >
-                Pro turns this deal into three tools: a manager style
-                underwriting note, a closer line you can read at the desk, and a
-                twelve month risk picture for the note.
-              </p>
-
-              <div style={blurOverlay}>
-                <div style={blurOverlayTitle}>Unlock AI Studio</div>
-                <p style={{ marginBottom: 10 }}>
-                  Upgrade to Pro to run AI underwriting, closer lines and risk
-                  movies right inside the analyzer, with no copy and paste.
-                </p>
-                <a href="/billing" style={btnSecondary}>
-                  Upgrade to Pro
-                </a>
-              </div>
-            </>
+            </section>
           )}
-        </div>
-      </section>
 
-      {/* results grid */}
-      <div style={resultsGrid}>
-        {/* deal summary card */}
-        <section style={panel}>
-          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Deal summary</h2>
-          <ul
-            style={{
-              paddingLeft: 0,
-              listStyle: "none",
-              margin: 0
-            }}
-          >
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Payment</span>
-              <span style={summaryValue}>
-                ${result.payment.toFixed(2)}
-              </span>
-            </li>
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Total interest</span>
-              <span style={summaryValue}>
-                ${result.totalInterest.toFixed(2)}
-              </span>
-            </li>
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Total profit</span>
-              <span style={summaryValue}>
-                ${result.totalProfit.toFixed(2)}
-              </span>
-            </li>
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Break even week</span>
-              <span style={summaryValue}>{result.breakEvenWeek}</span>
-            </li>
-          </ul>
-        </section>
-
-        {/* basic risk */}
-        <section style={panel}>
-          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Basic risk</h2>
-          <ul
-            style={{
-              paddingLeft: 0,
-              listStyle: "none",
-              margin: 0
-            }}
-          >
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Payment to income</span>
-              <span style={summaryValue}>{ptiDisplay}</span>
-            </li>
-
-            {ptiValue !== null && (
-              <li>
-                <div style={ptiBarOuter}>
-                  <div style={ptiBarInner} />
-                </div>
-                <div
-                  style={{
-                    marginTop: 4,
-                    fontSize: 11,
-                    color: colors.textSecondary,
-                    display: "flex",
-                    justifyContent: "space-between"
-                  }}
-                >
-                  <span>
-                    Policy max {(ptiLimit * 100).toFixed(0)} percent
-                  </span>
-                  <span>{ptiFillPercent.toFixed(0)} percent of limit</span>
-                </div>
-              </li>
-            )}
-
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Risk score</span>
-              <span style={summaryValue}>
-                <span style={riskChipStyle(result.riskScore)}>
-                  {result.riskScore}
-                </span>
-              </span>
-            </li>
-            {typeof result.ltv === "number" && (
-              <li style={summaryRow}>
-                <span style={summaryLabel}>LTV</span>
-                <span style={summaryValue}>
-                  {(result.ltv * 100).toFixed(1)} percent
-                </span>
-              </li>
-            )}
-            {approvalScore !== null && (
-              <li style={summaryRow}>
-                <span style={summaryLabel}>Approval likelihood</span>
-                <span style={summaryValue}>{approvalScore} percent</span>
-              </li>
-            )}
-          </ul>
-          {!isPro && (
-            <p style={smallUpsell}>
-              Upgrade to Pro to save risk history, see approval likelihood and
-              catch over advanced cars before funding.
-            </p>
-          )}
-        </section>
-
-        {/* underwriting verdict */}
-        {result.underwriting && (
-          <section style={panel}>
-            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-              Underwriting verdict
-            </h2>
-            <p style={{ marginBottom: 10 }}>
-              <span style={verdictChipStyle(verdictText)}>{verdictText}</span>
-            </p>
-
-            {result.underwriting.reasons?.length > 0 && (
+          <div style={resultsGrid}>
+            {/* deal summary card */}
+            <section style={panel}>
+              <h2 style={{ fontSize: 17, marginBottom: 10 }}>Deal summary</h2>
               <ul
                 style={{
-                  marginTop: 4,
-                  paddingLeft: 18,
-                  lineHeight: 1.6,
-                  fontSize: 14
+                  paddingLeft: 0,
+                  listStyle: "none",
+                  margin: 0
                 }}
               >
-                {result.underwriting.reasons.map((r: string, i: number) => (
-                  <li key={i}>{r}</li>
-                ))}
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Payment</span>
+                  <span style={summaryValue}>
+                    ${result.payment.toFixed(2)}
+                  </span>
+                </li>
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Total interest</span>
+                  <span style={summaryValue}>
+                    ${result.totalInterest.toFixed(2)}
+                  </span>
+                </li>
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Total profit</span>
+                  <span style={summaryValue}>
+                    ${result.totalProfit.toFixed(2)}
+                  </span>
+                </li>
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Break even week</span>
+                  <span style={summaryValue}>{result.breakEvenWeek}</span>
+                </li>
               </ul>
-            )}
+            </section>
 
-            {!isPro && (
-              <p style={smallUpsell}>
-                Pro users see full policy reasoning for PTI, LTV, term, down
-                payment and profit with every deal, plus AI commentary and
-                delinquency prediction.
-              </p>
-            )}
-          </section>
-        )}
-
-        {/* hidden risk flags */}
-        <section style={panel}>
-          <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: 17, marginBottom: 6 }}>Hidden risk flags</h2>
-
-            {/* overall risk and quick takeaway */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 6,
-                gap: 8
-              }}
-            >
-              <span
+            {/* basic risk */}
+            <section style={panel}>
+              <h2 style={{ fontSize: 17, marginBottom: 10 }}>Basic risk</h2>
+              <ul
                 style={{
-                  fontSize: 12,
-                  color: colors.textSecondary
+                  paddingLeft: 0,
+                  listStyle: "none",
+                  margin: 0
                 }}
               >
-                Overall risk on this structure
-              </span>
-              <span style={riskChipStyle(hiddenRiskSeverity)}>
-                {hiddenRiskSeverity}
-              </span>
-            </div>
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Payment to income</span>
+                  <span style={summaryValue}>{ptiDisplay}</span>
+                </li>
 
-            <p
-              style={{
-                fontSize: 13,
-                marginBottom: 10,
-                color: colors.textSecondary
-              }}
-            >
-              Next step: {primaryRiskFocus}
-            </p>
-
-            {/* detailed drivers */}
-            <ul
-              style={{
-                paddingLeft: 18,
-                margin: 0,
-                lineHeight: 1.6,
-                fontSize: 14
-              }}
-            >
-              {advancedRiskFlags.map((f, idx) => (
-                <li key={idx}>{f}</li>
-              ))}
-            </ul>
-
-            {!isPro && (
-              <div style={blurOverlay}>
-                <div style={blurOverlayTitle}>
-                  Risk flags detected for this deal
-                </div>
-                <p style={{ marginBottom: 10 }}>
-                  Pro shows which risk flags triggered and gives a clear next
-                  step before you fund the deal.
-                </p>
-                <a href="/billing" style={btnSecondary}>
-                  Unlock hidden risk flags
-                </a>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* payment schedule */}
-        {result?.schedulePreview && (
-          <section style={panel}>
-            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-              Payment schedule preview
-            </h2>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 12
-              }}
-            >
-              <thead>
-                <tr>
-                  <th style={{ textAlign: "left", paddingBottom: 6 }}>
-                    Period
-                  </th>
-                  <th style={{ textAlign: "right", paddingBottom: 6 }}>
-                    Interest
-                  </th>
-                  <th style={{ textAlign: "right", paddingBottom: 6 }}>
-                    Principal
-                  </th>
-                  <th style={{ textAlign: "right", paddingBottom: 6 }}>
-                    Balance
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.schedulePreview.map((row: any) => (
-                  <tr key={row.period}>
-                    <td>{row.period}</td>
-                    <td style={{ textAlign: "right" }}>
-                      {row.interest.toFixed(2)}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      {row.principal.toFixed(2)}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      {row.balance.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p
-              style={{
-                marginTop: 8,
-                fontSize: 11,
-                color: colors.textSecondary
-              }}
-            >
-              Showing first 12 periods only for a quick glance. Pro users can
-              print full schedules inside offer sheets and underwriting packets.
-            </p>
-          </section>
-        )}
-
-        {/* profit optimizer */}
-        <section style={panel}>
-          <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: 17, marginBottom: 4 }}>Profit optimizer</h2>
-
-            {isPro && hasVariants && maxExtraProfit > 0 && (
-              <p
-                style={{
-                  fontSize: 12,
-                  marginBottom: 10,
-                  color: colors.textSecondary,
-                  textTransform: "uppercase",
-                  letterSpacing: ".08em"
-                }}
-              >
-                Up to ${maxExtraProfit.toFixed(0)} more profit inside policy
-              </p>
-            )}
-
-            {isPro ? (
-              <>
-                {hasVariants ? (
-                  <>
-                    <p
-                      style={{
-                        fontSize: 14,
-                        color: colors.textSecondary,
-                        marginBottom: 10
-                      }}
-                    >
-                      Pick a structure below. All options stay inside your PTI
-                      and LTV policy rules. Start with the first option for the
-                      best balance of profit and risk.
-                    </p>
-
+                {ptiValue !== null && (
+                  <li>
+                    <div style={ptiBarOuter}>
+                      <div style={ptiBarInner} />
+                    </div>
                     <div
                       style={{
+                        marginTop: 4,
+                        fontSize: 11,
+                        color: colors.textSecondary,
                         display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                        marginBottom: 12
+                        justifyContent: "space-between"
                       }}
                     >
-                      {profitOptimizer.variants.map(
-                        (v: any, idx: number) => {
-                          const paymentDelta = formatDelta(
-                            basePayment,
-                            v.payment,
-                            {
-                              prefix: "Payment ",
-                              suffix: " per week"
-                            }
-                          );
-
-                          const ptiDelta =
-                            typeof v.pti === "number" &&
-                            typeof result?.paymentToIncome === "number"
-                              ? formatDelta(
-                                  result.paymentToIncome,
-                                  v.pti,
-                                  {
-                                    prefix: "PTI ",
-                                    suffix: " points"
-                                  }
-                                )
-                              : null;
-
-                          const termDelta =
-                            typeof termWeeks === "number" &&
-                            typeof v.termWeeks === "number"
-                              ? formatDelta(termWeeks, v.termWeeks, {
-                                  prefix: "Term ",
-                                  suffix: " weeks"
-                                })
-                              : null;
-
-                          const ltvDelta =
-                            typeof result?.ltv === "number" &&
-                            typeof v.ltv === "number"
-                              ? formatDelta(result.ltv, v.ltv, {
-                                  prefix: "LTV ",
-                                  suffix: " points"
-                                })
-                              : null;
-
-                          return (
-                            <div
-                              key={idx}
-                              style={{
-                                borderRadius: 12,
-                                border: `1px solid ${colors.border}`,
-                                padding: 10,
-                                background:
-                                  idx === 0
-                                    ? "rgba(34,197,94,0.07)"
-                                    : "transparent"
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  marginBottom: 4,
-                                  gap: 8
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontWeight: 600,
-                                    fontSize: 14
-                                  }}
-                                >
-                                  {v.label}
-                                </span>
-                                {typeof v.extraProfit === "number" && (
-                                  <span
-                                    style={{
-                                      padding: "3px 9px",
-                                      borderRadius: 999,
-                                      fontSize: 11,
-                                      fontWeight: 700,
-                                      background: "#dcfce7",
-                                      color: "#166534",
-                                      whiteSpace: "nowrap"
-                                    }}
-                                  >
-                                    +${v.extraProfit.toFixed(0)} profit
-                                  </span>
-                                )}
-                              </div>
-
-                              <ul
-                                style={{
-                                  margin: 0,
-                                  paddingLeft: 18,
-                                  fontSize: 13,
-                                  lineHeight: 1.5
-                                }}
-                              >
-                                {paymentDelta && <li>{paymentDelta}</li>}
-                                {termDelta && <li>{termDelta}</li>}
-                                {ptiDelta && <li>{ptiDelta}</li>}
-                                {ltvDelta && <li>{ltvDelta}</li>}
-                                {!paymentDelta &&
-                                  !termDelta &&
-                                  !ptiDelta &&
-                                  !ltvDelta && (
-                                    <li>
-                                      Adjusts structure to add profit while
-                                      staying inside policy.
-                                    </li>
-                                  )}
-                              </ul>
-
-                              {idx === 0 && (
-                                <p
-                                  style={{
-                                    marginTop: 6,
-                                    marginBottom: 0,
-                                    fontSize: 11,
-                                    color: colors.textSecondary
-                                  }}
-                                >
-                                  Recommended starting point for this customer.
-                                </p>
-                              )}
-                            </div>
-                          );
-                        }
-                      )}
+                      <span>
+                        Policy max {(ptiLimit * 100).toFixed(0)} percent
+                      </span>
+                      <span>{ptiFillPercent.toFixed(0)} percent of limit</span>
                     </div>
-                  </>
-                ) : hasAdjustments ? (
+                  </li>
+                )}
+
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Risk score</span>
+                  <span style={summaryValue}>
+                    <span style={riskChipStyle(result.riskScore)}>
+                      {result.riskScore}
+                    </span>
+                  </span>
+                </li>
+                {typeof result.ltv === "number" && (
+                  <li style={summaryRow}>
+                    <span style={summaryLabel}>LTV</span>
+                    <span style={summaryValue}>
+                      {(result.ltv * 100).toFixed(1)} percent
+                    </span>
+                  </li>
+                )}
+                {approvalScore !== null && (
+                  <li style={summaryRow}>
+                    <span style={summaryLabel}>Approval likelihood</span>
+                    <span style={summaryValue}>{approvalScore} percent</span>
+                  </li>
+                )}
+              </ul>
+              {!isPro && (
+                <p style={smallUpsell}>
+                  Upgrade to Pro to save risk history, see approval likelihood
+                  and catch over advanced cars before funding.
+                </p>
+              )}
+            </section>
+
+            {/* underwriting verdict */}
+            {result.underwriting && (
+              <section style={panel}>
+                <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                  Underwriting verdict
+                </h2>
+                <p style={{ marginBottom: 10 }}>
+                  <span style={verdictChipStyle(verdictText)}>
+                    {verdictText}
+                  </span>
+                </p>
+
+                {result.underwriting.reasons?.length > 0 && (
+                  <ul
+                    style={{
+                      marginTop: 4,
+                      paddingLeft: 18,
+                      lineHeight: 1.6,
+                      fontSize: 14
+                    }}
+                  >
+                    {result.underwriting.reasons.map(
+                      (r: string, i: number) => (
+                        <li key={i}>{r}</li>
+                      )
+                    )}
+                  </ul>
+                )}
+
+                {!isPro && (
+                  <p style={smallUpsell}>
+                    Pro users see full policy reasoning for PTI, LTV, term, down
+                    payment and profit with every deal, plus AI commentary and
+                    delinquency prediction.
+                  </p>
+                )}
+              </section>
+            )}
+
+            {/* payment schedule */}
+            {result?.schedulePreview && (
+              <section style={panel}>
+                <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                  Payment schedule preview
+                </h2>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: 12
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", paddingBottom: 6 }}>
+                        Period
+                      </th>
+                      <th style={{ textAlign: "right", paddingBottom: 6 }}>
+                        Interest
+                      </th>
+                      <th style={{ textAlign: "right", paddingBottom: 6 }}>
+                        Principal
+                      </th>
+                      <th style={{ textAlign: "right", paddingBottom: 6 }}>
+                        Balance
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.schedulePreview.map((row: any) => (
+                      <tr key={row.period}>
+                        <td>{row.period}</td>
+                        <td style={{ textAlign: "right" }}>
+                          {row.interest.toFixed(2)}
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          {row.principal.toFixed(2)}
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          {row.balance.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p
+                  style={{
+                    marginTop: 8,
+                    fontSize: 11,
+                    color: colors.textSecondary
+                  }}
+                >
+                  Showing first 12 periods only for a quick glance. Pro users
+                  can print full schedules inside offer sheets and underwriting
+                  packets.
+                </p>
+              </section>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* RISK TAB */}
+      {activeTab === "risk" && (
+        <>
+          <div style={resultsGrid}>
+            {/* hidden risk flags */}
+            <section style={panel}>
+              <div style={lockedPanelInner}>
+                <h2 style={{ fontSize: 17, marginBottom: 6 }}>
+                  Hidden risk flags
+                </h2>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 6,
+                    gap: 8
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: colors.textSecondary
+                    }}
+                  >
+                    Overall risk on this structure
+                  </span>
+                  <span style={riskChipStyle(hiddenRiskSeverity)}>
+                    {hiddenRiskSeverity}
+                  </span>
+                </div>
+
+                <p
+                  style={{
+                    fontSize: 13,
+                    marginBottom: 10,
+                    color: colors.textSecondary
+                  }}
+                >
+                  Next step: {primaryRiskFocus}
+                </p>
+
+                <ul
+                  style={{
+                    paddingLeft: 18,
+                    margin: 0,
+                    lineHeight: 1.6,
+                    fontSize: 14
+                  }}
+                >
+                  {advancedRiskFlags.map((f, idx) => (
+                    <li key={idx}>{f}</li>
+                  ))}
+                </ul>
+
+                {!isPro && (
+                  <div style={blurOverlay}>
+                    <div style={blurOverlayTitle}>
+                      Risk flags detected for this deal
+                    </div>
+                    <p style={{ marginBottom: 10 }}>
+                      Pro shows which risk flags triggered and gives a clear
+                      next step before you fund the deal.
+                    </p>
+                    <a href="/billing" style={btnSecondary}>
+                      Unlock hidden risk flags
+                    </a>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* compliance and delinquency */}
+            <section style={panel}>
+              <div style={lockedPanelInner}>
+                <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                  Compliance and early delinquency check
+                </h2>
+
+                {/* compliance block */}
+                <h3
+                  style={{
+                    fontSize: 13,
+                    marginBottom: 4,
+                    color: colors.textSecondary,
+                    textTransform: "uppercase",
+                    letterSpacing: ".08em"
+                  }}
+                >
+                  Compliance status
+                </h3>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 6,
+                    gap: 8
+                  }}
+                >
+                  <span
+                    style={{ fontSize: 12, color: colors.textSecondary }}
+                  >
+                    Policy and common cap checks
+                  </span>
+                  <span style={riskChipStyle(complianceChipScore)}>
+                    {complianceChipLabel}
+                  </span>
+                </div>
+
+                <ul
+                  style={{
+                    paddingLeft: 18,
+                    marginTop: 0,
+                    marginBottom: 10,
+                    lineHeight: 1.5,
+                    fontSize: 14
+                  }}
+                >
+                  {complianceAnalysis.bullets.map((c, idx) => (
+                    <li key={idx}>{c}</li>
+                  ))}
+                </ul>
+
+                {/* delinquency block */}
+                <h3
+                  style={{
+                    fontSize: 13,
+                    marginBottom: 4,
+                    marginTop: 10,
+                    color: colors.textSecondary,
+                    textTransform: "uppercase",
+                    letterSpacing: ".08em"
+                  }}
+                >
+                  First six payments risk
+                </h3>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 6,
+                    gap: 8
+                  }}
+                >
+                  <span
+                    style={{ fontSize: 12, color: colors.textSecondary }}
+                  >
+                    Likely early delinquency on this structure
+                  </span>
+                  <span style={riskChipStyle(delinquencyChipLabel)}>
+                    {delinquencyChipLabel}
+                  </span>
+                </div>
+
+                <ul
+                  style={{
+                    paddingLeft: 18,
+                    marginTop: 0,
+                    lineHeight: 1.5,
+                    fontSize: 14
+                  }}
+                >
+                  {delinquencyAnalysis.bullets.map((d, idx) => (
+                    <li key={idx}>{d}</li>
+                  ))}
+                </ul>
+
+                <p
+                  style={{
+                    fontSize: 13,
+                    marginTop: 4,
+                    color: colors.textSecondary
+                  }}
+                >
+                  Action before funding: {delinquencyAnalysis.action}
+                </p>
+
+                {!isPro && (
+                  <div style={blurOverlay}>
+                    <div style={blurOverlayTitle}>
+                      Detailed compliance and delinquency drivers
+                    </div>
+                    <p style={{ marginBottom: 10 }}>
+                      Pro breaks this view down by PTI, LTV, term, repos and
+                      fees so you know exactly which field to tighten before
+                      funding.
+                    </p>
+                    <a href="/billing" style={btnSecondary}>
+                      Unlock compliance and delinquency tools
+                    </a>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* policy snapshot */}
+            <section style={panel}>
+              <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                Policy snapshot
+              </h2>
+              <ul
+                style={{
+                  paddingLeft: 0,
+                  listStyle: "none",
+                  margin: 0
+                }}
+              >
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Max PTI</span>
+                  <span style={summaryValue}>
+                    {(policy.maxPTI * 100).toFixed(0)} percent
+                  </span>
+                </li>
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Max LTV</span>
+                  <span style={summaryValue}>
+                    {(policy.maxLTV * 100).toFixed(0)} percent
+                  </span>
+                </li>
+                <li style={summaryRow}>
+                  <span style={summaryLabel}>Max term</span>
+                  <span style={summaryValue}>
+                    {policy.maxTermWeeks} weeks
+                  </span>
+                </li>
+              </ul>
+            </section>
+
+            {/* portfolio benchmarking */}
+            <section style={panel}>
+              <div style={lockedPanelInner}>
+                <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                  Portfolio benchmarking
+                </h2>
+
+                {!isPro ? (
                   <>
                     <p
                       style={{
                         fontSize: 14,
                         color: colors.textSecondary,
-                        marginBottom: 10
+                        marginBottom: 8
                       }}
                     >
-                      We found a tighter structure for this deal. Apply the
-                      targets below to move profit and PTI in the right
-                      direction while staying inside your policy.
+                      Pro compares this deal against your last month of funded
+                      deals and shows where PTI, LTV and profit sit against your
+                      normal numbers instead of guessing from one structure at a
+                      time.
                     </p>
+
+                    <div style={blurOverlay}>
+                      <div style={blurOverlayTitle}>
+                        See how this deal stacks up
+                      </div>
+                      <p style={{ marginBottom: 10 }}>
+                        Unlock Pro to see PTI, LTV and profit side by side with
+                        your store averages on every deal, so you can tighten
+                        the outlier structures before you fund them.
+                      </p>
+                      <a href="/billing" style={btnSecondary}>
+                        Unlock portfolio benchmarking
+                      </a>
+                    </div>
+                  </>
+                ) : hasPortfolioBenchmark ? (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                        marginBottom: 6
+                      }}
+                    >
+                      Quick read on how this structure compares to what you
+                      usually fund in the store.
+                    </p>
+
+                    <div style={benchGrid}>
+                      {/* PTI tile */}
+                      <div style={benchTile}>
+                        <div style={benchLabel}>Payment to income</div>
+                        <div style={benchCurrent}>
+                          {dealPtiPct !== null
+                            ? `${dealPtiPct.toFixed(1)} percent`
+                            : "N A"}
+                        </div>
+                        {portfolioPtiPct !== null && (
+                          <div style={benchBaseline}>
+                            Store average {portfolioPtiPct.toFixed(1)} percent
+                          </div>
+                        )}
+                        <div
+                          style={
+                            portfolioComparison.ptiDelta > 0
+                              ? benchTagWarn
+                              : benchTagGood
+                          }
+                        >
+                          {portfolioComparison.ptiDelta > 0
+                            ? `${portfolioComparison.ptiDelta.toFixed(
+                                1
+                              )} points hotter than normal`
+                            : `${Math.abs(
+                                portfolioComparison.ptiDelta
+                              ).toFixed(1)} points softer than normal`}
+                        </div>
+                      </div>
+
+                      {/* LTV tile */}
+                      <div style={benchTile}>
+                        <div style={benchLabel}>LTV</div>
+                        <div style={benchCurrent}>
+                          {dealLtvPct !== null
+                            ? `${dealLtvPct.toFixed(1)} percent`
+                            : "N A"}
+                        </div>
+                        {portfolioLtvPct !== null && (
+                          <div style={benchBaseline}>
+                            Store average {portfolioLtvPct.toFixed(1)} percent
+                          </div>
+                        )}
+                        <div
+                          style={
+                            portfolioComparison.ltvDelta > 0
+                              ? benchTagWarn
+                              : benchTagGood
+                          }
+                        >
+                          {portfolioComparison.ltvDelta > 0
+                            ? `${portfolioComparison.ltvDelta.toFixed(
+                                1
+                              )} points higher than normal`
+                            : `${Math.abs(
+                                portfolioComparison.ltvDelta
+                              ).toFixed(1)} points lower than normal`}
+                        </div>
+                      </div>
+
+                      {/* profit tile */}
+                      <div style={benchTile}>
+                        <div style={benchLabel}>Profit per deal</div>
+                        <div style={benchCurrent}>
+                          {dealProfit !== null
+                            ? `$${dealProfit.toFixed(0)}`
+                            : "N A"}
+                        </div>
+                        {portfolioProfit !== null && (
+                          <div style={benchBaseline}>
+                            Store average ${portfolioProfit.toFixed(0)}
+                          </div>
+                        )}
+                        <div
+                          style={
+                            portfolioComparison.profitDelta >= 0
+                              ? benchTagGood
+                              : benchTagWarn
+                          }
+                        >
+                          {portfolioComparison.profitDelta >= 0
+                            ? `About $${portfolioComparison.profitDelta.toFixed(
+                                0
+                              )} more profit than average`
+                            : `About $${Math.abs(
+                                portfolioComparison.profitDelta
+                              ).toFixed(0)} less profit than average`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <p
+                      style={{
+                        marginTop: 10,
+                        fontSize: 12,
+                        color: colors.textSecondary
+                      }}
+                    >
+                      Five second read: tighten deals that are hotter on PTI or
+                      LTV than your norm unless profit is carrying the extra
+                      risk.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginBottom: 6
+                      }}
+                    >
+                      We will start benchmarking once you have at least one
+                      month of funded deals with PTI, LTV and profit captured in
+                      the system.
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: colors.textSecondary
+                      }}
+                    >
+                      Run and fund a few more deals, then come back to see how
+                      new structures stack up against your real portfolio.
+                    </p>
+                  </>
+                )}
+              </div>
+            </section>
+          </div>
+        </>
+      )}
+
+      {/* TOOLS TAB */}
+      {activeTab === "tools" && (
+        <>
+          <div style={resultsGrid}>
+            {/* profit optimizer */}
+            <section style={panel}>
+              <div style={lockedPanelInner}>
+                <h2 style={{ fontSize: 17, marginBottom: 4 }}>
+                  Profit optimizer
+                </h2>
+
+                {isPro && hasVariants && maxExtraProfit > 0 && (
+                  <p
+                    style={{
+                      fontSize: 12,
+                      marginBottom: 10,
+                      color: colors.textSecondary,
+                      textTransform: "uppercase",
+                      letterSpacing: ".08em"
+                    }}
+                  >
+                    Up to ${maxExtraProfit.toFixed(0)} more profit inside
+                    policy
+                  </p>
+                )}
+
+                {isPro ? (
+                  <>
+                    {hasVariants ? (
+                      <>
+                        <p
+                          style={{
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                            marginBottom: 10
+                          }}
+                        >
+                          Pick a structure below. All options stay inside your
+                          PTI and LTV policy rules. Start with the first option
+                          for the best balance of profit and risk.
+                        </p>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 10,
+                            marginBottom: 12
+                          }}
+                        >
+                          {profitOptimizer.variants.map(
+                            (v: any, idx: number) => {
+                              const paymentDelta = formatDelta(
+                                basePayment,
+                                v.payment,
+                                {
+                                  prefix: "Payment ",
+                                  suffix: " per week"
+                                }
+                              );
+
+                              const ptiDelta =
+                                typeof v.pti === "number" &&
+                                typeof result?.paymentToIncome === "number"
+                                  ? formatDelta(
+                                      result.paymentToIncome,
+                                      v.pti,
+                                      {
+                                        prefix: "PTI ",
+                                        suffix: " points"
+                                      }
+                                    )
+                                  : null;
+
+                              const termDelta =
+                                typeof termWeeks === "number" &&
+                                typeof v.termWeeks === "number"
+                                  ? formatDelta(termWeeks, v.termWeeks, {
+                                      prefix: "Term ",
+                                      suffix: " weeks"
+                                    })
+                                  : null;
+
+                              const ltvDelta =
+                                typeof result?.ltv === "number" &&
+                                typeof v.ltv === "number"
+                                  ? formatDelta(result.ltv, v.ltv, {
+                                      prefix: "LTV ",
+                                      suffix: " points"
+                                    })
+                                  : null;
+
+                              return (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    borderRadius: 12,
+                                    border: `1px solid ${colors.border}`,
+                                    padding: 10,
+                                    background:
+                                      idx === 0
+                                        ? "rgba(34,197,94,0.07)"
+                                        : "transparent"
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                      marginBottom: 4,
+                                      gap: 8
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        fontWeight: 600,
+                                        fontSize: 14
+                                      }}
+                                    >
+                                      {v.label}
+                                    </span>
+                                    {typeof v.extraProfit === "number" && (
+                                      <span
+                                        style={{
+                                          padding: "3px 9px",
+                                          borderRadius: 999,
+                                          fontSize: 11,
+                                          fontWeight: 700,
+                                          background: "#dcfce7",
+                                          color: "#166534",
+                                          whiteSpace: "nowrap"
+                                        }}
+                                      >
+                                        +${v.extraProfit.toFixed(0)} profit
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <ul
+                                    style={{
+                                      margin: 0,
+                                      paddingLeft: 18,
+                                      fontSize: 13,
+                                      lineHeight: 1.5
+                                    }}
+                                  >
+                                    {paymentDelta && <li>{paymentDelta}</li>}
+                                    {termDelta && <li>{termDelta}</li>}
+                                    {ptiDelta && <li>{ptiDelta}</li>}
+                                    {ltvDelta && <li>{ltvDelta}</li>}
+                                    {!paymentDelta &&
+                                      !termDelta &&
+                                      !ptiDelta &&
+                                      !ltvDelta && (
+                                        <li>
+                                          Adjusts structure to add profit while
+                                          staying inside policy.
+                                        </li>
+                                      )}
+                                  </ul>
+
+                                  {idx === 0 && (
+                                    <p
+                                      style={{
+                                        marginTop: 6,
+                                        marginBottom: 0,
+                                        fontSize: 11,
+                                        color: colors.textSecondary
+                                      }}
+                                    >
+                                      Recommended starting point for this
+                                      customer.
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      </>
+                    ) : hasAdjustments ? (
+                      <>
+                        <p
+                          style={{
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                            marginBottom: 10
+                          }}
+                        >
+                          We found a tighter structure for this deal. Apply the
+                          targets below to move profit and PTI in the right
+                          direction while staying inside your policy.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p
+                          style={{
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                            marginBottom: 8
+                          }}
+                        >
+                          No optimized structures calculated for this deal yet.
+                          Try adjusting sale price, down payment or term and run
+                          the analysis again.
+                        </p>
+                      </>
+                    )}
+
+                    {hasAdjustments && (
+                      <>
+                        <h3
+                          style={{
+                            fontSize: 13,
+                            marginTop: 8,
+                            marginBottom: 6,
+                            color: colors.textSecondary,
+                            textTransform: "uppercase",
+                            letterSpacing: ".08em"
+                          }}
+                        >
+                          {hasVariants
+                            ? "Targets for the structure you choose"
+                            : "Suggested structure for this deal"}
+                        </h3>
+
+                        <ul
+                          style={{
+                            paddingLeft: 0,
+                            listStyle: "none",
+                            margin: 0,
+                            marginBottom: 10
+                          }}
+                        >
+                          {typeof result.underwriting.adjustments
+                            .newDownPayment === "number" && (
+                            <li style={summaryRow}>
+                              <span style={summaryLabel}>
+                                Down payment target
+                              </span>
+                              <span style={summaryValue}>
+                                $
+                                {result.underwriting.adjustments.newDownPayment.toFixed(
+                                  2
+                                )}
+                              </span>
+                            </li>
+                          )}
+                          {typeof result.underwriting.adjustments
+                            .newTermWeeks === "number" && (
+                            <li style={summaryRow}>
+                              <span style={summaryLabel}>Term target</span>
+                              <span style={summaryValue}>
+                                {
+                                  result.underwriting.adjustments
+                                    .newTermWeeks
+                                }{" "}
+                                weeks
+                              </span>
+                            </li>
+                          )}
+                          {typeof result.underwriting.adjustments
+                            .newSalePrice === "number" && (
+                            <li style={summaryRow}>
+                              <span style={summaryLabel}>
+                                Sale price target
+                              </span>
+                              <span style={summaryValue}>
+                                $
+                                {result.underwriting.adjustments.newSalePrice.toFixed(
+                                  2
+                                )}
+                              </span>
+                            </li>
+                          )}
+                          {typeof result.underwriting.adjustments.newApr ===
+                            "number" && (
+                            <li style={summaryRow}>
+                              <span style={summaryLabel}>APR target</span>
+                              <span style={summaryValue}>
+                                {result.underwriting.adjustments.newApr.toFixed(
+                                  2
+                                )}{" "}
+                                percent
+                              </span>
+                            </li>
+                          )}
+                        </ul>
+
+                        <button
+                          type="button"
+                          style={btnSecondary}
+                          onClick={() => {
+                            if (!loading) {
+                              void applySuggestedStructure();
+                            }
+                          }}
+                        >
+                          {hasVariants
+                            ? "Apply best structure to form"
+                            : "Apply suggested structure to form"}
+                        </button>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -1864,630 +2186,403 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                         marginBottom: 8
                       }}
                     >
-                      No optimized structures calculated for this deal yet. Try
-                      adjusting sale price, down payment or term and run the
-                      analysis again.
+                      Pro tests alternate structures for you and suggests
+                      options that add profit without breaking PTI or LTV rules.
+                      See how a slightly stronger down payment, longer term or
+                      higher price changes payment and risk.
                     </p>
+
+                    <div style={blurOverlay}>
+                      <div style={blurOverlayTitle}>Unlock profit optimizer</div>
+                      <p style={{ marginBottom: 10 }}>
+                        Pro often finds an extra one hundred to five hundred in
+                        profit on deals you already plan to fund, while staying
+                        inside your policy.
+                      </p>
+                      <a href="/billing" style={btnSecondary}>
+                        See profit optimized options
+                      </a>
+                    </div>
                   </>
                 )}
-
-                {hasAdjustments && (
-                  <>
-                    <h3
-                      style={{
-                        fontSize: 13,
-                        marginTop: 8,
-                        marginBottom: 6,
-                        color: colors.textSecondary,
-                        textTransform: "uppercase",
-                        letterSpacing: ".08em"
-                      }}
-                    >
-                      {hasVariants
-                        ? "Targets for the structure you choose"
-                        : "Suggested structure for this deal"}
-                    </h3>
-
-                    <ul
-                      style={{
-                        paddingLeft: 0,
-                        listStyle: "none",
-                        margin: 0,
-                        marginBottom: 10
-                      }}
-                    >
-                      {typeof result.underwriting.adjustments
-                        .newDownPayment === "number" && (
-                        <li style={summaryRow}>
-                          <span style={summaryLabel}>
-                            Down payment target
-                          </span>
-                          <span style={summaryValue}>
-                            $
-                            {result.underwriting.adjustments.newDownPayment.toFixed(
-                              2
-                            )}
-                          </span>
-                        </li>
-                      )}
-                      {typeof result.underwriting.adjustments
-                        .newTermWeeks === "number" && (
-                        <li style={summaryRow}>
-                          <span style={summaryLabel}>Term target</span>
-                          <span style={summaryValue}>
-                            {
-                              result.underwriting.adjustments
-                                .newTermWeeks
-                            }{" "}
-                            weeks
-                          </span>
-                        </li>
-                      )}
-                      {typeof result.underwriting.adjustments
-                        .newSalePrice === "number" && (
-                        <li style={summaryRow}>
-                          <span style={summaryLabel}>
-                            Sale price target
-                          </span>
-                          <span style={summaryValue}>
-                            $
-                            {result.underwriting.adjustments.newSalePrice.toFixed(
-                              2
-                            )}
-                          </span>
-                        </li>
-                      )}
-                      {typeof result.underwriting.adjustments.newApr ===
-                        "number" && (
-                        <li style={summaryRow}>
-                          <span style={summaryLabel}>APR target</span>
-                          <span style={summaryValue}>
-                            {result.underwriting.adjustments.newApr.toFixed(
-                              2
-                            )}{" "}
-                            percent
-                          </span>
-                        </li>
-                      )}
-                    </ul>
-
-                    <button
-                      type="button"
-                      style={btnSecondary}
-                      onClick={() => {
-                        if (!loading) {
-                          void applySuggestedStructure();
-                        }
-                      }}
-                    >
-                      {hasVariants
-                        ? "Apply best structure to form"
-                        : "Apply suggested structure to form"}
-                    </button>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: colors.textSecondary,
-                    marginBottom: 8
-                  }}
-                >
-                  Pro tests alternate structures for you and suggests options
-                  that add profit without breaking PTI or LTV rules. See how a
-                  slightly stronger down payment, longer term or higher price
-                  changes payment and risk.
-                </p>
-
-                <div style={blurOverlay}>
-                  <div style={blurOverlayTitle}>Unlock profit optimizer</div>
-                  <p style={{ marginBottom: 10 }}>
-                    Pro often finds an extra one hundred to five hundred in
-                    profit on deals you already plan to fund, while staying
-                    inside your policy.
-                  </p>
-                  <a href="/billing" style={btnSecondary}>
-                    See profit optimized options
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* customer offer sheet */}
-        <section style={panel}>
-          <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-            Customer offer sheet
-          </h2>
-          <p
-            style={{
-              fontSize: 14,
-              color: colors.textSecondary,
-              marginBottom: 12
-            }}
-          >
-            Generate a one page customer offer with payment, term and structure
-            that you can print or save as PDF.
-          </p>
-
-          {isPro ? (
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => printOfferSheet(result, form)}
-            >
-              Print customer offer
-            </button>
-          ) : (
-            <a href="/billing" style={btnSecondary}>
-              Upgrade to unlock offer sheet
-            </a>
-          )}
-        </section>
-
-        {/* underwriting packet */}
-        <section style={panel}>
-          <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-            Underwriting packet
-          </h2>
-          <p
-            style={{
-              fontSize: 14,
-              color: colors.textSecondary,
-              marginBottom: 12
-            }}
-          >
-            Print a full underwriting summary with verdict, reasons, PTI, LTV
-            and AI commentary plus risk and compliance flags.
-          </p>
-          {isPro ? (
-            <button
-              type="button"
-              style={btnSecondary}
-              onClick={() => printUnderwritingPacket(result)}
-            >
-              Print underwriting packet
-            </button>
-          ) : (
-            <a href="/billing" style={btnSecondary}>
-              Upgrade to unlock underwriting packet
-            </a>
-          )}
-        </section>
-
-        {/* policy snapshot */}
-        <section style={panel}>
-          <h2 style={{ fontSize: 17, marginBottom: 10 }}>Policy snapshot</h2>
-          <ul
-            style={{
-              paddingLeft: 0,
-              listStyle: "none",
-              margin: 0
-            }}
-          >
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Max PTI</span>
-              <span style={summaryValue}>
-                {(policy.maxPTI * 100).toFixed(0)} percent
-              </span>
-            </li>
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Max LTV</span>
-              <span style={summaryValue}>
-                {(policy.maxLTV * 100).toFixed(0)} percent
-              </span>
-            </li>
-            <li style={summaryRow}>
-              <span style={summaryLabel}>Max term</span>
-              <span style={summaryValue}>{policy.maxTermWeeks} weeks</span>
-            </li>
-          </ul>
-        </section>
-
-        {/* compliance and delinquency */}
-        <section style={panel}>
-          <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-              Compliance and early delinquency check
-            </h2>
-
-            {/* compliance block */}
-            <h3
-              style={{
-                fontSize: 13,
-                marginBottom: 4,
-                color: colors.textSecondary,
-                textTransform: "uppercase",
-                letterSpacing: ".08em"
-              }}
-            >
-              Compliance status
-            </h3>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 6,
-                gap: 8
-              }}
-            >
-              <span style={{ fontSize: 12, color: colors.textSecondary }}>
-                Policy and common cap checks
-              </span>
-              <span style={riskChipStyle(complianceChipScore)}>
-                {complianceChipLabel}
-              </span>
-            </div>
-
-            <ul
-              style={{
-                paddingLeft: 18,
-                marginTop: 0,
-                marginBottom: 10,
-                lineHeight: 1.5,
-                fontSize: 14
-              }}
-            >
-              {complianceAnalysis.bullets.map((c, idx) => (
-                <li key={idx}>{c}</li>
-              ))}
-            </ul>
-
-            {/* delinquency block */}
-            <h3
-              style={{
-                fontSize: 13,
-                marginBottom: 4,
-                marginTop: 10,
-                color: colors.textSecondary,
-                textTransform: "uppercase",
-                letterSpacing: ".08em"
-              }}
-            >
-              First six payments risk
-            </h3>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 6,
-                gap: 8
-              }}
-            >
-              <span style={{ fontSize: 12, color: colors.textSecondary }}>
-                Likely early delinquency on this structure
-              </span>
-              <span style={riskChipStyle(delinquencyChipLabel)}>
-                {delinquencyChipLabel}
-              </span>
-            </div>
-
-            <ul
-              style={{
-                paddingLeft: 18,
-                marginTop: 0,
-                lineHeight: 1.5,
-                fontSize: 14
-              }}
-            >
-              {delinquencyAnalysis.bullets.map((d, idx) => (
-                <li key={idx}>{d}</li>
-              ))}
-            </ul>
-
-            <p
-              style={{
-                fontSize: 13,
-                marginTop: 4,
-                color: colors.textSecondary
-              }}
-            >
-              Action before funding: {delinquencyAnalysis.action}
-            </p>
-
-            {!isPro && (
-              <div style={blurOverlay}>
-                <div style={blurOverlayTitle}>
-                  Detailed compliance and delinquency drivers
-                </div>
-                <p style={{ marginBottom: 10 }}>
-                  Pro breaks this view down by PTI, LTV, term, repos and fees
-                  so you know exactly which field to tighten before funding.
-                </p>
-                <a href="/billing" style={btnSecondary}>
-                  Unlock compliance and delinquency tools
-                </a>
               </div>
-            )}
-          </div>
-        </section>
+            </section>
 
-        {/* portfolio benchmarking */}
-        <section style={panel}>
-          <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-              Portfolio benchmarking
-            </h2>
+            {/* customer offer sheet */}
+            <section style={panel}>
+              <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                Customer offer sheet
+              </h2>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: colors.textSecondary,
+                  marginBottom: 12
+                }}
+              >
+                Generate a one page customer offer with payment, term and
+                structure that you can print or save as PDF.
+              </p>
 
-            {!isPro ? (
-              <>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: colors.textSecondary,
-                    marginBottom: 8
-                  }}
+              {isPro ? (
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => printOfferSheet(result, form)}
                 >
-                  Pro compares this deal against your last month of funded deals
-                  and shows where PTI, LTV and profit sit against your normal
-                  numbers instead of guessing from one structure at a time.
-                </p>
+                  Print customer offer
+                </button>
+              ) : (
+                <a href="/billing" style={btnSecondary}>
+                  Upgrade to unlock offer sheet
+                </a>
+              )}
+            </section>
 
-                <div style={blurOverlay}>
-                  <div style={blurOverlayTitle}>
-                    See how this deal stacks up
-                  </div>
-                  <p style={{ marginBottom: 10 }}>
-                    Unlock Pro to see PTI, LTV and profit side by side with your
-                    store averages on every deal, so you can tighten the outlier
-                    structures before you fund them.
-                  </p>
+            {/* underwriting packet */}
+            <section style={panel}>
+              <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                Underwriting packet
+              </h2>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: colors.textSecondary,
+                  marginBottom: 12
+                }}
+              >
+                Print a full underwriting summary with verdict, reasons, PTI,
+                LTV and AI commentary plus risk and compliance flags.
+              </p>
+              {isPro ? (
+                <button
+                  type="button"
+                  style={btnSecondary}
+                  onClick={() => printUnderwritingPacket(result)}
+                >
+                  Print underwriting packet
+                </button>
+              ) : (
+                <a href="/billing" style={btnSecondary}>
+                  Upgrade to unlock underwriting packet
+                </a>
+              )}
+            </section>
+          </div>
+
+          {/* monthly portfolio report upsell */}
+          {!isPro && (
+            <section
+              style={{
+                ...panel,
+                marginTop: 24
+              }}
+            >
+              <h2 style={{ fontSize: 17, marginBottom: 8 }}>
+                Monthly portfolio report (Pro)
+              </h2>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: colors.textSecondary,
+                  marginBottom: 10
+                }}
+              >
+                Pro users receive a monthly portfolio snapshot with PTI and LTV
+                trends, average profit per deal and a list of risky structures
+                that should be tightened before the next month.
+              </p>
+              <a href="/billing" style={btnSecondary}>
+                Upgrade to get your portfolio report
+              </a>
+            </section>
+          )}
+        </>
+      )}
+
+      {/* AI TAB */}
+      {activeTab === "ai" && (
+        <>
+          {/* AI deal opinion */}
+          {result.aiExplanation && (
+            <section
+              style={{
+                ...panel,
+                marginTop: 16,
+                marginBottom: 12
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 10
+                }}
+              >
+                <h2 style={{ fontSize: 17 }}>AI deal opinion</h2>
+                {!isPro && (
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      background:
+                        "linear-gradient(to right, #22c55e, #4ade80)",
+                      color: "#052e16",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: ".08em",
+                      textTransform: "uppercase"
+                    }}
+                  >
+                    Pro
+                  </span>
+                )}
+              </div>
+
+              <p
+                style={{
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  whiteSpace: "pre-wrap"
+                }}
+              >
+                {result.aiExplanation}
+              </p>
+
+              {!isPro && (
+                <div style={{ marginTop: 12 }}>
                   <a href="/billing" style={btnSecondary}>
-                    Unlock portfolio benchmarking
+                    Unlock full AI underwriting with Pro
                   </a>
                 </div>
-              </>
-            ) : hasPortfolioBenchmark ? (
-              <>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: colors.textSecondary,
-                    marginBottom: 6
-                  }}
-                >
-                  Quick read on how this structure compares to what you usually
-                  fund in the store.
-                </p>
+              )}
+            </section>
+          )}
 
-                <div style={benchGrid}>
-                  {/* PTI tile */}
-                  <div style={benchTile}>
-                    <div style={benchLabel}>Payment to income</div>
-                    <div style={benchCurrent}>
-                      {dealPtiPct !== null
-                        ? `${dealPtiPct.toFixed(1)} percent`
-                        : "N A"}
-                    </div>
-                    {portfolioPtiPct !== null && (
-                      <div style={benchBaseline}>
-                        Store average {portfolioPtiPct.toFixed(1)} percent
-                      </div>
-                    )}
-                    <div
-                      style={
-                        portfolioComparison.ptiDelta > 0
-                          ? benchTagWarn
-                          : benchTagGood
-                      }
-                    >
-                      {portfolioComparison.ptiDelta > 0
-                        ? `${portfolioComparison.ptiDelta.toFixed(
-                            1
-                          )} points hotter than normal`
-                        : `${Math.abs(
-                            portfolioComparison.ptiDelta
-                          ).toFixed(1)} points softer than normal`}
-                    </div>
-                  </div>
-
-                  {/* LTV tile */}
-                  <div style={benchTile}>
-                    <div style={benchLabel}>LTV</div>
-                    <div style={benchCurrent}>
-                      {dealLtvPct !== null
-                        ? `${dealLtvPct.toFixed(1)} percent`
-                        : "N A"}
-                    </div>
-                    {portfolioLtvPct !== null && (
-                      <div style={benchBaseline}>
-                        Store average {portfolioLtvPct.toFixed(1)} percent
-                      </div>
-                    )}
-                    <div
-                      style={
-                        portfolioComparison.ltvDelta > 0
-                          ? benchTagWarn
-                          : benchTagGood
-                      }
-                    >
-                      {portfolioComparison.ltvDelta > 0
-                        ? `${portfolioComparison.ltvDelta.toFixed(
-                            1
-                          )} points higher than normal`
-                        : `${Math.abs(
-                            portfolioComparison.ltvDelta
-                          ).toFixed(1)} points lower than normal`}
-                    </div>
-                  </div>
-
-                  {/* profit tile */}
-                  <div style={benchTile}>
-                    <div style={benchLabel}>Profit per deal</div>
-                    <div style={benchCurrent}>
-                      {dealProfit !== null
-                        ? `$${dealProfit.toFixed(0)}`
-                        : "N A"}
-                    </div>
-                    {portfolioProfit !== null && (
-                      <div style={benchBaseline}>
-                        Store average ${portfolioProfit.toFixed(0)}
-                      </div>
-                    )}
-                    <div
-                      style={
-                        portfolioComparison.profitDelta >= 0
-                          ? benchTagGood
-                          : benchTagWarn
-                      }
-                    >
-                      {portfolioComparison.profitDelta >= 0
-                        ? `About $${portfolioComparison.profitDelta.toFixed(
-                            0
-                          )} more profit than average`
-                        : `About $${Math.abs(
-                            portfolioComparison.profitDelta
-                          ).toFixed(0)} less profit than average`}
-                    </div>
-                  </div>
-                </div>
-
-                <p
-                  style={{
-                    marginTop: 10,
-                    fontSize: 12,
-                    color: colors.textSecondary
-                  }}
-                >
-                  Five second read: tighten deals that are hotter on PTI or LTV
-                  than your norm unless profit is carrying the extra risk.
-                </p>
-              </>
-            ) : (
-              <>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: colors.textSecondary,
-                    marginBottom: 6
-                  }}
-                >
-                  We will start benchmarking once you have at least one month of
-                  funded deals with PTI, LTV and profit captured in the system.
-                </p>
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: colors.textSecondary
-                  }}
-                >
-                  Run and fund a few more deals, then come back to see how new
-                  structures stack up against your real portfolio.
-                </p>
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* sales scripts / save the deal help */}
-        <section style={panel}>
-          <div style={lockedPanelInner}>
-            <h2 style={{ fontSize: 17, marginBottom: 10 }}>
-              Save the deal scripts
-            </h2>
-
-            {isPro && scriptScenarios.length > 0 ? (
-              <>
-                <p style={scriptIntro}>
-                  Use these ready to read scripts when a customer pushes back on
-                  payment, down payment or term. Tap a situation to see what to
-                  say.
-                </p>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10
-                  }}
-                >
-                  {scriptScenarios.map((s, idx) => (
-                    <details
-                      key={s.id}
-                      style={scriptDetails}
-                      open={idx === 0}
-                    >
-                      <summary style={scriptSummaryRow}>
-                        <span>{s.title}</span>
-                        <span style={scriptTag}>Lot ready</span>
-                      </summary>
-                      <div style={scriptBody}>{s.script}</div>
-                    </details>
-                  ))}
-                </div>
-
-                <p style={scriptHint}>
-                  Tip: drop your favorite lines into your CRM or route book so
-                  new salespeople can plug in what already works.
-                </p>
-              </>
-            ) : (
-              <>
-                <p
-                  style={{
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    color: colors.textSecondary
-                  }}
-                >
-                  Pro can turn this structure into simple talk tracks and
-                  objection handlers you can read right to the customer. See
-                  how to present a stronger down payment, a longer term or the
-                  current structure without losing the customer.
-                </p>
-
-                <div style={blurOverlay}>
-                  <div style={blurOverlayTitle}>
-                    Turn structure into a close
-                  </div>
-                  <p style={{ marginBottom: 10 }}>
-                    Unlock Pro to get lot ready scripts for payment, down
-                    payment and term objections on every deal you run.
-                  </p>
-                  <a href="/billing" style={btnSecondary}>
-                    Upgrade to Pro
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
-      </div>
-
-      {/* monthly portfolio report upsell */}
-      {!isPro && (
-        <section
-          style={{
-            ...panel,
-            marginTop: 24
-          }}
-        >
-          <h2 style={{ fontSize: 17, marginBottom: 8 }}>
-            Monthly portfolio report (Pro)
-          </h2>
-          <p
+          {/* AI Studio */}
+          <section
             style={{
-              fontSize: 14,
-              color: colors.textSecondary,
-              marginBottom: 10
+              ...panel,
+              marginTop: 16
             }}
           >
-            Pro users receive a monthly portfolio snapshot with PTI and LTV
-            trends, average profit per deal and a list of risky structures that
-            should be tightened before the next month.
-          </p>
-          <a href="/billing" style={btnSecondary}>
-            Upgrade to get your portfolio report
-          </a>
-        </section>
+            <div style={lockedPanelInner}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 4
+                }}
+              >
+                <h2 style={{ fontSize: 17 }}>AI Studio</h2>
+                {!isPro && (
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      background:
+                        "linear-gradient(to right, #22c55e, #4ade80)",
+                      color: "#052e16",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: ".08em",
+                      textTransform: "uppercase"
+                    }}
+                  >
+                    Pro
+                  </span>
+                )}
+              </div>
+
+              {isPro ? (
+                <>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: colors.textSecondary
+                    }}
+                  >
+                    Three AI helpers for this structure. Use the one that fits
+                    what you are doing right now at the desk.
+                  </p>
+
+                  <div style={aiRow}>
+                    {/* Underwriter card */}
+                    <div style={aiCard}>
+                      <div style={aiTitle}>AI underwriter</div>
+                      <p style={aiHint}>
+                        One paragraph manager level take on risk, PTI, LTV and
+                        profit.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={runUnderwriter}
+                        disabled={aiLoading === "/api/ai-underwriter"}
+                        style={aiButton}
+                      >
+                        {aiLoading === "/api/ai-underwriter"
+                          ? "Thinking..."
+                          : "Run underwriter"}
+                      </button>
+                      {aiUnderwriter && (
+                        <div style={aiOutput}>{aiUnderwriter}</div>
+                      )}
+                    </div>
+
+                    {/* Closer line card */}
+                    <div style={aiCard}>
+                      <div style={aiTitle}>Closer line</div>
+                      <p style={aiHint}>
+                        Two short sentences you can read word for word to close
+                        this deal.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={runCloser}
+                        disabled={aiLoading === "/api/ai-closer-line"}
+                        style={aiButton}
+                      >
+                        {aiLoading === "/api/ai-closer-line"
+                          ? "Thinking..."
+                          : "Closer line"}
+                      </button>
+                      {aiCloser && <div style={aiOutput}>{aiCloser}</div>}
+                    </div>
+
+                    {/* Risk movie card */}
+                    <div style={aiCard}>
+                      <div style={aiTitle}>Risk movie</div>
+                      <p style={aiHint}>
+                        Twelve month story for the note so you can plan follow
+                        up.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={runRiskMovie}
+                        disabled={aiLoading === "/api/ai-risk-movie"}
+                        style={aiButton}
+                      >
+                        {aiLoading === "/api/ai-risk-movie"
+                          ? "Projecting..."
+                          : "Risk movie"}
+                      </button>
+                      {aiRiskMovie && (
+                        <div style={aiOutput}>{aiRiskMovie}</div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: colors.textSecondary,
+                      marginTop: 4
+                    }}
+                  >
+                    Pro turns this deal into three tools: a manager style
+                    underwriting note, a closer line you can read at the desk,
+                    and a twelve month risk picture for the note.
+                  </p>
+
+                  <div style={blurOverlay}>
+                    <div style={blurOverlayTitle}>Unlock AI Studio</div>
+                    <p style={{ marginBottom: 10 }}>
+                      Upgrade to Pro to run AI underwriting, closer lines and
+                      risk movies right inside the analyzer, with no copy and
+                      paste.
+                    </p>
+                    <a href="/billing" style={btnSecondary}>
+                      Upgrade to Pro
+                    </a>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* sales scripts / save the deal help */}
+          <section
+            style={{
+              ...panel,
+              marginTop: 16
+            }}
+          >
+            <div style={lockedPanelInner}>
+              <h2 style={{ fontSize: 17, marginBottom: 10 }}>
+                Save the deal scripts
+              </h2>
+
+              {isPro && scriptScenarios.length > 0 ? (
+                <>
+                  <p style={scriptIntro}>
+                    Use these ready to read scripts when a customer pushes back
+                    on payment, down payment or term. Tap a situation to see
+                    what to say.
+                  </p>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10
+                    }}
+                  >
+                    {scriptScenarios.map((s, idx) => (
+                      <details
+                        key={s.id}
+                        style={scriptDetails}
+                        open={idx === 0}
+                      >
+                        <summary style={scriptSummaryRow}>
+                          <span>{s.title}</span>
+                          <span style={scriptTag}>Lot ready</span>
+                        </summary>
+                        <div style={scriptBody}>{s.script}</div>
+                      </details>
+                    ))}
+                  </div>
+
+                  <p style={scriptHint}>
+                    Tip: drop your favorite lines into your CRM or route book so
+                    new salespeople can plug in what already works.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                      color: colors.textSecondary
+                    }}
+                  >
+                    Pro can turn this structure into simple talk tracks and
+                    objection handlers you can read right to the customer. See
+                    how to present a stronger down payment, a longer term or the
+                    current structure without losing the customer.
+                  </p>
+
+                  <div style={blurOverlay}>
+                    <div style={blurOverlayTitle}>
+                      Turn structure into a close
+                    </div>
+                    <p style={{ marginBottom: 10 }}>
+                      Unlock Pro to get lot ready scripts for payment, down
+                      payment and term objections on every deal you run.
+                    </p>
+                    <a href="/billing" style={btnSecondary}>
+                      Upgrade to Pro
+                    </a>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+        </>
       )}
     </>
   );
