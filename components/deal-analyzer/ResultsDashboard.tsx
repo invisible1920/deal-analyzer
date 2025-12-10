@@ -25,6 +25,78 @@ type Props = {
   onOpenCompare?: () => void;
 };
 
+function Card(props: {
+  title?: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      style={{
+        background: "#ffffff",
+        border: "1px solid rgba(15,23,42,0.06)",
+        borderRadius: 16,
+        padding: 18,
+        boxShadow: "0 18px 40px rgba(15,23,42,0.08)",
+        boxSizing: "border-box",
+        minWidth: 0
+      }}
+    >
+      {(props.title || props.badge) && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8
+          }}
+        >
+          {props.title && (
+            <h2
+              style={{
+                fontSize: 15,
+                fontWeight: 600,
+                margin: 0
+              }}
+            >
+              {props.title}
+            </h2>
+          )}
+          {props.badge}
+        </div>
+      )}
+      {props.children}
+    </section>
+  );
+}
+
+function StatChip(props: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <span
+        style={{
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: ".08em",
+          opacity: 0.7
+        }}
+      >
+        {props.label}
+      </span>
+      <span
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          fontVariantNumeric: "tabular-nums"
+        }}
+      >
+        {props.value}
+      </span>
+    </div>
+  );
+}
+
+
 
 export function ResultsDashboard(props: Props) {
   const {
@@ -130,17 +202,7 @@ export function ResultsDashboard(props: Props) {
     marginTop: 10
   };
 
-  const panel: CSSProperties = {
-    background: colors.panel,
-    border: `1px solid ${colors.border}`,
-    borderRadius: 14,
-    padding: 20,
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)",
-    minWidth: 0,
-    wordBreak: "break-word",
-    boxSizing: "border-box",
-    maxWidth: "100%"
-  };
+
 
   const basePayment =
     typeof result?.payment === "number" ? result.payment : null;
@@ -239,58 +301,7 @@ export function ResultsDashboard(props: Props) {
     fontVariantNumeric: "tabular-nums"
   };
 
-  const summaryBar: CSSProperties = {
-    marginTop: 24,
-    padding: "14px 20px",
-    borderRadius: 24,
-    border: `1px solid ${colors.border}`,
-    background: "rgba(15, 23, 42, 0.96)",
-    color: "#e5e7eb",
-    display: "flex",
-    flexDirection: isMobile ? "column" : "row",
-    alignItems: isMobile ? "flex-start" : "center",
-    justifyContent: isMobile ? "flex-start" : "space-between",
-    gap: isMobile ? 16 : 24,
-    position: isMobile ? "static" : "sticky",
-    top: 16,
-    zIndex: 10,
-    backdropFilter: "blur(14px)",
-    boxSizing: "border-box",
-    maxWidth: "100%",
-    overflowX: "hidden"
-  };
 
-  const summaryChipLabel: CSSProperties = {
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: ".08em",
-    opacity: 0.85
-  };
-
-  const summaryChipValue: CSSProperties = {
-    fontSize: 16,
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    fontVariantNumeric: "tabular-nums"
-  };
-
-    const summaryChipGroup: CSSProperties = {
-    display: "flex",
-    flexWrap: "wrap",
-    rowGap: 10,
-    columnGap: 24,
-    width: "100%"
-  };
-
-  const summaryChipBox: CSSProperties = {
-    minWidth: isMobile ? "48%" : 140,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 2
-  };
 
   const scenarioBar: CSSProperties = {
     marginTop: 12,
@@ -452,16 +463,17 @@ export function ResultsDashboard(props: Props) {
 
   
 
-  const resultsGrid: CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile
-      ? "minmax(0, 1fr)"
-      : "repeat(3, minmax(0, 1fr))",
-    gap: 20,
-    marginTop: 24,
-    alignItems: "stretch",
-    maxWidth: "100%"
-  };
+ const resultsGrid: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: isMobile
+    ? "minmax(0, 1fr)"
+    : "repeat(2, minmax(0, 1fr))",
+  gap: 20,
+  marginTop: 24,
+  alignItems: "stretch",
+  maxWidth: "100%"
+};
+
 
   // derived metrics
 
@@ -1015,57 +1027,60 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
   return (
     <>
       {/* sticky summary bar */}
-      <div style={summaryBar}>
-        <div style={summaryChipGroup}>
-          <div style={summaryChipBox}>
-            <div style={summaryChipLabel}>Payment</div>
-            <div style={summaryChipValue}>${result.payment.toFixed(2)}</div>
-          </div>
+<div
+  style={{
+    marginTop: 16,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 24,
+    background: "linear-gradient(to right, #0f172a, #020617)",
+    color: "white",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 20,
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 18px 40px rgba(15,23,42,0.55)",
+    position: isMobile ? "static" : "sticky",
+    top: 12,
+    zIndex: 10
+  }}
+>
+  <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
+    <StatChip label="Payment" value={`$${result.payment.toFixed(2)}`} />
+    <StatChip
+      label="Total profit"
+      value={`$${result.totalProfit.toFixed(2)}`}
+    />
+    <StatChip label="PTI" value={ptiDisplay} />
+    <StatChip label="Verdict" value={verdictText} />
+    {approvalScore !== null && (
+      <StatChip
+        label="Approval score"
+        value={`${approvalScore} percent`}
+      />
+    )}
+  </div>
 
-          <div style={summaryChipBox}>
-            <div style={summaryChipLabel}>Total profit</div>
-            <div style={summaryChipValue}>
-              ${result.totalProfit.toFixed(2)}
-            </div>
-          </div>
+  {planType !== "pro" && (
+    <a
+      href="/billing"
+      style={{
+        ...btnSecondary,
+        background: "linear-gradient(to right, #22c55e, #4ade80)",
+        color: "#052e16",
+        width: isMobile ? "100%" : "auto",
+        textAlign: "center",
+        alignSelf: isMobile ? "stretch" : "center",
+        marginTop: isMobile ? 4 : 0,
+        boxShadow: "0 10px 30px rgba(22, 163, 74, 0.45)"
+      }}
+    >
+      Upgrade to save and export
+    </a>
+  )}
+</div>
 
-          <div style={summaryChipBox}>
-            <div style={summaryChipLabel}>PTI</div>
-            <div style={summaryChipValue}>{ptiDisplay}</div>
-          </div>
-
-          <div style={summaryChipBox}>
-            <div style={summaryChipLabel}>Verdict</div>
-            <div style={summaryChipValue}>
-              <span style={verdictChipStyle(verdictText)}>{verdictText}</span>
-            </div>
-          </div>
-
-          {approvalScore !== null && (
-            <div style={summaryChipBox}>
-              <div style={summaryChipLabel}>Approval score</div>
-              <div style={summaryChipValue}>{approvalScore} percent</div>
-            </div>
-          )}
-        </div>
-        {planType !== "pro" && (
-          <a
-            href="/billing"
-            style={{
-              ...btnSecondary,
-              background:
-                "linear-gradient(to right, #22c55e, #4ade80, #22c55e)",
-              color: "#052e16",
-              width: isMobile ? "100%" : "auto",
-              textAlign: "center",
-              alignSelf: isMobile ? "stretch" : "center",
-              marginTop: isMobile ? 4 : 0
-            }}
-          >
-            Upgrade to save and export
-          </a>
-        )}
-      </div>
 
             {/* scenario tools */}
       {isPro && (onSaveScenario || onOpenCompare) && (
