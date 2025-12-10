@@ -25,79 +25,6 @@ type Props = {
   onOpenCompare?: () => void;
 };
 
-function Card(props: {
-  title?: string;
-  badge?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      style={{
-        background: "#ffffff",
-        border: "1px solid rgba(15,23,42,0.06)",
-        borderRadius: 16,
-        padding: 18,
-        boxShadow: "0 18px 40px rgba(15,23,42,0.08)",
-        boxSizing: "border-box",
-        minWidth: 0
-      }}
-    >
-      {(props.title || props.badge) && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 8
-          }}
-        >
-          {props.title && (
-            <h2
-              style={{
-                fontSize: 15,
-                fontWeight: 600,
-                margin: 0
-              }}
-            >
-              {props.title}
-            </h2>
-          )}
-          {props.badge}
-        </div>
-      )}
-      {props.children}
-    </section>
-  );
-}
-
-function StatChip(props: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <span
-        style={{
-          fontSize: 11,
-          textTransform: "uppercase",
-          letterSpacing: ".08em",
-          opacity: 0.7
-        }}
-      >
-        {props.label}
-      </span>
-      <span
-        style={{
-          fontSize: 18,
-          fontWeight: 700,
-          fontVariantNumeric: "tabular-nums"
-        }}
-      >
-        {props.value}
-      </span>
-    </div>
-  );
-}
-
-
-
 export function ResultsDashboard(props: Props) {
   const {
     result,
@@ -114,12 +41,13 @@ export function ResultsDashboard(props: Props) {
     onOpenCompare
   } = props;
 
-    // AI states
+  // AI states
   const [aiUnderwriter, setAiUnderwriter] = useState<string>("");
   const [aiCloser, setAiCloser] = useState<string>("");
   const [aiRiskMovie, setAiRiskMovie] = useState<string>("");
 
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+
   async function runAi(endpoint: string, setter: (t: string) => void) {
     setAiLoading(endpoint);
     try {
@@ -148,8 +76,6 @@ export function ResultsDashboard(props: Props) {
   function runRiskMovie() {
     runAi("/api/ai-risk-movie", setAiRiskMovie);
   }
-
-
 
   const isMobile = useIsMobile(768);
 
@@ -202,7 +128,17 @@ export function ResultsDashboard(props: Props) {
     marginTop: 10
   };
 
-
+  const panel: CSSProperties = {
+    background: colors.panel,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 14,
+    padding: 20,
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.10)",
+    minWidth: 0,
+    wordBreak: "break-word",
+    boxSizing: "border-box",
+    maxWidth: "100%"
+  };
 
   const basePayment =
     typeof result?.payment === "number" ? result.payment : null;
@@ -222,9 +158,7 @@ export function ResultsDashboard(props: Props) {
   };
 
   const profitOptimizer =
-    result?.profitOptimizer ||
-    result?.underwriting?.profitOptimizer ||
-    null;
+    result?.profitOptimizer || result?.underwriting?.profitOptimizer || null;
 
   const hasVariants =
     !!profitOptimizer &&
@@ -301,7 +235,58 @@ export function ResultsDashboard(props: Props) {
     fontVariantNumeric: "tabular-nums"
   };
 
+  const summaryBar: CSSProperties = {
+    marginTop: 24,
+    padding: "14px 20px",
+    borderRadius: 24,
+    border: `1px solid ${colors.border}`,
+    background: "rgba(15, 23, 42, 0.96)",
+    color: "#e5e7eb",
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    alignItems: isMobile ? "flex-start" : "center",
+    justifyContent: isMobile ? "flex-start" : "space-between",
+    gap: isMobile ? 16 : 24,
+    position: isMobile ? "static" : "sticky",
+    top: 16,
+    zIndex: 10,
+    backdropFilter: "blur(14px)",
+    boxSizing: "border-box",
+    maxWidth: "100%",
+    overflowX: "hidden"
+  };
 
+  const summaryChipLabel: CSSProperties = {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: ".08em",
+    opacity: 0.85
+  };
+
+  const summaryChipValue: CSSProperties = {
+    fontSize: 16,
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontVariantNumeric: "tabular-nums"
+  };
+
+  const summaryChipGroup: CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    rowGap: 10,
+    columnGap: 24,
+    width: "100%"
+  };
+
+  const summaryChipBox: CSSProperties = {
+    minWidth: isMobile ? "48%" : 140,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 2
+  };
 
   const scenarioBar: CSSProperties = {
     marginTop: 12,
@@ -327,7 +312,7 @@ export function ResultsDashboard(props: Props) {
     justifyContent: "center"
   };
 
-      const benchGrid: CSSProperties = {
+  const benchGrid: CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile
       ? "minmax(0, 1fr)"
@@ -345,12 +330,11 @@ export function ResultsDashboard(props: Props) {
   };
 
   const aiRow: CSSProperties = {
-  display: isMobile ? "block" : "grid",
-  gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-  gap: 20,            // <-- was 16
-  marginTop: 12
-};
-
+    display: isMobile ? "block" : "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+    gap: 20,
+    marginTop: 12
+  };
 
   const aiCard: CSSProperties = {
     borderRadius: 12,
@@ -406,16 +390,16 @@ export function ResultsDashboard(props: Props) {
   };
 
   const aiOutput: CSSProperties = {
-  marginTop: 8,
-  padding: 10,
-  borderRadius: 10,
-  background: "rgba(15,23,42,0.03)",
-  fontSize: 13,
-  lineHeight: 1.5,
-  whiteSpace: "pre-wrap",
-  maxHeight: 160,
-  overflowY: "auto"
-};
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 10,
+    background: "rgba(15,23,42,0.03)",
+    fontSize: 13,
+    lineHeight: 1.5,
+    whiteSpace: "pre-wrap",
+    maxHeight: 160,
+    overflowY: "auto"
+  };
 
   const benchLabel: CSSProperties = {
     fontSize: 11,
@@ -461,19 +445,16 @@ export function ResultsDashboard(props: Props) {
     color: "#854d0e"
   };
 
-  
-
- const resultsGrid: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: isMobile
-    ? "minmax(0, 1fr)"
-    : "repeat(2, minmax(0, 1fr))",
-  gap: 20,
-  marginTop: 24,
-  alignItems: "stretch",
-  maxWidth: "100%"
-};
-
+  const resultsGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile
+      ? "minmax(0, 1fr)"
+      : "repeat(3, minmax(0, 1fr))",
+    gap: 20,
+    marginTop: 24,
+    alignItems: "stretch",
+    maxWidth: "100%"
+  };
 
   // derived metrics
 
@@ -841,23 +822,23 @@ export function ResultsDashboard(props: Props) {
       score = 2;
     } else if (ptiValue > ptiLimit) {
       bullets.push(
-        `PTI is above your policy limit at ${(
-          ptiValue * 100
-        ).toFixed(1)} percent so payment pressure is high.`
+        `PTI is above your policy limit at ${(ptiValue * 100).toFixed(
+          1
+        )} percent so payment pressure is high.`
       );
       score = 2;
     } else if (ptiValue > ptiLimit * 0.9) {
       bullets.push(
-        `PTI is near your limit at ${(
-          ptiValue * 100
-        ).toFixed(1)} percent. Expect tighter first six payments.`
+        `PTI is near your limit at ${(ptiValue * 100).toFixed(
+          1
+        )} percent. Expect tighter first six payments.`
       );
       score = Math.max(score, 1);
     } else {
       bullets.push(
-        `PTI is comfortably inside policy at ${(
-          ptiValue * 100
-        ).toFixed(1)} percent.`
+        `PTI is comfortably inside policy at ${(ptiValue * 100).toFixed(
+          1
+        )} percent.`
       );
       score = Math.max(score, 0);
     }
@@ -912,6 +893,7 @@ export function ResultsDashboard(props: Props) {
   const delinquencyChipLabel = `${delinquencyAnalysis.level} risk`;
 
   // what if helpers
+
   function bumpTerm(deltaMonths: number) {
     if (!onScenarioRun) return;
     const next = Math.max(6, form.termMonths + deltaMonths);
@@ -955,7 +937,7 @@ Middle:
 If we can move a little more money to the front, I can work on lowering that payment for you. For example, if you are able to bump ${nicerDown} just a bit, I can tighten the term and reduce what you pay each week while still keeping you approved on this vehicle.
 
 Close:
-Would you rather keep the smaller down payment and live with the higher weekly payment, or put a little more down today so the payment feels lighter every week you drive it`
+Would you rather keep the smaller down payment and live with the higher weekly payment, or put a little more down today so the payment feels lighter every week you drive it?`
       },
       {
         id: "downShort",
@@ -967,7 +949,7 @@ Middle:
 If we stay at this lower down payment, they are going to keep the payment where it is to cover the risk. If you can bring a little more today, I can either push the payment down or shorten the term so you pay the car off faster and save interest.
 
 Close:
-If we can get a little closer to their target down, I can lock this approval in and make the numbers work the way you want them. How close can you get to that so we can wrap this up`
+If we can get a little closer to their target down, I can lock this approval in and make the numbers work the way you want them. How close can you get to that so we can wrap this up?`
       },
       {
         id: "longTerm",
@@ -979,7 +961,7 @@ Middle:
 If you prefer to be done sooner, we can look at a couple of options. One is to put a little more down today so we can shorten the term. The other is to keep this comfortable payment and you always have the option to pay extra with no penalty, which cuts months off the back of the loan.
 
 Close:
-Would you rather keep the lower payment and pay extra when you can, or put a little more down today so we officially shorten the term on paper`
+Would you rather keep the lower payment and pay extra when you can, or put a little more down today so we officially shorten the term on paper?`
       }
     ];
   })();
@@ -1027,62 +1009,62 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
   return (
     <>
       {/* sticky summary bar */}
-<div
-  style={{
-    marginTop: 16,
-    marginBottom: 24,
-    padding: 16,
-    borderRadius: 24,
-    background: "linear-gradient(to right, #0f172a, #020617)",
-    color: "white",
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 20,
-    justifyContent: "space-between",
-    alignItems: "center",
-    boxShadow: "0 18px 40px rgba(15,23,42,0.55)",
-    position: isMobile ? "static" : "sticky",
-    top: 12,
-    zIndex: 10
-  }}
->
-  <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
-    <StatChip label="Payment" value={`$${result.payment.toFixed(2)}`} />
-    <StatChip
-      label="Total profit"
-      value={`$${result.totalProfit.toFixed(2)}`}
-    />
-    <StatChip label="PTI" value={ptiDisplay} />
-    <StatChip label="Verdict" value={verdictText} />
-    {approvalScore !== null && (
-      <StatChip
-        label="Approval score"
-        value={`${approvalScore} percent`}
-      />
-    )}
-  </div>
+      <div style={summaryBar}>
+        <div style={summaryChipGroup}>
+          <div style={summaryChipBox}>
+            <div style={summaryChipLabel}>Payment</div>
+            <div style={summaryChipValue}>
+              ${result.payment.toFixed(2)}
+            </div>
+          </div>
 
-  {planType !== "pro" && (
-    <a
-      href="/billing"
-      style={{
-        ...btnSecondary,
-        background: "linear-gradient(to right, #22c55e, #4ade80)",
-        color: "#052e16",
-        width: isMobile ? "100%" : "auto",
-        textAlign: "center",
-        alignSelf: isMobile ? "stretch" : "center",
-        marginTop: isMobile ? 4 : 0,
-        boxShadow: "0 10px 30px rgba(22, 163, 74, 0.45)"
-      }}
-    >
-      Upgrade to save and export
-    </a>
-  )}
-</div>
+          <div style={summaryChipBox}>
+            <div style={summaryChipLabel}>Total profit</div>
+            <div style={summaryChipValue}>
+              ${result.totalProfit.toFixed(2)}
+            </div>
+          </div>
 
+          <div style={summaryChipBox}>
+            <div style={summaryChipLabel}>PTI</div>
+            <div style={summaryChipValue}>{ptiDisplay}</div>
+          </div>
 
-            {/* scenario tools */}
+          <div style={summaryChipBox}>
+            <div style={summaryChipLabel}>Verdict</div>
+            <div style={summaryChipValue}>
+              <span style={verdictChipStyle(verdictText)}>{verdictText}</span>
+            </div>
+          </div>
+
+          {approvalScore !== null && (
+            <div style={summaryChipBox}>
+              <div style={summaryChipLabel}>Approval score</div>
+              <div style={summaryChipValue}>{approvalScore} percent</div>
+            </div>
+          )}
+        </div>
+
+        {planType !== "pro" && (
+          <a
+            href="/billing"
+            style={{
+              ...btnSecondary,
+              background:
+                "linear-gradient(to right, #22c55e, #4ade80, #22c55e)",
+              color: "#052e16",
+              width: isMobile ? "100%" : "auto",
+              textAlign: "center",
+              alignSelf: isMobile ? "stretch" : "center",
+              marginTop: isMobile ? 4 : 0
+            }}
+          >
+            Upgrade to save and export
+          </a>
+        )}
+      </div>
+
+      {/* scenario tools */}
       {isPro && (onSaveScenario || onOpenCompare) && (
         <div style={scenarioBar}>
           {onSaveScenario && (
@@ -1116,7 +1098,6 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           )}
         </div>
       )}
-
 
       {/* label for results area */}
       <h2
@@ -1227,11 +1208,10 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
       {result.aiExplanation && (
         <section
           style={{
-  ...panel,
-  marginTop: 16,
-  marginBottom: 12
-}}
-
+            ...panel,
+            marginTop: 16,
+            marginBottom: 12
+          }}
         >
           <div
             style={{
@@ -1333,7 +1313,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                 <div style={aiCard}>
                   <div style={aiTitle}>AI underwriter</div>
                   <p style={aiHint}>
-                    One paragraph manager level take on risk, PTI, LTV and profit.
+                    One paragraph manager level take on risk, PTI, LTV and
+                    profit.
                   </p>
                   <button
                     type="button"
@@ -1342,8 +1323,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     style={aiButton}
                   >
                     {aiLoading === "/api/ai-underwriter"
-  ? "Thinking..."
-  : "Run underwriter"}
+                      ? "Thinking..."
+                      : "Run underwriter"}
                   </button>
                   {aiUnderwriter && (
                     <div style={aiOutput}>{aiUnderwriter}</div>
@@ -1354,7 +1335,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                 <div style={aiCard}>
                   <div style={aiTitle}>Closer line</div>
                   <p style={aiHint}>
-                    Two short sentences you can read word for word to close this deal.
+                    Two short sentences you can read word for word to close this
+                    deal.
                   </p>
                   <button
                     type="button"
@@ -1363,8 +1345,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     style={aiButton}
                   >
                     {aiLoading === "/api/ai-closer-line"
-  ? "Thinking..."
-  : "Closer line"}
+                      ? "Thinking..."
+                      : "Closer line"}
                   </button>
                   {aiCloser && <div style={aiOutput}>{aiCloser}</div>}
                 </div>
@@ -1382,8 +1364,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     style={aiButton}
                   >
                     {aiLoading === "/api/ai-risk-movie"
-  ? "Projecting..."
-  : "Risk movie"}
+                      ? "Projecting..."
+                      : "Risk movie"}
                   </button>
                   {aiRiskMovie && <div style={aiOutput}>{aiRiskMovie}</div>}
                 </div>
@@ -1418,9 +1400,6 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
         </div>
       </section>
 
-
-
-
       {/* results grid */}
       <div style={resultsGrid}>
         {/* deal summary card */}
@@ -1435,7 +1414,9 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
           >
             <li style={summaryRow}>
               <span style={summaryLabel}>Payment</span>
-              <span style={summaryValue}>${result.payment.toFixed(2)}</span>
+              <span style={summaryValue}>
+                ${result.payment.toFixed(2)}
+              </span>
             </li>
             <li style={summaryRow}>
               <span style={summaryLabel}>Total interest</span>
@@ -2342,7 +2323,9 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                   <div style={benchTile}>
                     <div style={benchLabel}>Profit per deal</div>
                     <div style={benchCurrent}>
-                      {dealProfit !== null ? `$${dealProfit.toFixed(0)}` : "N A"}
+                      {dealProfit !== null
+                        ? `$${dealProfit.toFixed(0)}`
+                        : "N A"}
                     </div>
                     {portfolioProfit !== null && (
                       <div style={benchBaseline}>
@@ -2387,8 +2370,8 @@ Would you rather keep the lower payment and pay extra when you can, or put a lit
                     marginBottom: 6
                   }}
                 >
-                  We will start benchmarking once you have at least one month of funded
-                  deals with PTI, LTV and profit captured in the system.
+                  We will start benchmarking once you have at least one month of
+                  funded deals with PTI, LTV and profit captured in the system.
                 </p>
                 <p
                   style={{
